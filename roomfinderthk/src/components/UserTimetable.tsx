@@ -1,0 +1,111 @@
+import { Card } from './ui/card';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Calendar, Clock, MapPin, User as UserIcon, Trash2 } from 'lucide-react';
+import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner@2.0.3';
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+export function UserTimetable() {
+  const { rooms, getUserClasses, removeClassFromTimetable } = useData();
+  const { user } = useAuth();
+
+  if (!user) return null;
+
+  const userClasses = getUserClasses(user.id);
+
+  const handleRemoveClass = (classId: string) => {
+    if (confirm('Remove this class from your timetable?')) {
+      removeClassFromTimetable(classId, user.id);
+      toast.success('Class removed from your timetable');
+    }
+  };
+
+  // Organize classes by day
+  const classesByDay = DAYS.map(day => ({
+    day,
+    classes: userClasses.filter(cls => cls.day === day),
+  }));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3>My Timetable</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {userClasses.length} {userClasses.length === 1 ? 'class' : 'classes'} enrolled
+          </p>
+        </div>
+      </div>
+
+      {userClasses.length === 0 ? (
+        <Card className="p-8 text-center">
+          <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+          <p className="text-gray-500">No classes in your timetable yet</p>
+          <p className="text-sm text-gray-400 mt-2">
+            Browse classes and add them to your schedule
+          </p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {classesByDay.map(({ day, classes }) => (
+            classes.length > 0 && (
+              <Card key={day} className="p-4">
+                <h4 className="mb-3 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {day}
+                  <Badge variant="secondary" className="ml-auto">
+                    {classes.length} {classes.length === 1 ? 'class' : 'classes'}
+                  </Badge>
+                </h4>
+                <div className="space-y-2">
+                  {classes
+                    .sort((a, b) => a.timeSlot.localeCompare(b.timeSlot))
+                    .map(cls => {
+                      const room = rooms.find(r => r.id === cls.roomId);
+                      return (
+                        <div
+                          key={cls.id}
+                          className="flex items-start justify-between p-3 rounded-lg border bg-blue-50 border-blue-200"
+                        >
+                          <div className="flex-1">
+                            <div className="font-medium mb-2">{cls.name}</div>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>{cls.timeSlot}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <MapPin className="w-3.5 h-3.5" />
+                                <span>{room?.roomNumber || 'Unknown'}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <UserIcon className="w-3.5 h-3.5" />
+                                <span>{cls.professor}</span>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs mt-2">
+                              {cls.subject}
+                            </Badge>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveClass(cls.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                </div>
+              </Card>
+            )
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
