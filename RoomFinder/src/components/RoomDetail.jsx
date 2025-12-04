@@ -1,6 +1,7 @@
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Switch from '@mui/material/Switch'
+import TimeSlotComponent from './TimeSlotComponent'
 
 export default function RoomDetail() {
   const { roomNumber } = useParams()
@@ -39,6 +40,18 @@ export default function RoomDetail() {
               onChange={handleToggle}
             />
             <span>{isCheckedIn ? 'Eingecheckt' : 'Nicht eingecheckt'}</span>
+          </div>
+
+          <div style={{ marginTop: '30px' }}>
+            <h3>Verfügbarkeit nach Wochentag</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '16px' }}>
+              <TimeSlotComponent day="Montag" />
+              <TimeSlotComponent day="Dienstag" />
+              <TimeSlotComponent day="Mittwoch" />
+              <TimeSlotComponent day="Donnerstag" />
+              <TimeSlotComponent day="Freitag" />
+              <TimeSlotComponent day="Samstag" />
+            </div>
           </div>
         </div>
       ) : (
