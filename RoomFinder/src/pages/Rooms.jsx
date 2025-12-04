@@ -15,6 +15,8 @@ export default function Rooms() {
     { roomNumber: '201', floor: '2', availability: 'Occupied', seats: '30', equipment: 'Projector' },
     { roomNumber: '202', floor: '2', availability: 'Available', seats: '18', equipment: 'Conference Phone' },
     { roomNumber: '301', floor: '3', availability: 'Available', seats: '40', equipment: 'Projector, Microphone' },
+    { roomNumber: '301', floor: '3', availability: 'Available', seats: '40', equipment: 'Projector, Microphone' },
+    { roomNumber: '301', floor: '3', availability: 'Available', seats: '40', equipment: 'Projector, Microphone' },
   ]
 
   return (
