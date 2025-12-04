@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import RoomComponent from '../components/RoomComponent'
 
 export default function Rooms() {
   const [query, setQuery] = useState('')
+  const navigate = useNavigate()
 
   // Example rooms array — currently set to 5 items for demo.
   // You can change the number of rooms here or replace this with a
@@ -24,6 +26,14 @@ export default function Rooms() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search rooms or features..."
         />
+        <button
+          type="button"
+          className="filter-button"
+          onClick={() => navigate('/filter')}
+          aria-label="Open filters"
+        >
+          Filter
+        </button>
       </div>
 
       {/* map the rooms array to RoomComponent instances */}
