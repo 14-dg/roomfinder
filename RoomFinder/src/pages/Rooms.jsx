@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import RoomComponent from './RoomComponent'
+import RoomComponent from '../components/RoomComponent'
 
 export default function Rooms() {
   const [query, setQuery] = useState('')
