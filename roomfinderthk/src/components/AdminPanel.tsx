@@ -15,6 +15,8 @@ import { Upload, Trash2, Edit, Plus, Save, X, FileUp, Calendar } from 'lucide-re
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
 import { toast } from 'sonner@2.0.3';
 import { getRoom } from '../services/firebase';
+import { registerUser, User } from '../services/firebase';
+
 
 export function AdminPanel() {
   const { rooms, bookings, addRoom, updateRoom, deleteRoom, uploadTimetable, clearAllBookings, removeBooking } = useData();
@@ -73,37 +75,36 @@ export function AdminPanel() {
     }
   };
 
+  //author erik eliebrec
+  const handleAddProfessor = async () => {
+  if (!newProfessor.email || !newProfessor.name || !newProfessor.password) {
+    toast.error('Please fill in all fields');
+    return;
+  }
 
-  /*const handleAddProfessor = () => {
-    
-    if (!newProfessor.professorName) {
-      return;
-    }
-    
-    const professor = {
-      email: newProfessor.email,
-      name: newProfessor.professorName,
-      
+  try {
+    // User mit Rolle "professor" registrieren
+    const professor = await registerUser(
+      newProfessor.email,
+      newProfessor.password,
+      newProfessor.name,
+      'professor'
+    );
 
-    };
-    
-    addProfessor(professor);
+    toast.success(`Professor ${professor.name} added successfully!`);
+
+    // Formular zurücksetzen
     setNewProfessor({
-      roomNumber: '',
-      floor: 1,
-      capacity: 20,
-      occupiedSeats: 0,
-      hasBeamer: false,
-      isLocked: false,
+      email: '',
+      name: '',
+      password: '',
     });
-  };
-
-  const handleDeleteProfessor = (id: string) => {
-    if (confirm('Are you sure you want to delete this Professor? All bookings will also be removed.')) {
-      deleteProfessor(id);
-    }
-  };
-  */
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : 'Error adding professor');
+  }
+};
+  
+  
 
 
   const handleUploadTimetable = () => {
@@ -480,11 +481,81 @@ export function AdminPanel() {
         </TabsContent>
 
         {/* Professors Tab */}
-        <TabsContent value="professors" className="space-y-4 mt-6">
-          <Card className="p-6 bg-gray-50">
-            <h4 className="mb-2">Example Professors bliblablup:</h4>
-          </Card>
-        </TabsContent>
+        {/* Professors Tab */}
+<TabsContent value="professors" className="space-y-4 mt-6">
+  <Card className="p-6 space-y-4">
+    <h3 className="text-lg font-semibold mb-4">Add Professor</h3>
+
+    {/* Email */}
+    <div>
+      <Label htmlFor="profEmail">Email</Label>
+      <Input
+        id="profEmail"
+        placeholder="professor@example.com"
+        value={newProfessor.email}
+        onChange={(e) => setNewProfessor({ ...newProfessor, email: e.target.value })}
+        className="mt-2"
+      />
+    </div>
+
+    {/* Name */}
+    <div>
+      <Label htmlFor="profName">Name</Label>
+      <Input
+        id="profName"
+        placeholder="Professor Name"
+        value={newProfessor.name}
+        onChange={(e) => setNewProfessor({ ...newProfessor, name: e.target.value })}
+        className="mt-2"
+      />
+    </div>
+
+    {/* Password */}
+    <div>
+      <Label htmlFor="profPassword">Password</Label>
+      <Input
+        id="profPassword"
+        type="password"
+        placeholder="Enter password"
+        value={newProfessor.password}
+        onChange={(e) => setNewProfessor({ ...newProfessor, password: e.target.value })}
+        className="mt-2"
+      />
+    </div>
+
+    {/* Add Professor Button */}
+    <Button onClick={handleAddProfessor} className="w-full mt-2">
+  <Plus className="w-4 h-4 mr-2" />
+  Add Professor
+</Button>
+  </Card>
+
+  {/* Professors Table */}
+  <Card className="p-6">
+    <h3 className="mb-4">Professors List</h3>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Email</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Password</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {/* Hier kannst du später deine Professoren-Array mapen */}
+          <TableRow>
+            <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+              No professors yet
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+  </Card>
+</TabsContent>
+
         
       </Tabs>
     </div>
