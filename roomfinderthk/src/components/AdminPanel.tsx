@@ -14,6 +14,7 @@ import { useData } from '../contexts/DataContext';
 import { Upload, Trash2, Edit, Plus, Save, X, FileUp, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
 import { toast } from 'sonner@2.0.3';
+import { getRoom } from '../services/firebase';
 
 export function AdminPanel() {
   const { rooms, bookings, addRoom, updateRoom, deleteRoom, uploadTimetable, clearAllBookings, removeBooking } = useData();
@@ -30,6 +31,12 @@ export function AdminPanel() {
     roomId: '',
     jsonData: '',
   });
+  const [newProfessor, setNewProfessor] = useState({
+  email: '',
+  name: '',
+  password: '',
+});
+
   const [uploadMessage, setUploadMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const handleAddRoom = () => {
@@ -46,6 +53,7 @@ export function AdminPanel() {
       hasBeamer: newRoom.hasBeamer,
       isLocked: newRoom.isLocked,
       isAvailable: true,
+      
     };
     
     addRoom(room);
@@ -64,6 +72,39 @@ export function AdminPanel() {
       deleteRoom(id);
     }
   };
+
+
+  /*const handleAddProfessor = () => {
+    
+    if (!newProfessor.professorName) {
+      return;
+    }
+    
+    const professor = {
+      email: newProfessor.email,
+      name: newProfessor.professorName,
+      
+
+    };
+    
+    addProfessor(professor);
+    setNewProfessor({
+      roomNumber: '',
+      floor: 1,
+      capacity: 20,
+      occupiedSeats: 0,
+      hasBeamer: false,
+      isLocked: false,
+    });
+  };
+
+  const handleDeleteProfessor = (id: string) => {
+    if (confirm('Are you sure you want to delete this Professor? All bookings will also be removed.')) {
+      deleteProfessor(id);
+    }
+  };
+  */
+
 
   const handleUploadTimetable = () => {
     try {
@@ -117,11 +158,12 @@ export function AdminPanel() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="rooms" className="w-full">
-        <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="rooms">Rooms</TabsTrigger>
-          <TabsTrigger value="timetables">Timetables</TabsTrigger>
-          <TabsTrigger value="bookings">Bookings</TabsTrigger>
-        </TabsList>
+          <TabsList className="w-full flex flex-wrap gap-2 items-center">
+            <TabsTrigger value="rooms">Rooms</TabsTrigger>
+            <TabsTrigger value="timetables">Timetables</TabsTrigger>
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="professors">Professors</TabsTrigger>
+          </TabsList>
 
         {/* Rooms Tab */}
         <TabsContent value="rooms" className="space-y-4 mt-6">
@@ -132,7 +174,7 @@ export function AdminPanel() {
                 <Label htmlFor="roomNumber">Room Number</Label>
                 <Input
                   id="roomNumber"
-                  placeholder="A101"
+                  placeholder="ZW5-5"
                   value={newRoom.roomNumber}
                   onChange={(e) => setNewRoom({ ...newRoom, roomNumber: e.target.value })}
                   className="mt-2"
@@ -148,7 +190,7 @@ export function AdminPanel() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[1, 2, 3, 4, 5].map(f => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map(f => (
                       <SelectItem key={f} value={f.toString()}>Floor {f}</SelectItem>
                     ))}
                   </SelectContent>
@@ -164,17 +206,7 @@ export function AdminPanel() {
                   className="mt-2"
                 />
               </div>
-              <div>
-                <Label htmlFor="occupiedSeats">Occupied Seats</Label>
-                <Input
-                  id="occupiedSeats"
-                  type="number"
-                  value={newRoom.occupiedSeats}
-                  onChange={(e) => setNewRoom({ ...newRoom, occupiedSeats: parseInt(e.target.value) })}
-                  className="mt-2"
-                />
-              </div>
-              <div className="flex items-end">
+              <div className="col-span-2 flex items-end" style={{ gap: '40px' }}>
                 <div className="flex items-center gap-2 pb-2">
                   <Switch
                     id="hasBeamer"
@@ -183,8 +215,6 @@ export function AdminPanel() {
                   />
                   <Label htmlFor="hasBeamer">Has Beamer</Label>
                 </div>
-              </div>
-              <div className="flex items-end">
                 <div className="flex items-center gap-2 pb-2">
                   <Switch
                     id="isLocked"
@@ -292,12 +322,14 @@ export function AdminPanel() {
                   className="mt-2 font-mono text-sm h-48"
                 />
               </div>
+      {uploadMessage && (
+        <Alert variant={uploadMessage.type === 'error' ? 'destructive' : 'default'}>
+        <AlertDescription>{uploadMessage.text}</AlertDescription>
+        </Alert>
+        )}
 
-              {uploadMessage && (
-                <Alert variant={uploadMessage.type === 'error' ? 'destructive' : 'default'}>
-                  <AlertDescription>{uploadMessage.text}</AlertDescription>
-                </Alert>
-              )}
+        
+
 
               <Button 
                 onClick={handleUploadTimetable}
@@ -422,6 +454,9 @@ export function AdminPanel() {
               </Table>
             </div>
           </Card>
+
+
+          
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
