@@ -478,6 +478,14 @@ export function AdminPanel() {
             </Card>
           </div>
         </TabsContent>
+
+        {/* Professors Tab */}
+        <TabsContent value="professors" className="space-y-4 mt-6">
+          <Card className="p-6 bg-gray-50">
+            <h4 className="mb-2">Example Professors bliblablup:</h4>
+          </Card>
+        </TabsContent>
+        
       </Tabs>
     </div>
   );
