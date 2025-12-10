@@ -7,14 +7,14 @@ import { getAnalytics } from "firebase/analytics";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCERj2pCT1ViUPAsUoS0XQGvoExtoRiuAQ",
-  authDomain: "roomfinderthk-7ec6d.firebaseapp.com",
-  databaseURL: "https://roomfinderthk-7ec6d-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "roomfinderthk-7ec6d",
-  storageBucket: "roomfinderthk-7ec6d.firebasestorage.app",
-  messagingSenderId: "27010002308",
-  appId: "1:27010002308:web:9b139680f027dce66681d1",
-  measurementId: "G-35PT84K34K"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
