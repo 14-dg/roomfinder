@@ -13,17 +13,7 @@
  */
 
 import type { Room, Booking, DaySchedule } from '../contexts/DataContext';
-
-// Firebase configuration (placeholder)
-// TODO: Replace with actual Firebase config when implementing
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+import { app, auth, db } from '../firebase-config';
 
 // Initialize Firebase (placeholder)
 // TODO: Uncomment when implementing Firebase
