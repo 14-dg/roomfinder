@@ -37,6 +37,8 @@ export function AdminPanel() {
   email: '',
   name: '',
   password: '',
+  role: ""
+  
 });
 
   const [uploadMessage, setUploadMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -88,6 +90,7 @@ export function AdminPanel() {
       newProfessor.email,
       newProfessor.password,
       newProfessor.name,
+      newProfessor.role =
       'professor'
     );
 
@@ -98,6 +101,7 @@ export function AdminPanel() {
       email: '',
       name: '',
       password: '',
+      role : ''
     });
   } catch (error) {
     toast.error(error instanceof Error ? error.message : 'Error adding professor');
@@ -480,8 +484,8 @@ export function AdminPanel() {
           </div>
         </TabsContent>
 
-        {/* Professors Tab */}
-        {/* Professors Tab */}
+        
+        {/* Professors Tab author erik eliebrec */}
 <TabsContent value="professors" className="space-y-4 mt-6">
   <Card className="p-6 space-y-4">
     <h3 className="text-lg font-semibold mb-4">Add Professor</h3>
@@ -491,7 +495,7 @@ export function AdminPanel() {
       <Label htmlFor="profEmail">Email</Label>
       <Input
         id="profEmail"
-        placeholder="professor@example.com"
+        placeholder="professor@smail.th-koeln.de"
         value={newProfessor.email}
         onChange={(e) => setNewProfessor({ ...newProfessor, email: e.target.value })}
         className="mt-2"
