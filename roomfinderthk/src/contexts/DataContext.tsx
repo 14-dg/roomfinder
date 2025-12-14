@@ -1,16 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { RoomWithStatus } from '@/models';
+import { RoomWithStatus, Booking } from '@/models';
 
-export interface Booking {
-  id: string;
-  roomId: string;
-  day: string;
-  timeSlot: string;
-  subject: string;
-  bookedByName: string;
-  bookedByRole: string;
-  createdAt: Date;
-}
+
 
 export interface StudentCheckin {
   id: string;
