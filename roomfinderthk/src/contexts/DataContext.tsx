@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { RoomWithStatus, Booking, Lecture, CheckIn } from '@/models';
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry } from '@/models';
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {
@@ -11,12 +11,6 @@ const activityNoiseLevel: Record<string, number> = {
   'Online Meeting': 4,
   'Group Discussion': 5,
 };
-
-export interface UserTimetableEntry {
-  id: string;
-  classId: string;
-  userId: string;
-}
 
 interface DataContextType {
   rooms: RoomWithStatus[];
