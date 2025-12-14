@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Input } from "./ui/input";
-import { Card } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Search, User, Mail, Clock } from "lucide-react";
 
 interface Professor {
@@ -90,7 +90,7 @@ function generateProfessorSchedule(professorId: string): DaySchedule[] {
   }));
 }
 
-export function ProfessorSearch() {
+export default function ProfessorScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProfessor, setSelectedProfessor] = useState<Professor | null>(null);
 
