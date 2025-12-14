@@ -1,18 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { RoomWithStatus, Booking } from '@/models';
-
-
-
-export interface StudentCheckin {
-  id: string;
-  roomId: string;
-  day: string;
-  timeSlot: string;
-  studentId: string;
-  studentName: string;
-  activity: string;
-  createdAt: Date;
-}
+import { RoomWithStatus, Booking, Lecture, CheckIn } from '@/models';
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {
@@ -25,16 +12,6 @@ const activityNoiseLevel: Record<string, number> = {
   'Group Discussion': 5,
 };
 
-export interface Class {
-  id: string;
-  name: string;
-  subject: string;
-  professor: string;
-  roomId: string;
-  day: string;
-  timeSlot: string;
-}
-
 export interface UserTimetableEntry {
   id: string;
   classId: string;
@@ -44,17 +21,17 @@ export interface UserTimetableEntry {
 interface DataContextType {
   rooms: RoomWithStatus[];
   bookings: Booking[];
-  studentCheckins: StudentCheckin[];
-  classes: Class[];
+  studentCheckins: CheckIn[];
+  classes: Lecture[];
   userTimetableEntries: UserTimetableEntry[];
   getRoomSchedule: (roomId: string) => DaySchedule[];
-  getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => StudentCheckin[];
+  getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => CheckIn[];
   getLoudestActivity: (roomId: string, day: string, timeSlot: string) => string;
   getOccupancyLevel: (roomId: string, day: string, timeSlot: string, capacity: number) => 'empty' | 'moderate' | 'full';
   getCurrentDayAndTimeSlot: () => { day: string; timeSlot: string } | null;
   addBooking: (booking: Omit<Booking, 'id' | 'createdAt'>) => void;
   removeBooking: (id: string) => void;
-  addStudentCheckin: (checkin: Omit<StudentCheckin, 'id' | 'createdAt'>) => void;
+  addStudentCheckin: (checkin: Omit<CheckIn, 'id' | 'createdAt'>) => void;
   removeStudentCheckin: (id: string) => void;
   addRoom: (room: RoomWithStatus) => void;
   updateRoom: (id: string, updates: Partial<RoomWithStatus>) => void;
@@ -63,7 +40,7 @@ interface DataContextType {
   clearAllBookings: () => void;
   addClassToTimetable: (classId: string, userId: string) => void;
   removeClassFromTimetable: (classId: string, userId: string) => void;
-  getUserClasses: (userId: string) => Class[];
+  getUserClasses: (userId: string) => Lecture[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -103,7 +80,7 @@ const defaultSchedulePattern: TimeSlot[] = [
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-const initialClasses: Class[] = [
+const initialClasses: Lecture[] = [
   // Computer Science
   { id: "c1", name: "Introduction to Programming", subject: "Computer Science", professor: "Dr. Smith", roomId: "2", day: "Monday", timeSlot: "08:00-10:00" },
   { id: "c2", name: "Data Structures", subject: "Computer Science", professor: "Dr. Smith", roomId: "5", day: "Tuesday", timeSlot: "10:00-12:00" },
@@ -149,7 +126,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return savedBookings ? JSON.parse(savedBookings) : [];
   });
 
-  const [studentCheckins, setStudentCheckins] = useState<StudentCheckin[]>(() => {
+  const [studentCheckins, setStudentCheckins] = useState<CheckIn[]>(() => {
     const savedCheckins = localStorage.getItem('studentCheckins');
     return savedCheckins ? JSON.parse(savedCheckins) : [];
   });
@@ -159,7 +136,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return savedSchedules ? JSON.parse(savedSchedules) : [];
   });
 
-  const [classes, setClasses] = useState<Class[]>(() => {
+  const [classes, setClasses] = useState<Lecture[]>(() => {
     const savedClasses = localStorage.getItem('classes');
     return savedClasses ? JSON.parse(savedClasses) : initialClasses;
   });
@@ -220,7 +197,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const getStudentCheckinsForSlot = (roomId: string, day: string, timeSlot: string): StudentCheckin[] => {
+  const getStudentCheckinsForSlot = (roomId: string, day: string, timeSlot: string): CheckIn[] => {
     return studentCheckins.filter(
       c => c.roomId === roomId && c.day === day && c.timeSlot === timeSlot
     );
@@ -290,8 +267,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('bookings', JSON.stringify(updatedBookings));
   };
 
-  const addStudentCheckin = (checkin: Omit<StudentCheckin, 'id' | 'createdAt'>) => {
-    const newCheckin: StudentCheckin = {
+  const addStudentCheckin = (checkin: Omit<CheckIn, 'id' | 'createdAt'>) => {
+    const newCheckin: CheckIn = {
       ...checkin,
       id: Date.now().toString(),
       createdAt: new Date(),
@@ -363,7 +340,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const userClasses = userTimetableEntries
       .filter(e => e.userId === userId)
       .map(e => classes.find(c => c.id === e.classId))
-      .filter((c): c is Class => c !== undefined);
+      .filter((c): c is Lecture => c !== undefined);
     return userClasses;
   };
 
