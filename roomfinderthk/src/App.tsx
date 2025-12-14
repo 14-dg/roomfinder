@@ -21,6 +21,7 @@ import { Search, Home, Heart, User, SlidersHorizontal, BookmarkCheck, UserSearch
 import { Separator } from "./components/ui/separator";
 import { Badge } from "./components/ui/badge";
 import RoomsScreen from "./screens/RoomsScreen";
+import FavoritesScreen from "./screens/FavoritesScreen";
 import { RoomWithStatus } from "@/models";
 
 
@@ -170,36 +171,7 @@ function MainApp() {
       {/* Favorites Screen */}
       {currentScreen === "favorites" && (
         <div className="px-4 py-6">
-          {!selectedRoomInFavorites ? (
-            <>
-              {favoriteRooms.length > 0 ? (
-                <div className="space-y-3">
-                  {favoriteRooms.map((room) => (
-                    <RoomCard
-                      key={room.id}
-                      room={room}
-                      onClick={() => handleRoomClickInFavorites(room)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <BookmarkCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No favorite rooms yet</p>
-                  <p className="text-sm text-gray-400 mt-2">Start adding rooms to your favorites</p>
-                </div>
-              )}
-            </>
-          ) : (
-            <RoomTimetable
-              roomId={selectedRoomInFavorites.id}
-              roomNumber={selectedRoomInFavorites.roomNumber}
-              floor={selectedRoomInFavorites.floor}
-              capacity={selectedRoomInFavorites.capacity}
-              hasBeamer={selectedRoomInFavorites.hasBeamer}
-              isAvailable={selectedRoomInFavorites.isAvailable}
-            />
-          )}
+          <FavoritesScreen favoriteRooms={favoriteRooms}/>
         </div>
       )}
 
