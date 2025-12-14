@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { RoomCard } from "./components/RoomCard";
 import { RoomTimetable } from "./components/RoomTimetable";
-import { ClassSearch } from "./components/ClassSearch";
 import { UserTimetable } from "./components/UserTimetable";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
@@ -23,6 +22,7 @@ import ProfileScreen from "@/screens/ProfileScreen";
 import AdminScreen from "@/screens/AdminScreen";
 import ProfessorScreen from "@/screens/ProfessorScreen";
 import BookingScreen from "./screens/BookingScreen";
+import ClassesScreen from "./screens/ClassesScreen";
 import { RoomWithStatus } from "@/models";
 
 
@@ -205,7 +205,7 @@ function MainApp() {
       {/* Classes Screen */}
       {currentScreen === "classes" && (
         <div className="px-4 py-6">
-          <ClassSearch />
+          <ClassesScreen />
         </div>
       )}
 
