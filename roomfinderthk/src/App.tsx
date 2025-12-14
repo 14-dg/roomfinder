@@ -20,19 +20,8 @@ import { Button } from "./components/ui/button";
 import { Search, Home, Heart, User, SlidersHorizontal, BookmarkCheck, UserSearch, ArrowLeft, LogOut, Shield, Calendar, BookOpen } from "lucide-react";
 import { Separator } from "./components/ui/separator";
 import { Badge } from "./components/ui/badge";
+import { RoomWithStatus } from "@/models";
 
-interface Room {
-  id: string;
-  roomNumber: string;
-  floor: number;
-  capacity: number;
-  occupiedSeats: number;
-  hasBeamer: boolean;
-  isAvailable: boolean;
-  isLocked: boolean;
-  direction: 'north' | 'south' | 'east' | 'west';
-  availableUntil?: string;
-}
 
 interface TimeSlot {
   start: string;
@@ -50,8 +39,8 @@ type Screen = "rooms" | "favorites" | "professor" | "profile" | "admin" | "booki
 
 function MainApp() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("rooms");
-  const [selectedRoomInRooms, setSelectedRoomInRooms] = useState<Room | null>(null);
-  const [selectedRoomInFavorites, setSelectedRoomInFavorites] = useState<Room | null>(null);
+  const [selectedRoomInRooms, setSelectedRoomInRooms] = useState<RoomWithStatus | null>(null);
+  const [selectedRoomInFavorites, setSelectedRoomInFavorites] = useState<RoomWithStatus | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFloor, setSelectedFloor] = useState<string>("all");
   const [selectedSize, setSelectedSize] = useState<string>("all");
@@ -104,11 +93,11 @@ function MainApp() {
     !availableOnly,
   ].filter(Boolean).length;
 
-  const handleRoomClickInRooms = (room: Room) => {
+  const handleRoomClickInRooms = (room: RoomWithStatus) => {
     setSelectedRoomInRooms(room);
   };
 
-  const handleRoomClickInFavorites = (room: Room) => {
+  const handleRoomClickInFavorites = (room: RoomWithStatus) => {
     setSelectedRoomInFavorites(room);
   };
 
@@ -293,15 +282,7 @@ function MainApp() {
                   filteredRooms.map((room) => (
                     <RoomCard
                       key={room.id}
-                      roomNumber={room.roomNumber}
-                      floor={room.floor}
-                      capacity={room.capacity}
-                      occupiedSeats={room.occupiedSeats}
-                      hasBeamer={room.hasBeamer}
-                      isAvailable={room.isAvailable}
-                      isLocked={room.isLocked}
-                      direction={room.direction}
-                      availableUntil={room.availableUntil}
+                      room={room}
                       onClick={() => handleRoomClickInRooms(room)}
                     />
                   ))
@@ -336,15 +317,7 @@ function MainApp() {
                   {favoriteRooms.map((room) => (
                     <RoomCard
                       key={room.id}
-                      roomNumber={room.roomNumber}
-                      floor={room.floor}
-                      capacity={room.capacity}
-                      occupiedSeats={room.occupiedSeats}
-                      hasBeamer={room.hasBeamer}
-                      isAvailable={room.isAvailable}
-                      isLocked={room.isLocked}
-                      direction={room.direction}
-                      availableUntil={room.availableUntil}
+                      room={room}
                       onClick={() => handleRoomClickInFavorites(room)}
                     />
                   ))}

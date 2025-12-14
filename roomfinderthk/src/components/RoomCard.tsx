@@ -1,21 +1,14 @@
 import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
 import { Users, Projector, MapPin, Lock, Compass } from "lucide-react";
+import { RoomWithStatus, Direction } from "@/models";
 
 interface RoomCardProps {
-  roomNumber: string;
-  floor: number;
-  capacity: number;
-  occupiedSeats?: number;
-  hasBeamer: boolean;
-  isAvailable: boolean;
-  isLocked: boolean;
-  direction?: 'north' | 'south' | 'east' | 'west';
-  availableUntil?: string;
+  room: RoomWithStatus;
   onClick?: () => void;
 }
 
-const getDirectionColor = (direction: 'north' | 'south' | 'east' | 'west') => {
+const getDirectionColor = (direction: Direction) => {
   switch (direction) {
     case 'north':
       return 'bg-blue-100 text-blue-700 border-blue-300';
@@ -28,20 +21,21 @@ const getDirectionColor = (direction: 'north' | 'south' | 'east' | 'west') => {
   }
 };
 
-export function RoomCard({
-  roomNumber,
-  floor,
-  capacity,
-  occupiedSeats = 0,
-  hasBeamer,
-  isAvailable,
-  isLocked,
-  direction,
-  availableUntil,
-  onClick,
-}: RoomCardProps) {
+export function RoomCard({ room, onClick }: RoomCardProps) {
+  const {
+    roomNumber,
+    floor,
+    capacity,
+    occupiedSeats,
+    hasBeamer,
+    isAvailable,
+    isLocked,
+    direction,
+    availableUntil,
+  } = room;
+
   return (
-    <Card 
+    <Card
       className={`p-4 hover:shadow-lg transition-shadow cursor-pointer active:scale-98 ${
         isLocked ? 'opacity-75 bg-gray-50' : ''
       }`}
@@ -51,9 +45,7 @@ export function RoomCard({
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-lg">{roomNumber}</h3>
-            {isLocked && (
-              <Lock className="w-4 h-4 text-red-600" />
-            )}
+            {isLocked && <Lock className="w-4 h-4 text-red-600" />}
           </div>
           <div className="flex items-center gap-1 text-gray-600 mt-1">
             <MapPin className="w-4 h-4" />
@@ -96,7 +88,7 @@ export function RoomCard({
           Available until {availableUntil}
         </p>
       )}
-      
+
       {isLocked && (
         <p className="text-xs text-red-600 mt-2">
           Room is currently locked/closed

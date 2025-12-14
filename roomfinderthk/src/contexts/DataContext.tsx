@@ -1,17 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-
-export interface Room {
-  id: string;
-  roomNumber: string;
-  floor: number;
-  capacity: number;
-  occupiedSeats: number;
-  hasBeamer: boolean;
-  isAvailable: boolean;
-  isLocked: boolean;
-  direction: 'north' | 'south' | 'east' | 'west';
-  availableUntil?: string;
-}
+import { RoomWithStatus } from '@/models';
 
 export interface Booking {
   id: string;
@@ -63,7 +51,7 @@ export interface UserTimetableEntry {
 }
 
 interface DataContextType {
-  rooms: Room[];
+  rooms: RoomWithStatus[];
   bookings: Booking[];
   studentCheckins: StudentCheckin[];
   classes: Class[];
@@ -77,8 +65,8 @@ interface DataContextType {
   removeBooking: (id: string) => void;
   addStudentCheckin: (checkin: Omit<StudentCheckin, 'id' | 'createdAt'>) => void;
   removeStudentCheckin: (id: string) => void;
-  addRoom: (room: Room) => void;
-  updateRoom: (id: string, updates: Partial<Room>) => void;
+  addRoom: (room: RoomWithStatus) => void;
+  updateRoom: (id: string, updates: Partial<RoomWithStatus>) => void;
   deleteRoom: (id: string) => void;
   uploadTimetable: (roomId: string, schedule: DaySchedule[]) => void;
   clearAllBookings: () => void;
@@ -90,7 +78,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 // Initial mock data
-const initialRooms: Room[] = [
+const initialRooms: RoomWithStatus[] = [
   { id: "1", roomNumber: "A101", floor: 1, capacity: 20, occupiedSeats: 5, hasBeamer: true, isAvailable: true, isLocked: false, direction: 'north', availableUntil: "18:00" },
   { id: "2", roomNumber: "A102", floor: 1, capacity: 30, occupiedSeats: 30, hasBeamer: true, isAvailable: false, isLocked: false, direction: 'east' },
   { id: "3", roomNumber: "A103", floor: 1, capacity: 15, occupiedSeats: 3, hasBeamer: false, isAvailable: true, isLocked: false, direction: 'south', availableUntil: "17:00" },
@@ -160,7 +148,7 @@ const initialClasses: Class[] = [
 ];
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [rooms, setRooms] = useState<Room[]>(() => {
+  const [rooms, setRooms] = useState<RoomWithStatus[]>(() => {
     const savedRooms = localStorage.getItem('rooms');
     return savedRooms ? JSON.parse(savedRooms) : initialRooms;
   });
@@ -328,13 +316,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('studentCheckins', JSON.stringify(updatedCheckins));
   };
 
-  const addRoom = (room: Room) => {
+  const addRoom = (room: RoomWithStatus) => {
     const updatedRooms = [...rooms, room];
     setRooms(updatedRooms);
     localStorage.setItem('rooms', JSON.stringify(updatedRooms));
   };
 
-  const updateRoom = (id: string, updates: Partial<Room>) => {
+  const updateRoom = (id: string, updates: Partial<RoomWithStatus>) => {
     const updatedRooms = rooms.map(r => r.id === id ? { ...r, ...updates } : r);
     setRooms(updatedRooms);
     localStorage.setItem('rooms', JSON.stringify(updatedRooms));
