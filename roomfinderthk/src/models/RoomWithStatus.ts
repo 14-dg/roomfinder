@@ -1,19 +1,22 @@
 export type Direction = "north" | "south" | "east" | "west";
 
-export interface RoomWithStatus {
+// Basiseigenschaften eines Raums
+export interface Room {
   id: string;
-
   roomNumber: string;
   floor: number;
   capacity: number;
-
-  occupiedSeats: number;
-
   hasBeamer: boolean;
+  direction?: Direction;
+}
 
+// Status eines Raums
+export interface RoomStatus {
+  occupiedSeats: number;
   isAvailable: boolean;
   isLocked: boolean;
-
-  direction?: Direction;
-  availableUntil?: string; // bewusst string → UI-Format
+  availableUntil?: string;
 }
+
+// Kombination für Fälle, in denen beides benötigt wird
+export type RoomWithStatus = Room & RoomStatus;
