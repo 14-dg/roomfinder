@@ -3,5 +3,3 @@ export interface TimeSlot {
     end: string;
     isBooked: Boolean;
 }
-
-export default;
