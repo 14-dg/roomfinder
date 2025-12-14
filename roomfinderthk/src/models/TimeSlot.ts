@@ -1,5 +1,7 @@
 export interface TimeSlot {
-    begin: string;
+    start: string;
     end: string;
     isBooked: Boolean;
 }
+
+export default;
