@@ -1,21 +1,24 @@
 import { useState, useMemo } from "react";
-import { RoomCard } from "./components/RoomCard";
-import { RoomTimetable } from "./components/RoomTimetable";
-import { UserTimetable } from "./components/UserTimetable";
-import { LoginScreen } from "./components/LoginScreen";
-import { RegisterScreen } from "./components/RegisterScreen";
+
+import { RoomCard } from "@/components/RoomCard";
+import { RoomTimetable } from "@/components/RoomTimetable";
+import { UserTimetable } from "@/components/UserTimetable";
+import { LoginScreen } from "@/components/LoginScreen";
+import { RegisterScreen } from "@/components/RegisterScreen";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { DataProvider, useData } from "./contexts/DataContext";
-import { Toaster } from "./components/ui/sonner";
-import { Input } from "./components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
-import { Switch } from "./components/ui/switch";
-import { Label } from "./components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./components/ui/sheet";
-import { Button } from "./components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { Search, Home, Heart, User, SlidersHorizontal, BookmarkCheck, UserSearch, ArrowLeft, LogOut, Shield, Calendar, BookOpen } from "lucide-react";
-import { Separator } from "./components/ui/separator";
-import { Badge } from "./components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import BottomNavigation from "@/components/BottomNavigation";
+
 import RoomsScreen from "@/screens/RoomsScreen";
 import FavoritesScreen from "@/screens/FavoritesScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
@@ -23,6 +26,7 @@ import AdminScreen from "@/screens/AdminScreen";
 import ProfessorScreen from "@/screens/ProfessorScreen";
 import BookingScreen from "./screens/BookingScreen";
 import ClassesScreen from "./screens/ClassesScreen";
+
 import { RoomWithStatus } from "@/models";
 
 
@@ -210,94 +214,14 @@ function MainApp() {
       )}
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20">
-        <div className="flex items-center justify-around h-16">
-          <button
-            onClick={() => {
-              setCurrentScreen("rooms");
-              setSelectedRoomInRooms(null);
-            }}
-            className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-              currentScreen === "rooms" ? "text-blue-600" : "text-gray-600"
-            }`}
-          >
-            <Home className="w-6 h-6 mb-1" />
-            <span className="text-xs">Rooms</span>
-          </button>
-          
-          <button
-            onClick={() => {
-              setCurrentScreen("favorites");
-              setSelectedRoomInFavorites(null);
-            }}
-            className={`flex flex-col items-center justify-center w-full h-full transition-colors relative ${
-              currentScreen === "favorites" ? "text-blue-600" : "text-gray-600"
-            }`}
-          >
-            <Heart className="w-6 h-6 mb-1" />
-            <span className="text-xs">Favorites</span>
-            {favorites.length > 0 && (
-              <Badge className="absolute top-1 right-1/4 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                {favorites.length}
-              </Badge>
-            )}
-          </button>
-
-          <button
-            onClick={() => setCurrentScreen("professor")}
-            className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-              currentScreen === "professor" ? "text-blue-600" : "text-gray-600"
-            }`}
-          >
-            <UserSearch className="w-6 h-6 mb-1" />
-            <span className="text-xs">Professor</span>
-          </button>
-          
-          <button
-            onClick={() => setCurrentScreen("classes")}
-            className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-              currentScreen === "classes" ? "text-blue-600" : "text-gray-600"
-            }`}
-          >
-            <BookOpen className="w-6 h-6 mb-1" />
-            <span className="text-xs">Classes</span>
-          </button>
-          
-          {user?.role === 'professor' && (
-            <button
-              onClick={() => setCurrentScreen("booking")}
-              className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-                currentScreen === "booking" ? "text-blue-600" : "text-gray-600"
-              }`}
-            >
-              <Calendar className="w-6 h-6 mb-1" />
-              <span className="text-xs">Book</span>
-            </button>
-          )}
-          
-          <button
-            onClick={() => setCurrentScreen("profile")}
-            className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-              currentScreen === "profile" ? "text-blue-600" : "text-gray-600"
-            }`}
-          >
-            <User className="w-6 h-6 mb-1" />
-            <span className="text-xs">Profile</span>
-          </button>
-
-          {user?.role === 'admin' && (
-            <button
-              onClick={() => setCurrentScreen("admin")}
-              className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-                currentScreen === "admin" ? "text-blue-600" : "text-gray-600"
-              }`}
-            >
-              <Shield className="w-6 h-6 mb-1" />
-              <span className="text-xs">Admin</span>
-            </button>
-          )}
-        </div>
-      </div>
+      <BottomNavigation
+        currentScreen={currentScreen}
+        setCurrentScreen={setCurrentScreen}
+        favorites={favorites}
+        user={user}
+        setSelectedRoomInRooms={setSelectedRoomInRooms}
+        setSelectedRoomInFavorites={setSelectedRoomInFavorites}
+      />
     </div>
   );
 }
