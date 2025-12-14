@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { RoomCard } from "./components/RoomCard";
 import { RoomTimetable } from "./components/RoomTimetable";
-import { ProfessorBooking } from "./components/ProfessorBooking";
 import { ClassSearch } from "./components/ClassSearch";
 import { UserTimetable } from "./components/UserTimetable";
 import { LoginScreen } from "./components/LoginScreen";
@@ -23,6 +22,7 @@ import FavoritesScreen from "@/screens/FavoritesScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import AdminScreen from "@/screens/AdminScreen";
 import ProfessorScreen from "@/screens/ProfessorScreen";
+import BookingScreen from "./screens/BookingScreen";
 import { RoomWithStatus } from "@/models";
 
 
@@ -198,7 +198,7 @@ function MainApp() {
       {/* Booking Screen */}
       {currentScreen === "booking" && (
         <div className="px-4 py-6">
-          <ProfessorBooking />
+          <BookingScreen />
         </div>
       )}
 
