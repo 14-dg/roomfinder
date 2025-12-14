@@ -12,7 +12,7 @@
  * 4. Update function signatures as needed for Firebase types
  */
 
-import type { Room, Booking, DaySchedule } from '../contexts/DataContext';
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry } from '@/models';
 import { app, auth, db } from '../firebase-config';
 
 // Initialize Firebase (placeholder)

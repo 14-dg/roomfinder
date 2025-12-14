@@ -1,6 +1,6 @@
-import { RoomWithStatus, Booking, TimeSlot, Lecture, Timeslot } from '@/models';
+import { RoomWithStatus, Booking, TimeSlot, Lecture } from '@/models';
 
-// Initial mock data
+// Initial mock data++
 const initialRooms: RoomWithStatus[] = [
   { id: "1", roomNumber: "A101", floor: 1, capacity: 20, occupiedSeats: 5, hasBeamer: true, isAvailable: true, isLocked: false, direction: 'north', availableUntil: "18:00" },
   { id: "2", roomNumber: "A102", floor: 1, capacity: 30, occupiedSeats: 30, hasBeamer: true, isAvailable: false, isLocked: false, direction: 'east' },
