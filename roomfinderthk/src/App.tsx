@@ -7,7 +7,6 @@ import { ClassSearch } from "./components/ClassSearch";
 import { UserTimetable } from "./components/UserTimetable";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
-import { AdminPanel } from "./components/AdminPanel";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { DataProvider, useData } from "./contexts/DataContext";
 import { Toaster } from "./components/ui/sonner";
@@ -20,9 +19,10 @@ import { Button } from "./components/ui/button";
 import { Search, Home, Heart, User, SlidersHorizontal, BookmarkCheck, UserSearch, ArrowLeft, LogOut, Shield, Calendar, BookOpen } from "lucide-react";
 import { Separator } from "./components/ui/separator";
 import { Badge } from "./components/ui/badge";
-import RoomsScreen from "./screens/RoomsScreen";
-import FavoritesScreen from "./screens/FavoritesScreen";
-import ProfileScreen from "./screens/ProfileScreen";
+import RoomsScreen from "@/screens/RoomsScreen";
+import FavoritesScreen from "@/screens/FavoritesScreen";
+import ProfileScreen from "@/screens/ProfileScreen";
+import AdminScreen from "@/screens/AdminScreen";
 import { RoomWithStatus } from "@/models";
 
 
@@ -188,11 +188,10 @@ function MainApp() {
         <ProfileScreen user={user} onLogout={logout} />
       )}
 
-
       {/* Admin Screen */}
       {currentScreen === "admin" && (
         <div className="px-4 py-6">
-          <AdminPanel />
+          <AdminScreen />
         </div>
       )}
 

@@ -1,24 +1,24 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Badge } from './ui/badge';
-import { Switch } from './ui/switch';
-import { Textarea } from './ui/textarea';
-import { Alert, AlertDescription } from './ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useData } from '../contexts/DataContext';
 import { Upload, Trash2, Edit, Plus, Save, X, FileUp, Calendar } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
-import { toast } from 'sonner@2.0.3';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { getRoom } from '../services/firebase';
 import { registerUser, User } from '../services/firebase';
 
 
-export function AdminPanel() {
+export default function AdminScreen() {
   const { rooms, bookings, addRoom, updateRoom, deleteRoom, uploadTimetable, clearAllBookings, removeBooking } = useData();
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [newRoom, setNewRoom] = useState({
@@ -37,9 +37,8 @@ export function AdminPanel() {
   email: '',
   name: '',
   password: '',
-  role: ""
-  
-});
+  role: ""  
+  });
 
   const [uploadMessage, setUploadMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
