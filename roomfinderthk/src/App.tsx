@@ -20,6 +20,7 @@ import { Button } from "./components/ui/button";
 import { Search, Home, Heart, User, SlidersHorizontal, BookmarkCheck, UserSearch, ArrowLeft, LogOut, Shield, Calendar, BookOpen } from "lucide-react";
 import { Separator } from "./components/ui/separator";
 import { Badge } from "./components/ui/badge";
+import RoomsScreen from "./screens/RoomsScreen";
 import { RoomWithStatus } from "@/models";
 
 
@@ -162,148 +163,7 @@ function MainApp() {
       {/* Rooms Screen */}
       {currentScreen === "rooms" && (
         <div className="px-4 py-6">
-          {!selectedRoomInRooms ? (
-            <>
-              {/* Search Bar */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  type="text"
-                  placeholder="Search by room number..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-12"
-                />
-              </div>
-
-              {/* Filter Button */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="w-full h-12 mb-4 relative">
-                    <SlidersHorizontal className="w-5 h-5 mr-2" />
-                    Filters
-                    {activeFiltersCount > 0 && (
-                      <Badge className="ml-2 h-5 px-2">{activeFiltersCount}</Badge>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="h-[85vh]">
-                  <SheetHeader>
-                    <SheetTitle>Filter Rooms</SheetTitle>
-                  </SheetHeader>
-                  
-                  <div className="py-6 space-y-6">
-                    {/* Floor Filter */}
-                    <div>
-                      <Label htmlFor="floor" className="mb-3 block text-base">Floor</Label>
-                      <Select value={selectedFloor} onValueChange={setSelectedFloor}>
-                        <SelectTrigger id="floor" className="h-12">
-                          <SelectValue placeholder="All floors" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All floors</SelectItem>
-                          <SelectItem value="1">Floor 1</SelectItem>
-                          <SelectItem value="2">Floor 2</SelectItem>
-                          <SelectItem value="3">Floor 3</SelectItem>
-                          <SelectItem value="4">Floor 4</SelectItem>
-                          <SelectItem value="5">Floor 5</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Size Filter */}
-                    <div>
-                      <Label htmlFor="size" className="mb-3 block text-base">Room Size</Label>
-                      <Select value={selectedSize} onValueChange={setSelectedSize}>
-                        <SelectTrigger id="size" className="h-12">
-                          <SelectValue placeholder="All sizes" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All sizes</SelectItem>
-                          <SelectItem value="small">Small (≤20)</SelectItem>
-                          <SelectItem value="medium">Medium (21-40)</SelectItem>
-                          <SelectItem value="large">Large (40+)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Separator />
-
-                    {/* Toggle Filters */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between py-2">
-                        <Label htmlFor="beamer" className="text-base">Has Beamer</Label>
-                        <Switch
-                          id="beamer"
-                          checked={beamerOnly}
-                          onCheckedChange={setBeamerOnly}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <Label htmlFor="available" className="text-base">Available Only</Label>
-                        <Switch
-                          id="available"
-                          checked={availableOnly}
-                          onCheckedChange={setAvailableOnly}
-                        />
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Clear Filters Button */}
-                    <Button
-                      variant="outline"
-                      className="w-full h-12"
-                      onClick={() => {
-                        setSelectedFloor("all");
-                        setSelectedSize("all");
-                        setBeamerOnly(false);
-                        setAvailableOnly(true);
-                        setSearchQuery("");
-                      }}
-                    >
-                      Clear All Filters
-                    </Button>
-                  </div>
-                </SheetContent>
-              </Sheet>
-
-              {/* Results Count */}
-              <div className="mb-4">
-                <p className="text-sm text-gray-600">
-                  {filteredRooms.length} {filteredRooms.length === 1 ? "room" : "rooms"} found
-                </p>
-              </div>
-
-              {/* Room List */}
-              <div className="space-y-3">
-                {filteredRooms.length > 0 ? (
-                  filteredRooms.map((room) => (
-                    <RoomCard
-                      key={room.id}
-                      room={room}
-                      onClick={() => handleRoomClickInRooms(room)}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No rooms found matching your criteria</p>
-                    <p className="text-sm text-gray-400 mt-2">Try adjusting your filters</p>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <RoomTimetable
-              roomId={selectedRoomInRooms.id}
-              roomNumber={selectedRoomInRooms.roomNumber}
-              floor={selectedRoomInRooms.floor}
-              capacity={selectedRoomInRooms.capacity}
-              hasBeamer={selectedRoomInRooms.hasBeamer}
-              isAvailable={selectedRoomInRooms.isAvailable}
-            />
-          )}
+          <RoomsScreen />
         </div>
       )}
 
