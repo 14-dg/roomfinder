@@ -22,50 +22,38 @@ const getDirectionColor = (direction: Direction) => {
 };
 
 export function RoomCard({ room, onClick }: RoomCardProps) {
-  const {
-    roomNumber,
-    floor,
-    capacity,
-    occupiedSeats,
-    hasBeamer,
-    isAvailable,
-    isLocked,
-    direction,
-    availableUntil,
-  } = room;
-
   return (
     <Card
       className={`p-4 hover:shadow-lg transition-shadow cursor-pointer active:scale-98 ${
-        isLocked ? 'opacity-75 bg-gray-50' : ''
+        room.isLocked ? 'opacity-75 bg-gray-50' : ''
       }`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-lg">{roomNumber}</h3>
-            {isLocked && <Lock className="w-4 h-4 text-red-600" />}
+            <h3 className="text-lg">{room.roomNumber}</h3>
+            {room.isLocked && <Lock className="w-4 h-4 text-red-600" />}
           </div>
           <div className="flex items-center gap-1 text-gray-600 mt-1">
             <MapPin className="w-4 h-4" />
-            <span className="text-sm">Floor {floor}</span>
-            {direction && (
+            <span className="text-sm">Floor {room.floor}</span>
+            {room.direction && (
               <>
                 <span className="mx-1">•</span>
                 <Compass className="w-4 h-4" />
-                <span className={`text-xs px-2 py-0.5 rounded border capitalize ${getDirectionColor(direction)}`}>
-                  {direction}
+                <span className={`text-xs px-2 py-0.5 rounded border capitalize ${getDirectionColor(room.direction)}`}>
+                  {room.direction}
                 </span>
               </>
             )}
           </div>
         </div>
-        {isLocked ? (
+        {room.isLocked ? (
           <Badge variant="destructive">Locked</Badge>
         ) : (
-          <Badge variant={isAvailable ? "default" : "secondary"}>
-            {isAvailable ? "Available" : "Occupied"}
+          <Badge variant={room.isAvailable ? "default" : "secondary"}>
+            {room.isAvailable ? "Available" : "Occupied"}
           </Badge>
         )}
       </div>
@@ -73,9 +61,9 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
       <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
         <div className="flex items-center gap-1">
           <Users className="w-4 h-4" />
-          <span>{occupiedSeats}/{capacity} seats</span>
+          <span>{room.occupiedSeats}/{room.capacity} seats</span>
         </div>
-        {hasBeamer && (
+        {room.hasBeamer && (
           <div className="flex items-center gap-1">
             <Projector className="w-4 h-4" />
             <span>Beamer</span>
@@ -83,13 +71,13 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
         )}
       </div>
 
-      {!isLocked && isAvailable && availableUntil && (
+      {!room.isLocked && room.isAvailable && room.availableUntil && (
         <p className="text-xs text-green-600 mt-2">
-          Available until {availableUntil}
+          Available until {room.availableUntil}
         </p>
       )}
 
-      {isLocked && (
+      {room.isLocked && (
         <p className="text-xs text-red-600 mt-2">
           Room is currently locked/closed
         </p>
