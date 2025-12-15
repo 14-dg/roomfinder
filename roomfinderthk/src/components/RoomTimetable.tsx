@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Users, Projector, MapPin, Calendar, Clock, Lock, Unlock, User, Activity, Compass } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface RoomTimetableProps {
   roomId: string;
