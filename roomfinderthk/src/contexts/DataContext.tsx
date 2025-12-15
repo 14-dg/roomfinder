@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry } from '@/models';
+import {initialClasses, initialRooms, defaultSchedulePattern, days} from "../mockData/mockData";
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {

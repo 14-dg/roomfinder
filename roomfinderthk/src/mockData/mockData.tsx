@@ -1,7 +1,7 @@
 import { RoomWithStatus, Booking, TimeSlot, Lecture } from '@/models';
 
 // Initial mock data++
-const initialRooms: RoomWithStatus[] = [
+export const initialRooms: RoomWithStatus[] = [
   { id: "1", roomNumber: "A101", floor: 1, capacity: 20, occupiedSeats: 5, hasBeamer: true, isAvailable: true, isLocked: false, direction: 'north', availableUntil: "18:00" },
   { id: "2", roomNumber: "A102", floor: 1, capacity: 30, occupiedSeats: 30, hasBeamer: true, isAvailable: false, isLocked: false, direction: 'east' },
   { id: "3", roomNumber: "A103", floor: 1, capacity: 15, occupiedSeats: 3, hasBeamer: false, isAvailable: true, isLocked: false, direction: 'south', availableUntil: "17:00" },
@@ -24,7 +24,7 @@ const initialRooms: RoomWithStatus[] = [
   { id: "20", roomNumber: "E504", floor: 5, capacity: 50, occupiedSeats: 22, hasBeamer: true, isAvailable: true, isLocked: false, direction: 'east', availableUntil: "19:00" },
 ];
 
-const defaultSchedulePattern: TimeSlot[] = [
+export const defaultSchedulePattern: TimeSlot[] = [
   { start: "08:00", end: "10:00", isBooked: false },
   { start: "10:00", end: "12:00", isBooked: false },
   { start: "12:00", end: "14:00", isBooked: false },
@@ -33,9 +33,9 @@ const defaultSchedulePattern: TimeSlot[] = [
   { start: "18:00", end: "20:00", isBooked: false },
 ];
 
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+export const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-const initialClasses: Lecture[] = [
+export const initialClasses: Lecture[] = [
   // Computer Science
   { id: "c1", name: "Introduction to Programming", subject: "Computer Science", professor: "Dr. Smith", roomId: "2", day: "Monday", timeSlot: "08:00-10:00" },
   { id: "c2", name: "Data Structures", subject: "Computer Science", professor: "Dr. Smith", roomId: "5", day: "Tuesday", timeSlot: "10:00-12:00" },
