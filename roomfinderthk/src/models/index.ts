@@ -7,4 +7,4 @@ export * from "./Room";
 export * from "./RoomWithStatus";
 export * from "./Student";
 export * from "./UserTimetableEntry";
-export * from "./timeSlot";
+export * from "./TimeSlot";
