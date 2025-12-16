@@ -1,9 +1,9 @@
-export interface Reservierung {
+export interface Reservations {
 
-    beginn: Date;
-    ende: Date;
-    inRaum: string;
-    bezeichnung: string;
+    start: Date;
+    end: Date;
+    inRoom: string;
+    description: string;
     //Referenz auf Prof
-    vonProf: string;
+    fromProf: string;
 }
