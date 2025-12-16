@@ -1,7 +1,7 @@
-export interface Professor {
-    id: String;
-    name: String;
-    //Array von Referenzen auf die Lehrveranstaltungen
-    lehrveranstaltungen: String[];
-    
+interface Professor {
+    id: string;
+    name: string;
+    department: string;
+    email: string;
+    officeHours: string;
 }
