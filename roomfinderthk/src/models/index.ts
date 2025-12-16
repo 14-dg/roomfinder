@@ -8,3 +8,5 @@ export * from "./RoomWithStatus";
 export * from "./Student";
 export * from "./UserTimetableEntry";
 export * from "./TimeSlot";
+export * from "./RoomSchedule";
+export * from "./DaySchedule";
