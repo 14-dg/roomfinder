@@ -3,8 +3,7 @@ import { useState, useMemo } from "react";
 import { RoomCard } from "@/components/RoomCard";
 import { RoomTimetable } from "@/components/RoomTimetable";
 import { UserTimetable } from "@/components/UserTimetable";
-import { LoginScreen } from "@/components/LoginScreen";
-import { RegisterScreen } from "@/components/RegisterScreen";
+
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { DataProvider, useData } from "./contexts/DataContext";
 import { Toaster } from "@/components/ui/sonner";
@@ -19,6 +18,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import BottomNavigation from "@/components/BottomNavigation";
 
+import { LoginScreen } from "@/screens/LoginScreen";
+import { RegisterScreen } from "@/screens/RegisterScreen";
 import RoomsScreen from "@/screens/RoomsScreen";
 import FavoritesScreen from "@/screens/FavoritesScreen";
 import ProfileScreen from "@/screens/ProfileScreen";

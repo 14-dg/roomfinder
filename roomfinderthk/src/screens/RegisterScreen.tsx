@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Alert, AlertDescription } from './ui/alert';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GraduationCap, Loader2 } from 'lucide-react';
-import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useAuth, UserRole } from '@/contexts/AuthContext';
 
 interface RegisterScreenProps {
   onSwitchToLogin: () => void;
