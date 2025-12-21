@@ -1,4 +1,4 @@
-interface Professor {
+export interface Professor {
     id: string;
     name: string;
     department: string;
