@@ -30,18 +30,6 @@ import ClassesScreen from "./screens/ClassesScreen";
 import { RoomWithStatus } from "@/models";
 
 
-interface TimeSlot {
-  start: string;
-  end: string;
-  isBooked: boolean;
-  subject?: string;
-}
-
-interface DaySchedule {
-  day: string;
-  slots: TimeSlot[];
-}
-
 type Screen = "rooms" | "favorites" | "professor" | "profile" | "admin" | "booking" | "classes";
 
 function MainApp() {
