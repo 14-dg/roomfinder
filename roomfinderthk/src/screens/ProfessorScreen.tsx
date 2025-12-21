@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DaySchedule, TimeSlot } from "@/models";
 import { Search, User, Mail, Clock } from "lucide-react";
 
 interface Professor {
@@ -12,17 +13,6 @@ interface Professor {
   officeHours: string;
 }
 
-interface TimeSlot {
-  start: string;
-  end: string;
-  subject: string;
-  room: string;
-}
-
-interface DaySchedule {
-  day: string;
-  slots: TimeSlot[];
-}
 
 const mockProfessors: Professor[] = [
   { id: "1", name: "Dr. Sarah Johnson", department: "Computer Science", email: "s.johnson@uni.edu", officeHours: "Mon-Wed 14:00-16:00" },
