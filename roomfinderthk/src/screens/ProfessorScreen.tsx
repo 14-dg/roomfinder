@@ -2,16 +2,8 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DaySchedule, TimeSlot } from "@/models";
+import { DaySchedule, TimeSlot, Professor } from "@/models";
 import { Search, User, Mail, Clock } from "lucide-react";
-
-interface Professor {
-  id: string;
-  name: string;
-  department: string;
-  email: string;
-  officeHours: string;
-}
 
 
 const mockProfessors: Professor[] = [
