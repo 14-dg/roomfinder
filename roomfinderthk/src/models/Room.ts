@@ -1,4 +1,4 @@
-export interface Raum {
+export interface Room {
     id: String;
     name: String;
     etage: number;
