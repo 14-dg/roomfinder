@@ -8,4 +8,4 @@ export interface Room {
     gebaeude: String;
     //Referenz auf CheckIns
     checkIns: String;
-}
+} 
