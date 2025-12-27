@@ -1,21 +1,8 @@
 import { useState, useMemo } from "react";
 
-import { RoomCard } from "@/components/RoomCard";
-import { RoomTimetable } from "@/components/RoomTimetable";
-import { UserTimetable } from "@/components/UserTimetable";
-
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { DataProvider, useData } from "./contexts/DataContext";
-import { Toaster } from "@/components/ui/sonner";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Search, Home, Heart, User, SlidersHorizontal, BookmarkCheck, UserSearch, ArrowLeft, LogOut, Shield, Calendar, BookOpen } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+
 import BottomNavigation from "@/components/BottomNavigation";
 
 import { LoginScreen } from "@/screens/LoginScreen";
