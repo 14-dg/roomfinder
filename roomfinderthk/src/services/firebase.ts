@@ -295,6 +295,46 @@ export async function clearAllBookings(): Promise<void> {
 }
 
 // ============================================================================
+// FAVORITES SERVICES
+// ============================================================================
+
+/**
+ * Get favorites for a user
+ * 
+ * TODO: Replace with Firestore query
+ * - Use getDoc(doc(db, 'favorites', userId))
+ */
+export async function getFavoritesFromFirestore(userId: string): Promise<string[]> {
+  // const docSnap = await getDoc(doc(db, 'favorites', userId));
+  // return docSnap.exists() ? docSnap.data().roomIds : [];
+
+  // -----------------------------
+  // Placeholder: localStorage
+  // -----------------------------
+  const raw = localStorage.getItem(`favorites_${userId}`);
+  return raw ? JSON.parse(raw) : [];
+}
+
+/**
+ * Save favorites for a user
+ * 
+ * TODO: Replace with Firestore write
+ * - Use setDoc(doc(db, 'favorites', userId), { roomIds })
+ */
+export async function saveFavoritesToFirestore(
+  userId: string,
+  roomIds: string[]
+): Promise<void> {
+  // await setDoc(doc(db, 'favorites', userId), {
+  //   roomIds,
+  //   updatedAt: serverTimestamp(),
+  // });
+
+  localStorage.setItem(`favorites_${userId}`, JSON.stringify(roomIds));
+}
+
+
+// ============================================================================
 // TIMETABLE SERVICES
 // ============================================================================
 
@@ -308,7 +348,7 @@ interface RoomSchedule {
  * TODO: Replace with Firestore query
  * - Use getDoc(doc(db, 'timetables', roomId))
  */
-export async function getRoomTimetable(roomId: string): Promise<DaySchedule[] | null> {
+export async function getRoomDetailScreen(roomId: string): Promise<DaySchedule[] | null> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const docSnap = await getDoc(doc(db, 'timetables', roomId));
