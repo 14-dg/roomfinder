@@ -2,17 +2,15 @@ import { User, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { UserTimetable } from "@/components/UserTimetable";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface ProfileScreenProps {
-  user: {
-    name: string;
-    email: string;
-    role: string;
-  } | null;
-  onLogout: () => void;
-}
+export default function ProfileScreen() {
+  const { user, logout } = useAuth();
 
-export default function ProfileScreen({ user, onLogout }: ProfileScreenProps) {
+  if (!user) {
+    return <div>Not authenticated</div>;
+  }
+
   return (
     <div className="px-4 py-6 space-y-4">
       {/* User Card */}
@@ -23,13 +21,13 @@ export default function ProfileScreen({ user, onLogout }: ProfileScreenProps) {
           </div>
 
           <div className="flex-1">
-            <h2 className="text-xl">{user?.name}</h2>
-            <p className="text-sm text-gray-600">{user?.email}</p>
+            <h2 className="text-xl">{user.name}</h2>
+            <p className="text-sm text-gray-600">{user.email}</p>
             <Badge
               className="mt-2 capitalize"
-              variant={user?.role === "admin" ? "default" : "secondary"}
+              variant={user.role === "admin" ? "default" : "secondary"}
             >
-              {user?.role}
+              {user.role}
             </Badge>
           </div>
         </div>
@@ -52,16 +50,13 @@ export default function ProfileScreen({ user, onLogout }: ProfileScreenProps) {
           <p className="text-base">About</p>
           <p className="text-sm text-gray-600 mt-1">Version 1.0.0</p>
         </button>
-        <button 
-          onClick={onLogout}
-          className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors text-red-600"
+        <button
+          onClick={logout}
+          className="w-full px-6 py-4 text-left text-red-600"
         >
           <div className="flex items-center gap-2">
             <LogOut className="w-5 h-5" />
-            <div>
-              <p className="text-base">Sign Out</p>
-              <p className="text-sm text-gray-600 mt-1">Log out of your account</p>
-            </div>
+            Sign Out
           </div>
         </button>
       </div>
