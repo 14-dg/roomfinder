@@ -1,28 +1,16 @@
-import { useState } from "react";
 import { BookmarkCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { RoomCard } from "@/components/RoomCard";
-import { RoomTimetable } from "@/components/RoomTimetable";
-import { RoomWithStatus } from "@/models";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { useData } from "@/contexts/DataContext"; // um Rooms-Daten zu bekommen
 
-interface FavoritesScreenProps {
-  favoriteRooms: RoomWithStatus[];
-}
+export default function FavoritesScreen() {
+  const navigate = useNavigate();
+  const { favorites } = useFavorites();
+  const { rooms } = useData();
 
-export default function FavoritesScreen({ favoriteRooms }: FavoritesScreenProps) {
-  const [selectedRoom, setSelectedRoom] = useState<RoomWithStatus | null>(null);
-
-  if (selectedRoom) {
-    return (
-      <RoomTimetable
-        roomId={selectedRoom.id}
-        roomNumber={selectedRoom.roomNumber}
-        floor={selectedRoom.floor}
-        capacity={selectedRoom.capacity}
-        hasBeamer={selectedRoom.hasBeamer}
-        isAvailable={selectedRoom.isAvailable}
-      />
-    );
-  }
+  // alle Favoriten-Rooms mit Status
+  const favoriteRooms = rooms.filter((room) => favorites.includes(room.id));
 
   if (favoriteRooms.length === 0) {
     return (
@@ -42,7 +30,7 @@ export default function FavoritesScreen({ favoriteRooms }: FavoritesScreenProps)
         <RoomCard
           key={room.id}
           room={room}
-          onClick={() => setSelectedRoom(room)}
+          onClick={() => navigate(`/favorites/rooms/${room.id}`)}
         />
       ))}
     </div>
