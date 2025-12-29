@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { RoomCard } from "@/components/RoomCard";
-import { RoomTimetable } from "@/components/RoomTimetable";
+
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -9,20 +11,24 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 import { RoomWithStatus } from "@/models";
 
 export default function RoomsScreen() {
   const { rooms } = useData();
+  const navigate = useNavigate();
 
-  const [selectedRoom, setSelectedRoom] = useState<RoomWithStatus | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFloor, setSelectedFloor] = useState("all");
   const [selectedSize, setSelectedSize] = useState("all");
   const [beamerOnly, setBeamerOnly] = useState(false);
   const [availableOnly, setAvailableOnly] = useState(true);
 
+  // --------------------------------------------------
+  // Filters
+  // --------------------------------------------------
   const filteredRooms = useMemo(() => {
     return rooms.filter((room) => {
       if (searchQuery && !room.roomNumber.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -53,19 +59,9 @@ export default function RoomsScreen() {
     !availableOnly,
   ].filter(Boolean).length;
 
-  if (selectedRoom) {
-    return (
-      <RoomTimetable
-        roomId={selectedRoom.id}
-        roomNumber={selectedRoom.roomNumber}
-        floor={selectedRoom.floor}
-        capacity={selectedRoom.capacity}
-        hasBeamer={selectedRoom.hasBeamer}
-        isAvailable={selectedRoom.isAvailable}
-      />
-    );
-  }
-
+  // --------------------------------------------------
+  // Room list
+  // --------------------------------------------------
   return (
     <>
       {/* Search */}
@@ -105,8 +101,10 @@ export default function RoomsScreen() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All floors</SelectItem>
-                  {[1,2,3,4,5].map(f => (
-                    <SelectItem key={f} value={String(f)}>Floor {f}</SelectItem>
+                  {[1, 2, 3, 4, 5].map(f => (
+                    <SelectItem key={f} value={String(f)}>
+                      Floor {f}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -166,17 +164,15 @@ export default function RoomsScreen() {
 
       <div className="space-y-3">
         {filteredRooms.length > 0 ? (
-          filteredRooms.map(room => (
+          filteredRooms.map((room) => (
             <RoomCard
               key={room.id}
               room={room}
-              onClick={() => setSelectedRoom(room)}
+              onClick={() => navigate(`/rooms/${room.id}`)} // Routing zur Detail-Seite
             />
           ))
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            No rooms found
-          </div>
+          <div className="text-center py-12 text-gray-500">No rooms found</div>
         )}
       </div>
     </>
