@@ -31,7 +31,7 @@ The following Firebase integration points are ready to be implemented:
 - `clearAllBookings()` - Admin function to clear all bookings
 
 ### Timetable Services
-- `getRoomTimetable(roomId)` - Get custom schedule for room
+- `getRoomDetailScreen(roomId)` - Get custom schedule for room
 - `uploadTimetable(roomId, schedule)` - Upload/update timetable
 - `deleteTimetable(roomId)` - Remove custom timetable
 
