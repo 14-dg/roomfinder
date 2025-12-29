@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -6,12 +7,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface LoginScreenProps {
-  onSwitchToRegister: () => void;
-}
-
-export function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
+export default function LoginScreen() {
   const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,6 +23,8 @@ export function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
 
     try {
       await login(email, password);
+      // Nach erfolgreichem Login auf Home navigieren
+      navigate('/'); 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -94,12 +95,13 @@ export function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
             </Button>
           </form>
 
+          {/* Navigation zu Register */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
               <button
                 type="button"
-                onClick={onSwitchToRegister}
+                onClick={() => navigate('/register')}
                 className="text-blue-600 hover:underline"
               >
                 Register here
