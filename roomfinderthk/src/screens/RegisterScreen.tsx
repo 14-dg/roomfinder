@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,12 +8,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
 
-interface RegisterScreenProps {
-  onSwitchToLogin: () => void;
-}
-
-export function RegisterScreen({ onSwitchToLogin }: RegisterScreenProps) {
+export default function RegisterScreen() {
   const { register } = useAuth();
+  const navigate = useNavigate();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,7 +24,6 @@ export function RegisterScreen({ onSwitchToLogin }: RegisterScreenProps) {
     e.preventDefault();
     setError('');
 
-    // Validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -40,6 +38,8 @@ export function RegisterScreen({ onSwitchToLogin }: RegisterScreenProps) {
 
     try {
       await register(email, password, name, role);
+      // Nach erfolgreicher Registrierung direkt zum Home
+      navigate('/'); 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -150,12 +150,13 @@ export function RegisterScreen({ onSwitchToLogin }: RegisterScreenProps) {
             </Button>
           </form>
 
+          {/* Navigation zu Login */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
               <button
                 type="button"
-                onClick={onSwitchToLogin}
+                onClick={() => navigate('/login')}
                 className="text-blue-600 hover:underline"
               >
                 Sign in here
