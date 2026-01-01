@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import ScreenHeader from "@/components/ScreenHeader";
 import { DaySchedule, TimeSlot, Professor } from "@/models";
 import { Mail, Clock, User } from "lucide-react";
 
@@ -105,42 +106,45 @@ export default function ProfessorDetailScreen() {
   }
 
   return (
-    <div className="space-y-4">
-      <button
-        onClick={() => navigate("/professors")}
-        className="text-blue-600 flex items-center gap-2 mb-2"
-      >
-        ← Back to professors
-      </button>
+    <>
+      <ScreenHeader title="Professor Details" subtitle={`Details for Professor ${professor.name}`}/>
+      <div className="space-y-4">
+        <button
+          onClick={() => navigate("/professors")}
+          className="text-blue-600 flex items-center gap-2 mb-2"
+        >
+          ← Back to professors
+        </button>
 
-      <Card className="p-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 text-blue-600" />
+        <Card className="p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl">{professor.name}</h2>
+              <p className="text-sm text-gray-600">{professor.department}</p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h2 className="text-xl">{professor.name}</h2>
-            <p className="text-sm text-gray-600">{professor.department}</p>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Mail className="w-4 h-4" />
+              <span>{professor.email}</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <Clock className="w-4 h-4" />
+              <span>Office Hours: {professor.officeHours}</span>
+            </div>
           </div>
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2 text-gray-600">
-            <Mail className="w-4 h-4" />
-            <span>{professor.email}</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Clock className="w-4 h-4" />
-            <span>Office Hours: {professor.officeHours}</span>
-          </div>
-        </div>
-      </Card>
+        </Card>
 
-      <h3 className="text-lg">Teaching Schedule</h3>
-      <div className="space-y-3">
-        {schedule.map((daySchedule) => (
-          <ScheduleCard key={daySchedule.day} daySchedule={daySchedule} />
-        ))}
+        <h3 className="text-lg">Teaching Schedule</h3>
+        <div className="space-y-3">
+          {schedule.map((daySchedule) => (
+            <ScheduleCard key={daySchedule.day} daySchedule={daySchedule} />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

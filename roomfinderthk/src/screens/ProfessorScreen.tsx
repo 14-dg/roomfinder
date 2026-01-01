@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ScreenHeader from "@/components/ScreenHeader";
 import { Professor } from "@/models";
 import { Search, User, Clock } from "lucide-react";
 
@@ -63,36 +64,40 @@ export default function ProfessorScreen() {
   );
 
   return (
-    <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <Input
-          type="text"
-          placeholder="Search by name or department..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-12"
-        />
-      </div>
+    <>
+      <ScreenHeader title="Professors" subtitle="Find and view professor schedules" />
 
-      {/* Professor List */}
-      <div className="space-y-3">
-        {filteredProfessors.length > 0 ? (
-          filteredProfessors.map((professor) => (
-            <ProfessorCard
-              key={professor.id}
-              professor={professor}
-              onClick={() => navigate(`/professors/${professor.id}`)}
-            />
-          ))
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No professors found</p>
-            <p className="text-sm text-gray-400 mt-2">Try a different search term</p>
-          </div>
-        )}
+      <div className="space-y-4">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Input
+            type="text"
+            placeholder="Search by name or department..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-12"
+          />
+        </div>
+
+        {/* Professor List */}
+        <div className="space-y-3">
+          {filteredProfessors.length > 0 ? (
+            filteredProfessors.map((professor) => (
+              <ProfessorCard
+                key={professor.id}
+                professor={professor}
+                onClick={() => navigate(`/professors/${professor.id}`)}
+              />
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No professors found</p>
+              <p className="text-sm text-gray-400 mt-2">Try a different search term</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

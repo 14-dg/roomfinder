@@ -1,6 +1,7 @@
 import { BookmarkCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoomCard } from "@/components/RoomCard";
+import ScreenHeader from "@/components/ScreenHeader";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useData } from "@/contexts/DataContext"; // um Rooms-Daten zu bekommen
 
@@ -25,14 +26,17 @@ export default function FavoritesScreen() {
   }
 
   return (
-    <div className="space-y-3">
-      {favoriteRooms.map((room) => (
-        <RoomCard
-          key={room.id}
-          room={room}
-          onClick={() => navigate(`/favorites/rooms/${room.id}`)}
-        />
-      ))}
-    </div>
+    <>
+      <ScreenHeader title="Favorite Rooms" subtitle="Your saved favorite rooms" />
+      <div className="space-y-3">
+        {favoriteRooms.map((room) => (
+          <RoomCard
+            key={room.id}
+            room={room}
+            onClick={() => navigate(`/favorites/rooms/${room.id}`)}
+          />
+        ))}
+      </div>
+    </>
   );
 }

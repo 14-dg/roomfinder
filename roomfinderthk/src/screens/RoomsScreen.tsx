@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import ScreenHeader from "@/components/ScreenHeader";
 
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
@@ -64,6 +65,7 @@ export default function RoomsScreen() {
   // --------------------------------------------------
   return (
     <>
+      <ScreenHeader title="Rooms" subtitle="Find and filter through all rooms"/>
       {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />

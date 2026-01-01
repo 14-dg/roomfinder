@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import ScreenHeader from '@/components/ScreenHeader';
 import { useData } from '../contexts/DataContext';
 import { Upload, Trash2, Edit, Plus, Save, X, FileUp, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -160,6 +161,8 @@ export default function AdminScreen() {
 ]`;
 
   return (
+    <>
+      <ScreenHeader title="Admin Panel" subtitle="Manage rooms, timetables, bookings and professors" />
     <div className="space-y-6">
       <Tabs defaultValue="rooms" className="w-full">
           <TabsList className="w-full flex flex-wrap gap-2 items-center">
@@ -326,11 +329,11 @@ export default function AdminScreen() {
                   className="mt-2 font-mono text-sm h-48"
                 />
               </div>
-      {uploadMessage && (
-        <Alert variant={uploadMessage.type === 'error' ? 'destructive' : 'default'}>
-        <AlertDescription>{uploadMessage.text}</AlertDescription>
-        </Alert>
-        )}
+              {uploadMessage && (
+                <Alert variant={uploadMessage.type === 'error' ? 'destructive' : 'default'}>
+                <AlertDescription>{uploadMessage.text}</AlertDescription>
+                </Alert>
+                )}
 
         
 
@@ -485,82 +488,83 @@ export default function AdminScreen() {
 
         
         {/* Professors Tab author erik eliebrec */}
-<TabsContent value="professors" className="space-y-4 mt-6">
-  <Card className="p-6 space-y-4">
-    <h3 className="text-lg font-semibold mb-4">Add Professor</h3>
+        <TabsContent value="professors" className="space-y-4 mt-6">
+          <Card className="p-6 space-y-4">
+            <h3 className="text-lg font-semibold mb-4">Add Professor</h3>
 
-    {/* Email */}
-    <div>
-      <Label htmlFor="profEmail">Email</Label>
-      <Input
-        id="profEmail"
-        placeholder="professor@smail.th-koeln.de"
-        value={newProfessor.email}
-        onChange={(e) => setNewProfessor({ ...newProfessor, email: e.target.value })}
-        className="mt-2"
-      />
-    </div>
+            {/* Email */}
+            <div>
+              <Label htmlFor="profEmail">Email</Label>
+              <Input
+                id="profEmail"
+                placeholder="professor@smail.th-koeln.de"
+                value={newProfessor.email}
+                onChange={(e) => setNewProfessor({ ...newProfessor, email: e.target.value })}
+                className="mt-2"
+              />
+            </div>
 
-    {/* Name */}
-    <div>
-      <Label htmlFor="profName">Name</Label>
-      <Input
-        id="profName"
-        placeholder="Professor Name"
-        value={newProfessor.name}
-        onChange={(e) => setNewProfessor({ ...newProfessor, name: e.target.value })}
-        className="mt-2"
-      />
-    </div>
+            {/* Name */}
+            <div>
+              <Label htmlFor="profName">Name</Label>
+              <Input
+                id="profName"
+                placeholder="Professor Name"
+                value={newProfessor.name}
+                onChange={(e) => setNewProfessor({ ...newProfessor, name: e.target.value })}
+                className="mt-2"
+              />
+            </div>
 
-    {/* Password */}
-    <div>
-      <Label htmlFor="profPassword">Password</Label>
-      <Input
-        id="profPassword"
-        type="password"
-        placeholder="Enter password"
-        value={newProfessor.password}
-        onChange={(e) => setNewProfessor({ ...newProfessor, password: e.target.value })}
-        className="mt-2"
-      />
-    </div>
+            {/* Password */}
+            <div>
+              <Label htmlFor="profPassword">Password</Label>
+              <Input
+                id="profPassword"
+                type="password"
+                placeholder="Enter password"
+                value={newProfessor.password}
+                onChange={(e) => setNewProfessor({ ...newProfessor, password: e.target.value })}
+                className="mt-2"
+              />
+            </div>
 
-    {/* Add Professor Button */}
-    <Button onClick={handleAddProfessor} className="w-full mt-2">
-  <Plus className="w-4 h-4 mr-2" />
-  Add Professor
-</Button>
-  </Card>
+            {/* Add Professor Button */}
+            <Button onClick={handleAddProfessor} className="w-full mt-2">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Professor
+        </Button>
+          </Card>
 
-  {/* Professors Table */}
-  <Card className="p-6">
-    <h3 className="mb-4">Professors List</h3>
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Email</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Password</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {/* Hier kannst du später deine Professoren-Array mapen */}
-          <TableRow>
-            <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-              No professors yet
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
-  </Card>
-</TabsContent>
+          {/* Professors Table */}
+          <Card className="p-6">
+            <h3 className="mb-4">Professors List</h3>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Password</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {/* Hier kannst du später deine Professoren-Array mapen */}
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+                      No professors yet
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </TabsContent>
 
         
       </Tabs>
     </div>
+    </>
   );
 }
