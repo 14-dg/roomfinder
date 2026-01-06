@@ -187,3 +187,17 @@
 html {
   font-size: var(--font-size);
 }
+
+@layer components {
+  .screen-header {
+    @apply mb-6 pb-4 border-b border-border;
+  }
+
+  .screen-header h1 {
+    @apply text-2xl font-medium leading-tight;
+  }
+
+  .screen-header h2 {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+}
