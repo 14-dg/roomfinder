@@ -1,11 +1,10 @@
-// src/screens/AdminScreen.tsx
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ScreenHeader from '@/components/ScreenHeader';
 
-import RoomsAdmin from './RoomsAdmin';
-import TimetablesAdmin from './TimetablesAdmin';
-import BookingsAdmin from './BookingsAdmin';
-import ProfessorsAdmin from './ProfessorsAdmin';
+import RoomsAdmin from './admin/RoomsAdmin';
+import TimetablesAdmin from './admin/TimetablesAdmin';
+import BookingsAdmin from './admin/BookingsAdmin';
+import ProfessorsAdmin from './admin/ProfessorsAdmin';
 
 export default function AdminScreen() {
   return (
