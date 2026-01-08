@@ -1,7 +1,15 @@
 import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
-import { Users, Projector, MapPin, Lock, Compass } from "lucide-react";
+import {
+  Users,
+  Projector,
+  MapPin,
+  Lock,
+  Compass,
+  Heart,
+} from "lucide-react";
 import { RoomWithStatus, Direction } from "@/models";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 interface RoomCardProps {
   room: RoomWithStatus;
@@ -22,12 +30,22 @@ const getDirectionColor = (direction: Direction) => {
 };
 
 export function RoomCard({ room, onClick }: RoomCardProps) {
+  const { favorites, toggleFavorite } = useFavorites();
+  const isFavorite = favorites.includes(room.id);
+
+  const handleFavoriteClick = (
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    e.stopPropagation();
+    toggleFavorite(room.id);
+  };
+
   return (
     <Card
-      className={`p-4 hover:shadow-lg transition-shadow cursor-pointer active:scale-98 ${
-        room.isLocked ? 'opacity-75 bg-gray-50' : ''
-      }`}
       onClick={onClick}
+      className={`relative p-4 cursor-pointer transition-shadow hover:shadow-lg ${
+        room.isLocked ? "opacity-75 bg-gray-50" : ""
+      }`}
     >
       <div className="flex items-start justify-between mb-3">
         <div>
@@ -73,15 +91,36 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
 
       {!room.isLocked && room.isAvailable && room.availableUntil && (
         <p className="text-xs text-green-600 mt-2">
-          Available until {room.availableUntil}
-        </p>
-      )}
+            Available until {room.availableUntil}
+          </p>
+        )}
 
       {room.isLocked && (
         <p className="text-xs text-red-600 mt-2">
           Room is currently locked/closed
         </p>
       )}
+
+      <button
+        aria-label="Toggle favorite"
+        onClick={handleFavoriteClick}
+        className="
+          absolute bottom-0 right-0
+          w-16 h-16
+          flex items-center justify-center
+          rounded-full
+          hover:bg-gray-100
+          z-20
+        "
+      >
+        <Heart
+          className={`size-6 ${
+            isFavorite
+              ? "fill-red-500 text-red-500"
+              : "text-gray-400"
+          }`}
+        />
+      </button>
     </Card>
   );
 }
