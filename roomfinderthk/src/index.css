@@ -1587,6 +1587,10 @@
     color: var(--color-red-700);
   }
 
+  .fill-red-600 {
+    fill: var(--color-red-600);
+  }
+
   .text-secondary-foreground {
     color: var(--secondary-foreground);
   }

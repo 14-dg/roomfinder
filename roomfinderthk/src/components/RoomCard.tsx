@@ -116,7 +116,7 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
         <Heart
           className={`size-6 ${
             isFavorite
-              ? "fill-red-500 text-red-500"
+              ? "fill-red-600 text-red-600"
               : "text-gray-400"
           }`}
         />
