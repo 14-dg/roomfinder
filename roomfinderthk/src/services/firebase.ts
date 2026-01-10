@@ -464,3 +464,13 @@ export async function getUserBookings(userId: string): Promise<Booking[]> {
   const bookings = await getBookings();
   return bookings.filter(b => b.bookedBy === userId);
 }
+
+//get alle professoren für admin proffessors
+export async function getProfessors()  {
+  
+  
+}
+// get die office hours und raum der  professoren diese sollen auch bei favoriten gespeichert werden weil es dazu passt dafür müssen neue Attribute in der favoriten tabelle angelegt werden
+export async function getFavoritesProfessorsOfficeHoursAndRoom(){
+
+}
