@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+
 import {
   Select,
   SelectContent,
@@ -10,119 +11,99 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileUp } from 'lucide-react';
+
+import TimetableBuilder from './timetablebuilder/timetablebuilder';
 
 import { useData } from '@/contexts/DataContext';
 
 export default function TimetablesAdmin() {
-  const { rooms, uploadTimetable } = useData();
+  const [courseOfStudy, setCourseOfStudy] = useState('');
+  const [semester, setSemester] = useState('');
+  const [year, setYear] = useState(new Date().getFullYear());
 
-  const [timetableUpload, setTimetableUpload] = useState({
-    roomId: '',
-    jsonData: '',
-  });
+  const coursesOfStudy = ['Technische Informatik', 'Elektrotechnik', 'Medientechnik'];
 
-  const [message, setMessage] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
+  const isFormComplete = courseOfStudy !== '' && semester !== '' && year > 1999;
 
-  const handleUpload = () => {
-    try {
-      const schedule = JSON.parse(timetableUpload.jsonData);
-
-      if (!Array.isArray(schedule)) {
-        throw new Error('Timetable must be an array');
-      }
-
-      uploadTimetable(timetableUpload.roomId, schedule);
-
-      setMessage({
-        type: 'success',
-        text: 'Timetable uploaded successfully!',
-      });
-
-      setTimetableUpload({ roomId: '', jsonData: '' });
-
-      setTimeout(() => setMessage(null), 3000);
-    } catch (e) {
-      setMessage({
-        type: 'error',
-        text: e instanceof Error ? e.message : 'Invalid JSON',
-      });
-    }
-  };
 
   return (
     <div className="space-y-6">
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">
-          <FileUp className="w-5 h-5" />
-          <h3 className="text-lg font-semibold">Upload Timetable</h3>
+          <h3 className="text-lg font-semibold">Choose Timetable</h3>
         </div>
 
-        <div className="space-y-4">
-          {/* Room Select */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          {/* Course of Study*/}
           <div>
-            <Label>Select Room</Label>
+            <Label htmlFor="courseOfStudy">Course of Study</Label>
             <Select
-              value={timetableUpload.roomId}
-              onValueChange={(value) =>
-                setTimetableUpload({ ...timetableUpload, roomId: value })
-              }
+              value={courseOfStudy}
+              onValueChange={setCourseOfStudy}  
             >
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Choose a room" />
+              <SelectTrigger id="courseOfStudy" className="mt-2">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {rooms.map((room) => (
-                  <SelectItem key={room.id} value={room.id}>
-                    {room.roomNumber} – Floor {room.floor}
+                {coursesOfStudy.map((courseOfStudy) => (
+                  <SelectItem key={courseOfStudy} value={courseOfStudy}>
+                    {courseOfStudy}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* JSON Input */}
+          {/* Semester */}
           <div>
-            <Label>Timetable JSON</Label>
-            <Textarea
-              className="mt-2 h-48 font-mono text-sm"
-              placeholder="Paste timetable JSON here..."
-              value={timetableUpload.jsonData}
-              onChange={(e) =>
-                setTimetableUpload({
-                  ...timetableUpload,
-                  jsonData: e.target.value,
-                })
-              }
-            />
+            <Label htmlFor="semester">Semester</Label>
+            <Select
+              value={semester}
+              onValueChange={setSemester}
+            >
+              <SelectTrigger id="semester" className="mt-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["Winter", "Summer"].map((semester) => (
+                  <SelectItem key={semester} value={semester}>
+                    {semester} Semester
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Message */}
-          {message && (
-            <Alert
-              variant={message.type === 'error' ? 'destructive' : 'default'}
-            >
-              <AlertDescription>{message.text}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Upload Button */}
-          <Button
-            onClick={handleUpload}
-            disabled={
-              !timetableUpload.roomId || !timetableUpload.jsonData
-            }
-            className="w-full"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload Timetable
-          </Button>
+          {/* Year */}
+          <div>
+            <Label htmlFor="year">Year</Label>
+            <Input
+              id="Year"
+              type="number"
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              min={2000}
+              className="mt-2"
+            />
+          </div>
         </div>
       </Card>
+
+      {isFormComplete &&
+        <Card className="p-6">
+          <TimetableBuilder courseOfStudy={courseOfStudy} semester={semester} year={year} />
+        </Card>
+      }
+
+      <Card className="p-6">
+        {/* PDF-Export Button */}
+          <Button
+            className="w-full"
+          >
+            PDF-Export
+          </Button>
+      </Card>
+
     </div>
   );
-}
+};
