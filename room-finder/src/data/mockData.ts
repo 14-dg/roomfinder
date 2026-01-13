@@ -1,4 +1,4 @@
-import type { Room, Lecture, ProfessorUser } from '@/models';
+import type { Room, Lecture } from '@/models';
 
 export const mockRooms: Room[] = [
   { 
@@ -27,7 +27,7 @@ export const mockLectures: Lecture[] = [
     id: "l1",
     name: "Systementwurfspraktikum",
     abbreviation: "SYP",
-    professor: "Prof. Dr. Hopp",
+    professor: "Prof. Dr. Wörzberger",
     roomId: "101",
     schedule: [
       {
