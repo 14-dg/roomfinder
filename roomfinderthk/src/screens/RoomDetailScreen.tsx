@@ -62,9 +62,9 @@ const getOccupancyColor = (level: "empty" | "moderate" | "full") => {
 const getOccupancyIcon = (level: "empty" | "moderate" | "full") => {
   switch (level) {
     case "empty":
-      return "○○○";
-    case "moderate":
       return "●○○";
+    case "moderate":
+      return "●●○";
     case "full":
       return "●●●";
   }
