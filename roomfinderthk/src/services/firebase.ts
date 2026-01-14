@@ -127,7 +127,7 @@ export function getCurrentUser(): User | null {
  * TODO: Replace with Firestore query
  * - Use getDocs(collection(db, 'rooms'))
  */
-export async function getRooms(): Promise<Room[]> {
+export async function getRooms(): Promise<RoomWithStatus[]> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const snapshot = await getDocs(collection(db, 'rooms'));
@@ -142,7 +142,7 @@ export async function getRooms(): Promise<Room[]> {
  * TODO: Replace with Firestore query
  * - Use getDoc(doc(db, 'rooms', roomId))
  */
-export async function getRoom(roomId: string): Promise<Room | null> {
+export async function getRoom(roomId: string): Promise<RoomWithStatus | null> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const docSnap = await getDoc(doc(db, 'rooms', roomId));
@@ -157,14 +157,14 @@ export async function getRoom(roomId: string): Promise<Room | null> {
  * TODO: Replace with Firestore write
  * - Use addDoc(collection(db, 'rooms'), roomData)
  */
-export async function addRoom(room: Omit<Room, 'id'>): Promise<Room> {
+export async function addRoom(room: Omit<RoomWithStatus, 'id'>): Promise<RoomWithStatus> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const docRef = await addDoc(collection(db, 'rooms'), room);
   // return { id: docRef.id, ...room };
   
   const rooms = await getRooms();
-  const newRoom: Room = {
+  const newRoom: RoomWithStatus = {
     ...room,
     id: Date.now().toString(),
   };
@@ -178,7 +178,7 @@ export async function addRoom(room: Omit<Room, 'id'>): Promise<Room> {
  * TODO: Replace with Firestore update
  * - Use updateDoc(doc(db, 'rooms', roomId), updates)
  */
-export async function updateRoom(roomId: string, updates: Partial<Room>): Promise<void> {
+export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus>): Promise<void> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // await updateDoc(doc(db, 'rooms', roomId), updates);

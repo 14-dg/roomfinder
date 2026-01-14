@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule } from '@/models';
 import {initialClasses, initialRooms, defaultSchedulePattern, days} from "../mockData/mockData";
+import {getBookings, getRoomDetailScreen, getRooms} from "@/services/firebase";
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {
@@ -40,35 +41,61 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-export function DataProvider({ children }: { children: ReactNode }) {
-  const [rooms, setRooms] = useState<RoomWithStatus[]>(() => {
-    const savedRooms = localStorage.getItem('rooms');
-    return savedRooms ? JSON.parse(savedRooms) : initialRooms;
-  });
+export async function DataProvider({ children }: { children: ReactNode }) {
+  // const [rooms, setRooms] = useState<RoomWithStatus[]>(() => {
+  //   const savedRooms = localStorage.getItem('rooms');
+  //   return savedRooms ? JSON.parse(savedRooms) : initialRooms;
+  // });
+  const [rooms, setRooms] = useState<RoomWithStatus[]>([]);
 
-  const [bookings, setBookings] = useState<Booking[]>(() => {
-    const savedBookings = localStorage.getItem('bookings');
-    return savedBookings ? JSON.parse(savedBookings) : [];
-  });
+  // const [bookings, setBookings] = useState<Booking[]>(() => {
+  //   const savedBookings = localStorage.getItem('bookings');
+  //   return savedBookings ? JSON.parse(savedBookings) : [];
+  // });
+  const [bookings, setBookings] = useState<Booking[]>([]);
 
-  const [studentCheckins, setStudentCheckins] = useState<CheckIn[]>(() => {
-    const savedCheckins = localStorage.getItem('studentCheckins');
-    return savedCheckins ? JSON.parse(savedCheckins) : [];
-  });
+  // const [studentCheckins, setStudentCheckins] = useState<CheckIn[]>(() => {
+  //   const savedCheckins = localStorage.getItem('studentCheckins');
+  //   return savedCheckins ? JSON.parse(savedCheckins) : [];
+  // });
+  const [studentCheckins, setStudentCheckins] = useState<CheckIn[]>([]);
 
-  const [customSchedules, setCustomSchedules] = useState<RoomSchedule[]>(() => {
-    const savedSchedules = localStorage.getItem('customSchedules');
-    return savedSchedules ? JSON.parse(savedSchedules) : [];
-  });
+  // const [customSchedules, setCustomSchedules] = useState<RoomSchedule[]>(() => {
+  //   const savedSchedules = localStorage.getItem('customSchedules');
+  //   return savedSchedules ? JSON.parse(savedSchedules) : [];
+  // });
+  const [customSchedules, setCustomSchedules] = useState<RoomSchedule[]>([]);
 
-  const [classes, setClasses] = useState<Lecture[]>(() => {
-    const savedClasses = localStorage.getItem('classes');
-    return savedClasses ? JSON.parse(savedClasses) : initialClasses;
-  });
+  // const [classes, setClasses] = useState<Lecture[]>(() => {
+  //   const savedClasses = localStorage.getItem('classes');
+  //   return savedClasses ? JSON.parse(savedClasses) : initialClasses;
+  // });
+  const [classes, setClasses] = useState<Lecture[]>([]);
 
-  const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>(() => {
-    const savedEntries = localStorage.getItem('userTimetableEntries');
-    return savedEntries ? JSON.parse(savedEntries) : [];
+  // const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>(() => {
+  //   const savedEntries = localStorage.getItem('userTimetableEntries');
+  //   return savedEntries ? JSON.parse(savedEntries) : [];
+  // });
+  const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>([]);
+
+  useEffect(() => {
+
+    const fetchData = async () => {
+      try {
+        const allRooms = await getRooms();
+        setRooms(allRooms);
+
+        const allBookings = await getBookings();
+        setBookings(allBookings);
+
+        // TODO
+        // const allCheckins = await getCheckins();
+        // setCheckins(allCheckins);
+
+        const allRoomSchedules = await getRoomDetailScreen();
+        setCustomSchedules(allRoomSchedules);
+      }
+    }
   });
 
   const getRoomSchedule = (roomId: string): DaySchedule[] => {
@@ -210,26 +237,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const addRoom = (room: RoomWithStatus) => {
-    const updatedRooms = [...rooms, room];
-    setRooms(updatedRooms);
-    localStorage.setItem('rooms', JSON.stringify(updatedRooms));
+    // const updatedRooms = [...rooms, room];
+    // setRooms(updatedRooms);
+    // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
+
+    addRoom(room);
   };
 
   const updateRoom = (id: string, updates: Partial<RoomWithStatus>) => {
-    const updatedRooms = rooms.map(r => r.id === id ? { ...r, ...updates } : r);
-    setRooms(updatedRooms);
-    localStorage.setItem('rooms', JSON.stringify(updatedRooms));
+    // const updatedRooms = rooms.map(r => r.id === id ? { ...r, ...updates } : r);
+    // setRooms(updatedRooms);
+    // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
+
+    updateRoom(id, updates);
   };
 
   const deleteRoom = (id: string) => {
-    const updatedRooms = rooms.filter(r => r.id !== id);
-    setRooms(updatedRooms);
-    localStorage.setItem('rooms', JSON.stringify(updatedRooms));
+    // const updatedRooms = rooms.filter(r => r.id !== id);
+    // setRooms(updatedRooms);
+    // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
     
-    // Also remove bookings for this room
-    const updatedBookings = bookings.filter(b => b.roomId !== id);
-    setBookings(updatedBookings);
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+    // // Also remove bookings for this room
+    // const updatedBookings = bookings.filter(b => b.roomId !== id);
+    // setBookings(updatedBookings);
+    // localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+    
+    deleteRoom(id);
   };
 
   const uploadTimetable = (roomId: string, schedule: DaySchedule[]) => {
@@ -256,9 +289,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const removeClassFromTimetable = (classId: string, userId: string) => {
-    const updatedEntries = userTimetableEntries.filter(e => e.classId !== classId || e.userId !== userId);
-    setUserTimetableEntries(updatedEntries);
-    localStorage.setItem('userTimetableEntries', JSON.stringify(updatedEntries));
+    // const updatedEntries = userTimetableEntries.filter(e => e.classId !== classId || e.userId !== userId);
+    // setUserTimetableEntries(updatedEntries);
+    // localStorage.setItem('userTimetableEntries', JSON.stringify(updatedEntries));
+
+    
   };
 
   const getUserClasses = (userId: string) => {
