@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule } from '@/models';
 import {initialClasses, initialRooms, defaultSchedulePattern, days} from "../mockData/mockData";
-import {getBookings, getRoomDetailScreen, getRooms} from "@/services/firebase";
+import {getAllCustomSchedules, getAllLectures, getAllUserTimetableEntries, getBookings, getRoomDetailScreen, getRooms, getStudentCheckins} from "@/services/firebase";
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {
@@ -88,15 +88,25 @@ export async function DataProvider({ children }: { children: ReactNode }) {
         const allBookings = await getBookings();
         setBookings(allBookings);
 
-        // TODO
-        // const allCheckins = await getCheckins();
-        // setCheckins(allCheckins);
+        const allStudentCheckins = await getStudentCheckins();
+        setStudentCheckins(allStudentCheckins);
 
-        const allRoomSchedules = await getRoomDetailScreen();
-        setCustomSchedules(allRoomSchedules);
+        const allCustomSchedules = await getAllCustomSchedules();
+        setCustomSchedules(allCustomSchedules);
+
+        const allLectures = await getAllLectures();
+        setClasses(allLectures);
+
+        const allUserTimetableEntries = await getAllUserTimetableEntries();
+        setUserTimetableEntries(allUserTimetableEntries);
+      }
+      finally {
+
       }
     }
-  });
+
+    fetchData();
+  }, []);
 
   const getRoomSchedule = (roomId: string): DaySchedule[] => {
     // Check if there's a custom schedule for this room

@@ -12,7 +12,7 @@
  * 4. Update function signatures as needed for Firebase types
  */
 
-import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry } from '@/models';
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule } from '@/models';
 import { app, auth, db } from '../firebase-config';
 
 // Initialize Firebase (placeholder)
@@ -348,7 +348,7 @@ interface RoomSchedule {
  * TODO: Replace with Firestore query
  * - Use getDoc(doc(db, 'timetables', roomId))
  */
-export async function getRoomDetailScreen(roomId: string): Promise<DaySchedule[] | null> {
+export async function getRoomDetailScreen(roomId: string): Promise<DaySchedule[] | null> { 
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const docSnap = await getDoc(doc(db, 'timetables', roomId));
@@ -412,7 +412,7 @@ export async function deleteTimetable(roomId: string): Promise<void> {
  * TODO: Implement with Firestore real-time listener
  * - Use onSnapshot(collection(db, 'rooms'), callback)
  */
-export function subscribeToRooms(callback: (rooms: Room[]) => void): () => void {
+export function subscribeToRooms(callback: (rooms: RoomWithStatus[]) => void): () => void {
   // Placeholder: No real-time updates with localStorage
   // Firebase implementation would use:
   // return onSnapshot(collection(db, 'rooms'), (snapshot) => {
@@ -440,6 +440,31 @@ export function subscribeToBookings(callback: (bookings: Booking[]) => void): ()
   // Return unsubscribe function
   return () => {};
 }
+
+// ============================================================================
+// Startup Functions
+// ============================================================================
+// DataContext ruft diese Funktionen auf, um alle Daten zu bekommen
+
+export async function getStudentCheckins(): Promise<CheckIn[]> {
+    const savedCheckins = localStorage.getItem('studentCheckins');
+    return savedCheckins ? JSON.parse(savedCheckins) : [];
+}
+
+export async function getAllCustomSchedules(): Promise<RoomSchedule[]> {
+    const savedSchedules = localStorage.getItem('customSchedules');
+    return savedSchedules ? JSON.parse(savedSchedules) : [];
+}
+
+export async function getAllLectures(): Promise<Lecture[]> {
+    const savedLectures = localStorage.getItem('classes');
+    return savedLectures ? JSON.parse(savedLectures) : [];
+  }
+  
+  export async function getAllUserTimetableEntries(): Promise<UserTimetableEntry[]> {
+    const savedEntries = localStorage.getItem('userTimetableEntries');
+    return savedEntries ? JSON.parse(savedEntries) : [];
+  }
 
 // ============================================================================
 // UTILITY FUNCTIONS
