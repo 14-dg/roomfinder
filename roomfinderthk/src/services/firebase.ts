@@ -465,12 +465,34 @@ export async function getUserBookings(userId: string): Promise<Booking[]> {
   return bookings.filter(b => b.bookedBy === userId);
 }
 
-//get alle professoren für admin proffessors
-export async function getProfessors()  {
+/**
+ * Holt alle Nutzer mit der Rolle 'professor'
+ * TODO: Firebase Query: query(collection(db, 'users'), where('role', '==', 'professor'))
+ */
+export async function getProfessors(): Promise<User[]> {
+  // Alle User aus localStorage holen
+  const usersJson = localStorage.getItem('users');
+  if (!usersJson) return [];
   
+  const allUsers: User[] = JSON.parse(usersJson);
   
+  // Nur die Professoren zurückgeben
+  return allUsers.filter(user => user.role === 'professor');
 }
+
 // get die office hours und raum der  professoren diese sollen auch bei favoriten gespeichert werden weil es dazu passt dafür müssen neue Attribute in der favoriten tabelle angelegt werden
 export async function getFavoritesProfessorsOfficeHoursAndRoom(){
+
+}
+
+//funktion zum löschen eines professors
+export async function deleteProfessor(id: string): Promise<void> {
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  const updatedUsers = users.filter((u: any) => u.id !== id);
+  localStorage.setItem('users', JSON.stringify(updatedUsers));
+}
+
+
+export async function setFavoritesProfessorsOfficeHoursAndRoom(){
 
 }

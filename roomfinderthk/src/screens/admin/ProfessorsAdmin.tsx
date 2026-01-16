@@ -21,10 +21,9 @@ import {
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { registerUser } from '@/services/firebase';
+// Import der Service-Funktionen
+import { registerUser, getProfessors, deleteProfessor } from '@/services/firebase';
 import { useData } from '@/contexts/DataContext';
-
-
 
 // ---------------------------------------------
 // Time Options
@@ -39,44 +38,35 @@ const generateTimeOptions = () => {
   }
   return options;
 };
-
+//muss geändert werden auf richtiges passwort plus schicken einer email an den professor!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 function PasswordGenerator() {
   return "12345";
-  // Placeholder for password generation logic then send email to professor
-}
-
-// ---------------------------------------------
-// Get Professors
-// ---------------------------------------------
-function getProfessors() {
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  return users.filter((u: any) => u.role === 'professor').map((u: any) => ({
-    id: u.id,
-    email: u.email,
-    name: u.name,
-    role: u.role,
-    officeHours: 'Not set',
-    office: 'Not set',
-  }));
 }
 
 const timeOptions = generateTimeOptions();
 
 export default function ProfessorsAdmin() {
   const { rooms } = useData();
-
   const [professors, setProfessors] = useState<any[]>([]);
+  const [selectedProfessorId, setSelectedProfessorId] = useState<string | null>(null);
+
+  // Zentrale Funktion zum Laden/Aktualisieren der Liste
+  const loadProfessors = async () => {
+    try {
+      const data = await getProfessors();
+      setProfessors(data);
+    } catch (error) {
+      console.error("Fehler beim Laden:", error);
+    }
+  };
 
   useEffect(() => {
-    setProfessors(getProfessors());
+    loadProfessors();
   }, []);
-
-  const [selectedProfessorId, setSelectedProfessorId] = useState<string | null>(null);
 
   const [newProfessor, setNewProfessor] = useState({
     email: '',
     name: '',
-    
   });
 
   const [officeHours, setOfficeHours] = useState({
@@ -99,19 +89,21 @@ export default function ProfessorsAdmin() {
       await registerUser(email, password, name, 'professor');
       toast.success(`Professor ${name} added`);
 
-      setNewProfessor({ email: '', name: '', });
-      setProfessors(getProfessors()); // Refresh list
+      setNewProfessor({ email: '', name: '' });
+      await loadProfessors(); // Liste aktualisieren
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error');
     }
   };
 
-  const handleDeleteProfessor = (id: string) => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const updatedUsers = users.filter((u: any) => u.id !== id);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-    setProfessors(getProfessors());
-    toast.success('Professor deleted');
+  const handleDeleteProfessor = async (id: string) => {
+    try {
+      await deleteProfessor(id); // Nutzt die Funktion aus deinem Service
+      await loadProfessors();    // Liste aktualisieren
+      toast.success('Professor deleted');
+    } catch (error) {
+      toast.error('Error deleting professor');
+    }
   };
 
   const handleSetOfficeHours = () => {
@@ -121,10 +113,6 @@ export default function ProfessorsAdmin() {
       toast.error('Please select a professor and fill all fields');
       return;
     }
-
-    // TODO: Implement actual saving logic here
-    // const officeHoursList = JSON.parse(localStorage.getItem('professorOfficeHours') || '[]');
-    // ... save logic ...
 
     toast.success(`Office hours set for ${selectedProfessor.name}: ${startTime} - ${endTime} in ${selectedOffice}`);
 
@@ -163,8 +151,6 @@ export default function ProfessorsAdmin() {
             className="mt-2"
           />
         </div>
-
-        
 
         <Button onClick={handleAddProfessor} className="w-full">
           <Plus className="w-4 h-4 mr-2" />
@@ -265,7 +251,6 @@ export default function ProfessorsAdmin() {
                   key={professor.id}
                   className={`cursor-pointer hover:bg-gray-50 ${selectedProfessorId === professor.id ? 'bg-blue-100' : ''}`}
                   onClick={() => {
-                    console.log('Selected professor:', professor.id);
                     setSelectedProfessorId(professor.id);
                     setOfficeHours({ ...officeHours, selectedProfessor: professor });
                   }}
@@ -273,8 +258,8 @@ export default function ProfessorsAdmin() {
                   <TableCell>{professor.name}</TableCell>
                   <TableCell>{professor.email}</TableCell>
                   <TableCell>{professor.role}</TableCell>
-                  <TableCell>{professor.officeHours}</TableCell>
-                  <TableCell>{professor.office}</TableCell>
+                  <TableCell>{professor.officeHours || 'Not set'}</TableCell>
+                  <TableCell>{professor.officeRoom || 'Not set'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button
@@ -292,8 +277,9 @@ export default function ProfessorsAdmin() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          confirm('Delete this professor?') &&
-                          handleDeleteProfessor(professor.id);
+                          if (confirm('Delete this professor?')) {
+                            handleDeleteProfessor(professor.id);
+                          }
                         }}
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />
