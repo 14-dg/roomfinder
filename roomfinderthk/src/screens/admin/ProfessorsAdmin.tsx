@@ -22,12 +22,10 @@ import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Import der Service-Funktionen
-import { registerUser, getProfessors, deleteProfessor } from '@/services/firebase';
+// Hinweis: Wir nutzen getProfessors für die Liste und setUserProfessorsOfficeHoursAndRoom zum Speichern
+import { registerUser, getProfessors, deleteProfessor, setUserProfessorsOfficeHoursAndRoom } from '@/services/firebase';
 import { useData } from '@/contexts/DataContext';
 
-// ---------------------------------------------
-// Time Options
-// ---------------------------------------------
 const generateTimeOptions = () => {
   const options = [];
   for (let hour = 8; hour <= 22; hour++) {
@@ -38,7 +36,7 @@ const generateTimeOptions = () => {
   }
   return options;
 };
-//muss geändert werden auf richtiges passwort plus schicken einer email an den professor!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 function PasswordGenerator() {
   return "12345";
 }
@@ -50,7 +48,6 @@ export default function ProfessorsAdmin() {
   const [professors, setProfessors] = useState<any[]>([]);
   const [selectedProfessorId, setSelectedProfessorId] = useState<string | null>(null);
 
-  // Zentrale Funktion zum Laden/Aktualisieren der Liste
   const loadProfessors = async () => {
     try {
       const data = await getProfessors();
@@ -64,10 +61,7 @@ export default function ProfessorsAdmin() {
     loadProfessors();
   }, []);
 
-  const [newProfessor, setNewProfessor] = useState({
-    email: '',
-    name: '',
-  });
+  const [newProfessor, setNewProfessor] = useState({ email: '', name: '' });
 
   const [officeHours, setOfficeHours] = useState({
     selectedProfessor: null as any,
@@ -78,19 +72,16 @@ export default function ProfessorsAdmin() {
 
   const handleAddProfessor = async () => {
     const { email, name } = newProfessor;
-
     if (!email || !name) {
       toast.error('Please fill all fields');
       return;
     }
-
     try {
       const password = PasswordGenerator();
       await registerUser(email, password, name, 'professor');
       toast.success(`Professor ${name} added`);
-
       setNewProfessor({ email: '', name: '' });
-      await loadProfessors(); // Liste aktualisieren
+      await loadProfessors();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error');
     }
@@ -98,69 +89,88 @@ export default function ProfessorsAdmin() {
 
   const handleDeleteProfessor = async (id: string) => {
     try {
-      await deleteProfessor(id); // Nutzt die Funktion aus deinem Service
-      await loadProfessors();    // Liste aktualisieren
+      await deleteProfessor(id);
+      await loadProfessors();
       toast.success('Professor deleted');
     } catch (error) {
       toast.error('Error deleting professor');
     }
   };
 
-  const handleSetOfficeHours = () => {
+  // --- AKTUALISIERTE FUNKTION ---
+  const handleSetOfficeHours = async () => {
     const { selectedProfessor, startTime, endTime, selectedOffice } = officeHours;
 
-    if (!selectedProfessor || !startTime || !endTime || !selectedOffice) {
-      toast.error('Please select a professor and fill all fields');
+    // Prüfung ob ein Professor ausgewählt wurde (entweder über die Liste oder das State)
+    if (!selectedProfessor || !selectedProfessor.id) {
+      toast.error('Please select a professor from the table first');
       return;
     }
 
-    toast.success(`Office hours set for ${selectedProfessor.name}: ${startTime} - ${endTime} in ${selectedOffice}`);
+    if (!startTime || !endTime || !selectedOffice) {
+      toast.error('Please fill all time and room fields');
+      return;
+    }
 
-    setSelectedProfessorId(null);
-    setOfficeHours({
-      selectedProfessor: null,
-      startTime: '',
-      endTime: '',
-      selectedOffice: '',
-    });
+    try {
+      // Speichern über den Firebase Service
+      await setUserProfessorsOfficeHoursAndRoom(
+        selectedProfessor.id,
+        `${startTime} - ${endTime}`,
+        selectedOffice
+      );
+
+      toast.success(`Office hours updated for ${selectedProfessor.name}`);
+
+      // UI aktualisieren
+      await loadProfessors();
+      
+      // Formular zurücksetzen
+      setSelectedProfessorId(null);
+      setOfficeHours({
+        selectedProfessor: null,
+        startTime: '',
+        endTime: '',
+        selectedOffice: '',
+      });
+    } catch (error) {
+      toast.error('Failed to update office hours');
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* Add Professor Card */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold">Add Professor</h3>
-
-        <div>
-          <Label>Email</Label>
-          <Input
-            value={newProfessor.email}
-            onChange={(e) =>
-              setNewProfessor({ ...newProfessor, email: e.target.value })
-            }
-            className="mt-2"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label>Email</Label>
+            <Input
+              value={newProfessor.email}
+              onChange={(e) => setNewProfessor({ ...newProfessor, email: e.target.value })}
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label>Name</Label>
+            <Input
+              value={newProfessor.name}
+              onChange={(e) => setNewProfessor({ ...newProfessor, name: e.target.value })}
+              className="mt-2"
+            />
+          </div>
         </div>
-
-        <div>
-          <Label>Name</Label>
-          <Input
-            value={newProfessor.name}
-            onChange={(e) =>
-              setNewProfessor({ ...newProfessor, name: e.target.value })
-            }
-            className="mt-2"
-          />
-        </div>
-
         <Button onClick={handleAddProfessor} className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Professor
+          <Plus className="w-4 h-4 mr-2" /> Add Professor
         </Button>
       </Card>
 
-      {/* Office Hours */}
-      <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold">Set Office Hours</h3>
+      {/* Set Office Hours Card */}
+      <Card className={`p-6 space-y-4 border-2 ${!selectedProfessorId ? 'opacity-60' : 'border-blue-500'}`}>
+        <h3 className="text-lg font-semibold">
+          Set Office Hours {officeHours.selectedProfessor ? `for ${officeHours.selectedProfessor.name}` : '(Select a professor below)'}
+        </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -170,14 +180,10 @@ export default function ProfessorsAdmin() {
               onValueChange={(value) => setOfficeHours({ ...officeHours, startTime: value })}
             >
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select start time" />
+                <SelectValue placeholder="Start" />
               </SelectTrigger>
               <SelectContent>
-                {timeOptions.map((time) => (
-                  <SelectItem key={time} value={time}>
-                    {time}
-                  </SelectItem>
-                ))}
+                {timeOptions.map((time) => <SelectItem key={time} value={time}>{time}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -189,14 +195,10 @@ export default function ProfessorsAdmin() {
               onValueChange={(value) => setOfficeHours({ ...officeHours, endTime: value })}
             >
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select end time" />
+                <SelectValue placeholder="End" />
               </SelectTrigger>
               <SelectContent>
-                {timeOptions.map((time) => (
-                  <SelectItem key={time} value={time}>
-                    {time}
-                  </SelectItem>
-                ))}
+                {timeOptions.map((time) => <SelectItem key={time} value={time}>{time}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -208,7 +210,7 @@ export default function ProfessorsAdmin() {
               onValueChange={(value) => setOfficeHours({ ...officeHours, selectedOffice: value })}
             >
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select office" />
+                <SelectValue placeholder="Room" />
               </SelectTrigger>
               <SelectContent>
                 {rooms.map((room) => (
@@ -221,45 +223,43 @@ export default function ProfessorsAdmin() {
           </div>
         </div>
 
-        <Button onClick={handleSetOfficeHours} className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Set Office Hours
+        <Button 
+          onClick={handleSetOfficeHours} 
+          className="w-full"
+          variant={selectedProfessorId ? "default" : "secondary"}
+        >
+          <Plus className="w-4 h-4 mr-2" /> Set Office Hours
         </Button>
       </Card>
 
+      {/* List Card */}
       <Card className="p-6">
-        <h3 className="mb-4 text-lg font-semibold">
-          Manage Professors ({professors.length})
-        </h3>
-
+        <h3 className="mb-4 text-lg font-semibold">Manage Professors ({professors.length})</h3>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
                 <TableHead>Office Hours</TableHead>
                 <TableHead>Office</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
               {professors.map((professor) => (
                 <TableRow
                   key={professor.id}
-                  className={`cursor-pointer hover:bg-gray-50 ${selectedProfessorId === professor.id ? 'bg-blue-100' : ''}`}
+                  className={`cursor-pointer hover:bg-gray-50 ${selectedProfessorId === professor.id ? 'bg-blue-50' : ''}`}
                   onClick={() => {
                     setSelectedProfessorId(professor.id);
                     setOfficeHours({ ...officeHours, selectedProfessor: professor });
                   }}
                 >
-                  <TableCell>{professor.name}</TableCell>
+                  <TableCell className="font-medium">{professor.name}</TableCell>
                   <TableCell>{professor.email}</TableCell>
-                  <TableCell>{professor.role}</TableCell>
-                  <TableCell>{professor.officeHours || 'Not set'}</TableCell>
-                  <TableCell>{professor.officeRoom || 'Not set'}</TableCell>
+                  <TableCell>{professor.officeHours || '—'}</TableCell>
+                  <TableCell>{professor.officeRoom || '—'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button
@@ -267,19 +267,7 @@ export default function ProfessorsAdmin() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setOfficeHours({ ...officeHours, selectedProfessor: professor });
-                        }}
-                      >
-                        Set Hours
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('Delete this professor?')) {
-                            handleDeleteProfessor(professor.id);
-                          }
+                          if (confirm('Delete this professor?')) handleDeleteProfessor(professor.id);
                         }}
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />
@@ -288,17 +276,6 @@ export default function ProfessorsAdmin() {
                   </TableCell>
                 </TableRow>
               ))}
-
-              {professors.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center text-gray-500 py-8"
-                  >
-                    No professors available
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </div>
