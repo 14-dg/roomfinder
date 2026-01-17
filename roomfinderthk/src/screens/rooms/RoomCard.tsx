@@ -1,14 +1,12 @@
-import { Badge } from "./ui/badge";
-import { Card } from "./ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Card } from "../../components/ui/card";
 import {
-  Users,
+  MoveVertical,
   Projector,
-  MapPin,
   Lock,
-  Compass,
   Heart,
 } from "lucide-react";
-import { RoomWithStatus, Direction } from "@/models";
+import { RoomWithStatus } from "@/models";
 import { useFavorites } from "@/contexts/FavoritesContext";
 
 interface RoomCardProps {
@@ -16,26 +14,11 @@ interface RoomCardProps {
   onClick?: () => void;
 }
 
-const getDirectionColor = (direction: Direction) => {
-  switch (direction) {
-    case 'north':
-      return 'bg-blue-100 text-blue-700 border-blue-300';
-    case 'south':
-      return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-    case 'east':
-      return 'bg-red-100 text-red-700 border-red-300';
-    case 'west':
-      return 'bg-green-100 text-green-700 border-green-300';
-  }
-};
-
 export function RoomCard({ room, onClick }: RoomCardProps) {
   const { favorites, toggleFavorite } = useFavorites();
   const isFavorite = favorites.includes(room.id);
 
-  const handleFavoriteClick = (
-    e: React.MouseEvent<HTMLButtonElement>
-  ) => {
+  const handleFavoriteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     toggleFavorite(room.id);
   };
@@ -43,28 +26,17 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
   return (
     <Card
       onClick={onClick}
-      className={`relative p-4 cursor-pointer transition-shadow hover:shadow-lg ${
-        room.isLocked ? "opacity-75 bg-gray-50" : ""
-      }`}
+      className={`relative p-4 cursor-pointer transition-shadow hover:shadow-lg ${room.isLocked ? "opacity-75 bg-gray-50" : ""}`}
     >
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-lg">{room.roomNumber}</h3>
+            <h3 className="text-lg">{room.roomName}</h3>
             {room.isLocked && <Lock className="w-4 h-4 text-red-600" />}
           </div>
           <div className="flex items-center gap-1 text-gray-600 mt-1">
-            <MapPin className="w-4 h-4" />
+            <MoveVertical className="w-4 h-4" />
             <span className="text-sm">Floor {room.floor}</span>
-            {room.direction && (
-              <>
-                <span className="mx-1">•</span>
-                <Compass className="w-4 h-4" />
-                <span className={`text-xs px-2 py-0.5 rounded border capitalize ${getDirectionColor(room.direction)}`}>
-                  {room.direction}
-                </span>
-              </>
-            )}
           </div>
         </div>
         {room.isLocked ? (
@@ -77,10 +49,6 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
       </div>
 
       <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-        <div className="flex items-center gap-1">
-          <Users className="w-4 h-4" />
-          <span>{room.occupiedSeats}/{room.capacity} seats</span>
-        </div>
         {room.hasBeamer && (
           <div className="flex items-center gap-1">
             <Projector className="w-4 h-4" />
@@ -88,12 +56,6 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
           </div>
         )}
       </div>
-
-      {!room.isLocked && room.isAvailable && room.availableUntil && (
-        <p className="text-xs text-green-600 mt-2">
-            Available until {room.availableUntil}
-          </p>
-        )}
 
       {room.isLocked && (
         <p className="text-xs text-red-600 mt-2">
