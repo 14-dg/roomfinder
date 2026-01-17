@@ -17,7 +17,7 @@ export interface Room {
 export interface RoomStatus {
   isAvailable: boolean;
   isLocked: boolean;
-  checkins?: number;
+  checkins: number;
 }
 
 // Kombination für Fälle, in denen beides benötigt wird
