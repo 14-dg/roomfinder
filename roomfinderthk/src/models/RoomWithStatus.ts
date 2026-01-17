@@ -1,23 +1,23 @@
 //Kategorien eines Raums
-type RoomCategory = "Seminarraum" | "Labor" | "PC-Pool";
+type RoomCategory = "seminarraum" | "labor" | "pc-pool";
 
 // Basiseigenschaften eines Raums
 export interface Room {
   id: string;
   roomName: string;
-  roomType: RoomCategory;
+  roomType?: RoomCategory;
   floor: number;
-  capacity: number;
-  hasBeamer: boolean;
   building: string;
   campus: string;
+  capacity: number;
+  hasBeamer: boolean;
 }
 
 // Status eines Raums
 export interface RoomStatus {
   isAvailable: boolean;
   isLocked: boolean;
-  checkins: number;
+  checkins?: number;
 }
 
 // Kombination für Fälle, in denen beides benötigt wird
