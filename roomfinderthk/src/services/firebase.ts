@@ -14,6 +14,7 @@
 
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule } from '@/models';
 import { app, auth, db } from '../firebase-config';
+import { initialClasses, initialRooms } from '@/mockData/mockData';
 
 // Initialize Firebase (placeholder)
 // TODO: Uncomment when implementing Firebase
@@ -446,7 +447,17 @@ export function subscribeToBookings(callback: (bookings: Booking[]) => void): ()
 // ============================================================================
 // DataContext ruft diese Funktionen auf, um alle Daten zu bekommen
 
-export async function getStudentCheckins(): Promise<CheckIn[]> {
+export async function getAllRooms(): Promise<RoomWithStatus[]> {
+  const allRooms = localStorage.getItem('rooms');
+  return allRooms ? JSON.parse(allRooms) : initialRooms;
+}
+
+export async function getAllBookings(): Promise<Booking[]> {
+  const savedBookings = localStorage.getItem('bookings');
+    return savedBookings ? JSON.parse(savedBookings) : [];
+}
+
+export async function getAllStudentCheckins(): Promise<CheckIn[]> {
     const savedCheckins = localStorage.getItem('studentCheckins');
     return savedCheckins ? JSON.parse(savedCheckins) : [];
 }
@@ -458,7 +469,7 @@ export async function getAllCustomSchedules(): Promise<RoomSchedule[]> {
 
 export async function getAllLectures(): Promise<Lecture[]> {
     const savedLectures = localStorage.getItem('classes');
-    return savedLectures ? JSON.parse(savedLectures) : [];
+    return savedLectures ? JSON.parse(savedLectures) : initialClasses;
   }
   
   export async function getAllUserTimetableEntries(): Promise<UserTimetableEntry[]> {

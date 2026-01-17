@@ -1,7 +1,20 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule } from '@/models';
 import {initialClasses, initialRooms, defaultSchedulePattern, days} from "../mockData/mockData";
-import {getAllCustomSchedules, getAllLectures, getAllUserTimetableEntries, getBookings, getRoomDetailScreen, getRooms, getStudentCheckins} from "@/services/firebase";
+import {
+  getAllBookings,
+  getAllCustomSchedules,
+  getAllLectures,
+  getAllRooms,
+  getAllStudentCheckins,
+  getAllUserTimetableEntries,
+  getBookings,
+  getRoomDetailScreen,
+  getRooms,
+  addRoom as addRoomService,
+  updateRoom as updateRoomService,
+  deleteRoom as deleteRoomService,
+  } from "@/services/firebase";
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {
@@ -41,7 +54,7 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-export async function DataProvider({ children }: { children: ReactNode }) {
+export function DataProvider({ children }: { children: ReactNode }) {
   // const [rooms, setRooms] = useState<RoomWithStatus[]>(() => {
   //   const savedRooms = localStorage.getItem('rooms');
   //   return savedRooms ? JSON.parse(savedRooms) : initialRooms;
@@ -82,13 +95,13 @@ export async function DataProvider({ children }: { children: ReactNode }) {
 
     const fetchData = async () => {
       try {
-        const allRooms = await getRooms();
+        const allRooms = await getAllRooms();
         setRooms(allRooms);
 
-        const allBookings = await getBookings();
+        const allBookings = await getAllBookings();
         setBookings(allBookings);
 
-        const allStudentCheckins = await getStudentCheckins();
+        const allStudentCheckins = await getAllStudentCheckins();
         setStudentCheckins(allStudentCheckins);
 
         const allCustomSchedules = await getAllCustomSchedules();
@@ -251,7 +264,7 @@ export async function DataProvider({ children }: { children: ReactNode }) {
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
 
-    addRoom(room);
+    addRoomService(room);
   };
 
   const updateRoom = (id: string, updates: Partial<RoomWithStatus>) => {
@@ -259,7 +272,7 @@ export async function DataProvider({ children }: { children: ReactNode }) {
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
 
-    updateRoom(id, updates);
+    updateRoomService(id, updates);
   };
 
   const deleteRoom = (id: string) => {
@@ -272,7 +285,7 @@ export async function DataProvider({ children }: { children: ReactNode }) {
     // setBookings(updatedBookings);
     // localStorage.setItem('bookings', JSON.stringify(updatedBookings));
     
-    deleteRoom(id);
+    deleteRoomService(id);
   };
 
   const uploadTimetable = (roomId: string, schedule: DaySchedule[]) => {
