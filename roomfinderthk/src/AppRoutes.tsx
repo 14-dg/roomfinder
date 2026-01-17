@@ -10,7 +10,7 @@ import BookingScreen from "@/screens/BookingScreen";
 import ClassesScreen from "@/screens/ClassesScreen";
 import LoginScreen from "@/screens/LoginScreen";
 import RegisterScreen from "@/screens/RegisterScreen";
-import RoomDetailScreen from "@/screens/RoomDetailScreen";
+import RoomDetailScreen from "@/screens/rooms/RoomDetailScreen";
 import ProfessorDetailScreen from "@/screens/ProfessorDetailScreen";
 
 export default function AppRoutes() {
