@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { RoomCard } from "@/components/RoomCard";
+import { RoomCard } from "@/screens/rooms/RoomCard";
 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,7 +32,7 @@ export default function RoomsScreen() {
   // --------------------------------------------------
   const filteredRooms = useMemo(() => {
     return rooms.filter((room) => {
-      if (searchQuery && !room.roomNumber.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (searchQuery && !room.roomName.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
 
