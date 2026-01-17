@@ -33,6 +33,8 @@ export interface User {
   email: string;
   name: string;
   role: 'student' | 'professor' | 'admin';
+  officeHours?: string;
+  officeRoom?: string;
 }
 
 /**
@@ -480,9 +482,17 @@ export async function getProfessors(): Promise<User[]> {
   return allUsers.filter(user => user.role === 'professor');
 }
 
-// get die office hours und raum der  professoren diese sollen auch bei favoriten gespeichert werden weil es dazu passt dafür müssen neue Attribute in der favoriten tabelle angelegt werden
-export async function getFavoritesProfessorsOfficeHoursAndRoom(){
-
+/**
+ * Holt alle Professoren inklusive ihrer hinterlegten Sprechzeiten und Räume
+ * für die Anzeige im Admin-Panel.
+ */
+export async function getUserProfessorsOfficeHoursAndRoom(): Promise<User[]> {
+  const usersJson = localStorage.getItem('users');
+  if (!usersJson) return [];
+  
+  const allUsers: User[] = JSON.parse(usersJson);
+  
+  return allUsers.filter(user => user.role === 'professor');
 }
 
 //funktion zum löschen eines professors
@@ -493,6 +503,29 @@ export async function deleteProfessor(id: string): Promise<void> {
 }
 
 
-export async function setFavoritesProfessorsOfficeHoursAndRoom(){
+// Am Ende von src/services/firebase.ts einfügen/ersetzen:
 
+export async function setUserProfessorsOfficeHourAndRoom(
+  professorId: string,
+  officeHours: string,
+  officeRoom: string
+): Promise<void> {
+  const usersJson = localStorage.getItem('users');
+  if (!usersJson) return;
+
+  const users: any[] = JSON.parse(usersJson);
+  
+  const updatedUsers = users.map((u) => {
+    if (String(u.id) === String(professorId)) {
+      return { 
+        ...u, 
+        officeHours: officeHours, 
+        officeRoom: officeRoom 
+      };
+    }
+    return u;
+  });
+
+  localStorage.setItem('users', JSON.stringify(updatedUsers));
 }
+
