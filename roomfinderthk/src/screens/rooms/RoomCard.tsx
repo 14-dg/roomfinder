@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { RoomWithStatus } from "@/models";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { getOccupancyColor, getOccupancyIcon, getOccupancyLevel } from "@/utils/occupancy";
 
 interface RoomCardProps {
   room: RoomWithStatus;
@@ -46,6 +47,15 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
             {room.isAvailable ? "Available" : "Occupied"}
           </Badge>
         )}
+      </div>
+
+      <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+        {room.roomType}
+      </div>
+
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-gray-600"> {getOccupancyLevel(room.checkins)} </span>
+        <span className={`font-bold tracking-widest ${getOccupancyColor(getOccupancyLevel(room.checkins))}`}> {getOccupancyIcon(getOccupancyLevel(room.checkins))} </span>
       </div>
 
       <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
