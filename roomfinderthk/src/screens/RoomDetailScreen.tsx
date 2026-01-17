@@ -104,13 +104,12 @@ export default function RoomDetailScreen() {
   if (!room) return <p className="text-center py-10">Room not found</p>;
 
   const {
-    roomNumber,
+    roomName,
     floor,
     capacity,
     hasBeamer,
     isAvailable,
     isLocked = false,
-    direction,
   } = room;
 
   const schedule = getRoomSchedule(roomId);
@@ -145,7 +144,7 @@ export default function RoomDetailScreen() {
       studentId: user.id,
       studentName: user.name,
       activity,
-      duration,
+      //TODO duration,
     });
 
     toast.success("Successfully checked in!");
@@ -164,14 +163,14 @@ export default function RoomDetailScreen() {
 
   return (
     <>
-      <ScreenHeader title="Room Details" subtitle={`Details for ${roomNumber}`} />
+      <ScreenHeader title="Room Details" subtitle={`Details for ${roomName}`} />
       <div className="space-y-4">
         {/* Room Header */}
         <Card className="p-4">
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h2>{roomNumber}</h2>
+                <h2>{roomName}</h2>
                 {isLocked && <Lock className="w-5 h-5 text-red-600" />}
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
@@ -189,7 +188,7 @@ export default function RoomDetailScreen() {
                     <span>Beamer</span>
                   </div>
                 )}
-                {direction && (
+                {/* {direction && (
                   <div className="flex items-center gap-1">
                     <Compass className="w-4 h-4" />
                     <span
@@ -200,7 +199,7 @@ export default function RoomDetailScreen() {
                       {direction}
                     </span>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
 

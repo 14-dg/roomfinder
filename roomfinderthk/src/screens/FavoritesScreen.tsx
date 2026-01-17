@@ -1,6 +1,6 @@
 import { BookmarkCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { RoomCard } from "@/components/RoomCard";
+import { RoomCard } from "@/screens/rooms/RoomCard";
 import ScreenHeader from "@/components/ScreenHeader";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useData } from "@/contexts/DataContext"; // um Rooms-Daten zu bekommen

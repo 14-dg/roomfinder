@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-import RoomsScreen from "@/screens/RoomsScreen";
+import RoomsScreen from "@/screens/rooms/RoomsScreen";
 import FavoritesScreen from "@/screens/FavoritesScreen";
 import ProfessorScreen from "@/screens/ProfessorScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
