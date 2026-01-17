@@ -1,21 +1,23 @@
-export type Direction = "north" | "south" | "east" | "west";
+//Kategorien eines Raums
+type RoomCategory = "Seminarraum" | "Labor" | "PC-Pool";
 
 // Basiseigenschaften eines Raums
 export interface Room {
   id: string;
-  roomNumber: string;
+  roomName: string;
+  roomType: RoomCategory;
   floor: number;
   capacity: number;
   hasBeamer: boolean;
-  direction?: Direction;
+  building: string;
+  campus: string;
 }
 
 // Status eines Raums
 export interface RoomStatus {
-  occupiedSeats: number;
   isAvailable: boolean;
   isLocked: boolean;
-  availableUntil?: string;
+  checkins: number;
 }
 
 // Kombination für Fälle, in denen beides benötigt wird
