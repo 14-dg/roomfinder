@@ -21,9 +21,8 @@ import {
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Import der Service-Funktionen
-// Hinweis: Wir nutzen getProfessors für die Liste und setUserProfessorsOfficeHoursAndRoom zum Speichern
-import { registerUser, getProfessors, deleteProfessor, setUserProfessorsOfficeHourAndRoom } from '@/services/firebase';
+
+import { registerUser, getProfessors, deleteProfessor, setUserProfessorsOfficeHourAndRoom, sendEmailToProfessorForPassword} from '@/services/firebase';
 import { useData } from '@/contexts/DataContext';
 
 const generateTimeOptions = () => {
@@ -36,7 +35,7 @@ const generateTimeOptions = () => {
   }
   return options;
 };
-
+// muss mit echter logik gefüllt werdeb 12345 damit zum leichten testen
 function PasswordGenerator() {
   return "12345";
 }
@@ -76,10 +75,20 @@ export default function ProfessorsAdmin() {
       toast.error('Please fill all fields');
       return;
     }
+    if (!email.toLowerCase().endsWith('@smail.th-koeln.de')) {
+    toast.error('Invalid Email: Use @smail.th-koeln.de');
+    return;
+  }
     try {
       const password = PasswordGenerator();
+      
+      
       await registerUser(email, password, name, 'professor');
-      toast.success(`Professor ${name} added`);
+      
+      
+      await sendEmailToProfessorForPassword(email, password);
+      
+      toast.success(`Professor ${name} added and credentials sent`);
       setNewProfessor({ email: '', name: '' });
       await loadProfessors();
     } catch (e) {

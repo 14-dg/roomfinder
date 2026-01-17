@@ -529,3 +529,27 @@ export async function setUserProfessorsOfficeHourAndRoom(
   localStorage.setItem('users', JSON.stringify(updatedUsers));
 }
 
+
+/**
+ * Simuliert das Senden von Zugangsdaten an einen Professor.
+ * Da wir aktuell localStorage nutzen, loggen wir die Daten in die Konsole.
+ */
+export async function sendEmailToProfessorForPassword(
+  email: string, 
+  password: string
+): Promise<void> {
+  
+  if (!email.toLowerCase().endsWith('@smail.th-koeln.de')) {
+    throw new Error('Ungültige E-Mail-Adresse. Es muss eine @smail.th-koeln.de Adresse sein.');
+  }
+
+  
+  console.log(`--- EMAIL SIMULATION ---`);
+  console.log(`An: ${email}`);
+  console.log(`Betreff: Deine Zugangsdaten für das Raumbuchungssystem`);
+  console.log(`Inhalt: Dein Passwort lautet: ${password}`);
+  console.log(`------------------------`);
+
+  
+  return Promise.resolve();
+}
