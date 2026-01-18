@@ -5,7 +5,7 @@
 
 export interface roomTimetable {
     id: number;
-    roomNumber: string;
+    roomName: string;
     floor: number;
     capacity: number;
     occupiedSeats: number;

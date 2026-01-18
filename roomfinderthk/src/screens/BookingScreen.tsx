@@ -78,7 +78,7 @@ export default function BookingScreen() {
       bookedByRole: 'professor',
     });
 
-    toast.success(`Room ${room.roomNumber} booked successfully!`);
+    toast.success(`Room ${room.roomName} booked successfully!`);
     
     // Reset form
     setSelectedRoom('');
@@ -142,7 +142,7 @@ export default function BookingScreen() {
                         <TableRow key={booking.id}>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{room?.roomNumber}</div>
+                              <div className="font-medium">{room?.roomName}</div>
                               <div className="text-xs text-gray-500">Floor {room?.floor}</div>
                             </div>
                           </TableCell>
@@ -219,7 +219,7 @@ export default function BookingScreen() {
                       {filteredRooms.map(room => (
                         <SelectItem key={room.id} value={room.id}>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{room.roomNumber}</span>
+                            <span className="font-medium">{room.roomName}</span>
                             <span className="text-xs text-gray-500">
                               Floor {room.floor} • {room.capacity} seats
                               {room.hasBeamer && ' • Beamer'}
@@ -234,7 +234,7 @@ export default function BookingScreen() {
                     <Card className="mt-3 p-3 bg-blue-50 border-blue-200">
                       <div className="flex items-start justify-between">
                         <div>
-                          <div className="font-medium mb-2">{selectedRoomData.roomNumber}</div>
+                          <div className="font-medium mb-2">{selectedRoomData.roomName}</div>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4" />

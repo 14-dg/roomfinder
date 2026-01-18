@@ -142,7 +142,7 @@ export default function ProfessorsAdmin() {
             <Select onValueChange={v => setHours({...hours, room: v})}>
               <SelectTrigger><SelectValue placeholder="Select Room" /></SelectTrigger>
               <SelectContent>
-                {rooms.map(r => <SelectItem key={r.id} value={r.roomNumber}>{r.roomNumber}</SelectItem>)}
+                {rooms.map(r => <SelectItem key={r.id} value={r.roomName}>{r.roomName}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
