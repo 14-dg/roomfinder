@@ -310,9 +310,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 
   const addProfessor = async (email: string, name: string) => {
-    const password = "12345"; 
-    await registerProfessor(email, password, name);
-    await sendEmailToProfessorForPassword(email, password);
+    
+    await registerProfessor(email, name);
+    
     await refreshLecturers();
   };
 
