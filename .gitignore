@@ -6,5 +6,3 @@ secrets/
 
 *.env
 *.env.local
-
-package-lock.json
