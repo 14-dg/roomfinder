@@ -36,7 +36,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
 import { getOccupancyColor, getOccupancyIcon } from "@/utils/occupancy";
 import { RoomDetailLegend } from "./RoomDetailLegend";
+<<<<<<< HEAD
 import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
+=======
+>>>>>>> c43ac9f (RoomDetailLegende ausgelagert)
 
 /* ------------------------------ screen ------------------------------------ */
 
@@ -145,6 +148,25 @@ export default function RoomDetailScreen() {
             className="w-full"
           >
             {room.isLocked ? (
+              <>
+                <Unlock className="w-4 h-4 mr-2" />
+                Check Out
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4 mr-2" />
+                Check In
+              </>
+            )}
+          </Button>
+
+          {/* Checkin Button */}
+          <Button
+            onClick={handleToggleLock}
+            variant={isLocked ? "default" : "outline"}
+            className="w-full"
+          >
+            {isLocked ? (
               <>
                 <Unlock className="w-4 h-4 mr-2" />
                 Check Out
