@@ -36,10 +36,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
 import { getOccupancyColor, getOccupancyIcon } from "@/utils/occupancy";
 import { RoomDetailLegend } from "./RoomDetailLegend";
-<<<<<<< HEAD
-import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
-=======
->>>>>>> c43ac9f (RoomDetailLegende ausgelagert)
 
 /* ------------------------------ screen ------------------------------------ */
 
