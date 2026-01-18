@@ -123,8 +123,6 @@ export default function RoomDetailScreen() {
     toast.success(!isLocked ? "Room marked as locked" : "Room unlocked");
   };
 
-  /* ------------------------------ UI -------------------------------------- */
-
   return (
     <>
       <ScreenHeader title="Room Details" subtitle={`Details for ${roomName}`} />
@@ -152,18 +150,6 @@ export default function RoomDetailScreen() {
                     <span>Beamer</span>
                   </div>
                 )}
-                {/* {direction && (
-                  <div className="flex items-center gap-1">
-                    <Compass className="w-4 h-4" />
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded border capitalize ${getDirectionColor(
-                        direction
-                      )}`}
-                    >
-                      {direction}
-                    </span>
-                  </div>
-                )} */}
               </div>
             </div>
 
@@ -260,7 +246,11 @@ export default function RoomDetailScreen() {
             <span>Empty</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-yellow-600">●○○</span>
+            <span className="text-yellow-300">●○○</span>
+            <span>Minimal</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-yellow-600">●●○</span>
             <span>Moderate</span>
           </div>
           <div className="flex items-center gap-1">
