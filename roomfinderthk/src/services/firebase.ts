@@ -34,8 +34,7 @@ export interface User {
   email: string;
   name: string;
   role: 'student' | 'professor' | 'admin';
-  officeHours?: string;
-  officeRoom?: string;
+  
 }
 
 /**
@@ -503,89 +502,69 @@ export async function getUserBookings(userId: string): Promise<Booking[]> {
   return bookings.filter(b => b.bookedBy === userId);
 }
 
+
+
+// ============================================================================
+// PROFESSOR SERVICES
+// ============================================================================
 /**
  * Holt alle Nutzer mit der Rolle 'professor'
  * TODO: Firebase Query: query(collection(db, 'users'), where('role', '==', 'professor'))
  */
-export async function getProfessors(): Promise<User[]> {
-  // Alle User aus localStorage holen
-  const usersJson = localStorage.getItem('users');
-  if (!usersJson) return [];
-  
-  const allUsers: User[] = JSON.parse(usersJson);
-  
-  // Nur die Professoren zurückgeben
-  return allUsers.filter(user => user.role === 'professor');
+// --- In firebase.ts HINZUFÜGEN oder ERSETZEN ---
+
+/**
+ * Simuliert das Senden einer Email (z.B. via EmailJS oder Cloud Functions)
+ */
+export async function sendEmailToProfessorForPassword(email: string, password: string) {
+  console.log(`Email gesendet an ${email} mit Passwort: ${password}`);
+  // Hier würde später dein echter Email-Service-Aufruf stehen
+  return new Promise((resolve) => setTimeout(resolve, 800)); 
 }
 
 /**
- * Holt alle Professoren inklusive ihrer hinterlegten Sprechzeiten und Räume
- * für die Anzeige im Admin-Panel.
+ * Erstellt User-Account UND Lecturer-Profil
  */
-export async function getUserProfessorsOfficeHoursAndRoom(): Promise<User[]> {
-  const usersJson = localStorage.getItem('users');
-  if (!usersJson) return [];
+export async function registerProfessor(email: string, password: string, name: string) {
+  // 1. Technischer User (für Login)
+  const newUser = await registerUser(email, password, name, 'professor');
   
-  const allUsers: User[] = JSON.parse(usersJson);
+  // 2. Öffentliches Profil (für Timetable/Sprechzeiten)
+  const lecturers = JSON.parse(localStorage.getItem('lecturers') || '[]');
+  const newLecturer = {
+    id: newUser.id, // Verknüpfung über gleiche ID
+    name,
+    email,
+    officeHours: '',
+    officeLocation: '',
+  };
+  lecturers.push(newLecturer);
+  localStorage.setItem('lecturers', JSON.stringify(lecturers));
   
-  return allUsers.filter(user => user.role === 'professor');
+  return { newUser, newLecturer };
 }
 
-//funktion zum löschen eines professors
-export async function deleteProfessor(id: string): Promise<void> {
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  const updatedUsers = users.filter((u: any) => u.id !== id);
-  localStorage.setItem('users', JSON.stringify(updatedUsers));
+// Holen aller Lecturer
+export async function getLecturers(): Promise<any[]> {
+  const data = localStorage.getItem('lecturers');
+  return data ? JSON.parse(data) : [];
 }
 
-
-// Am Ende von src/services/firebase.ts einfügen/ersetzen:
-
-export async function setUserProfessorsOfficeHourAndRoom(
-  professorId: string,
-  officeHours: string,
-  officeRoom: string
-): Promise<void> {
-  const usersJson = localStorage.getItem('users');
-  if (!usersJson) return;
-
-  const users: any[] = JSON.parse(usersJson);
-  
-  const updatedUsers = users.map((u) => {
-    if (String(u.id) === String(professorId)) {
-      return { 
-        ...u, 
-        officeHours: officeHours, 
-        officeRoom: officeRoom 
-      };
-    }
-    return u;
-  });
-
-  localStorage.setItem('users', JSON.stringify(updatedUsers));
-}
-
-
-/**
- * Simuliert das Senden von Zugangsdaten an einen Professor.
- * Da wir aktuell localStorage nutzen, loggen wir die Daten in die Konsole.
- */
-export async function sendEmailToProfessorForPassword(
-  email: string, 
-  password: string
-): Promise<void> {
-  
-  if (!email.toLowerCase().endsWith('@smail.th-koeln.de')) {
-    throw new Error('Ungültige E-Mail-Adresse. Es muss eine @smail.th-koeln.de Adresse sein.');
+// Update Profil (Sprechzeiten)
+export async function updateLecturerProfile(id: string, updates: any) {
+  const lecturers = await getLecturers();
+  const index = lecturers.findIndex(l => l.id === id);
+  if (index !== -1) {
+    lecturers[index] = { ...lecturers[index], ...updates };
+    localStorage.setItem('lecturers', JSON.stringify(lecturers));
   }
+}
 
+// Löschen beider Einträge
+export async function deleteProfessorAndLecturer(id: string) {
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  localStorage.setItem('users', JSON.stringify(users.filter((u: any) => u.id !== id)));
   
-  console.log(`--- EMAIL SIMULATION ---`);
-  console.log(`An: ${email}`);
-  console.log(`Betreff: Deine Zugangsdaten für das Raumbuchungssystem`);
-  console.log(`Inhalt: Dein Passwort lautet: ${password}`);
-  console.log(`------------------------`);
-
-  
-  return Promise.resolve();
+  const lecturers = await getLecturers();
+  localStorage.setItem('lecturers', JSON.stringify(lecturers.filter(l => l.id !== id)));
 }

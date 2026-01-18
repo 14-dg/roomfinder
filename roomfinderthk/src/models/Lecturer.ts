@@ -9,5 +9,6 @@ export interface Lecturer {
     department: string;
     email: string;
     officeHours: string;
+    officeLocation: string;
     events: Event[];
 }

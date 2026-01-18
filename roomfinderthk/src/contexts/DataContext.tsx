@@ -14,6 +14,11 @@ import {
   addRoom as addRoomService,
   updateRoom as updateRoomService,
   deleteRoom as deleteRoomService,
+  getLecturers,
+  registerProfessor,
+  updateLecturerProfile,
+  deleteProfessorAndLecturer,
+  sendEmailToProfessorForPassword
   } from "@/services/firebase";
 
 // Activity noise levels for determining "loudest" activity
@@ -32,6 +37,7 @@ interface DataContextType {
   bookings: Booking[];
   studentCheckins: CheckIn[];
   classes: Lecture[];
+  lecturers: any[];
   userTimetableEntries: UserTimetableEntry[];
   getRoomSchedule: (roomId: string) => DaySchedule[];
   getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => CheckIn[];
@@ -45,6 +51,9 @@ interface DataContextType {
   addRoom: (room: RoomWithStatus) => void;
   updateRoom: (id: string, updates: Partial<RoomWithStatus>) => void;
   deleteRoom: (id: string) => void;
+  addProfessor: (email: string, name: string) => Promise<void>;
+  updateOfficeHours: (id: string, time: string, room: string) => Promise<void>;
+  removeProfessor: (id: string) => Promise<void>;
   uploadTimetable: (roomId: string, schedule: DaySchedule[]) => void;
   clearAllBookings: () => void;
   addClassToTimetable: (classId: string, userId: string) => void;
@@ -55,6 +64,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
+
   // const [rooms, setRooms] = useState<RoomWithStatus[]>(() => {
   //   const savedRooms = localStorage.getItem('rooms');
   //   return savedRooms ? JSON.parse(savedRooms) : initialRooms;
@@ -85,11 +95,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // });
   const [classes, setClasses] = useState<Lecture[]>([]);
 
+
+  const [lecturers, setLecturers] = useState<any[]>([]);
+
   // const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>(() => {
   //   const savedEntries = localStorage.getItem('userTimetableEntries');
   //   return savedEntries ? JSON.parse(savedEntries) : [];
   // });
   const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>([]);
+
+  const refreshLecturers = async () => {
+    const data = await getLecturers();
+    setLecturers(data);
+  };
 
   useEffect(() => {
 
@@ -99,8 +117,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setRooms(allRooms);
 
         const allBookings = await getAllBookings();
-        setBookings(allBookings);
-
+        setBookings(allBookings); 
         const allStudentCheckins = await getAllStudentCheckins();
         setStudentCheckins(allStudentCheckins);
 
@@ -112,6 +129,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         const allUserTimetableEntries = await getAllUserTimetableEntries();
         setUserTimetableEntries(allUserTimetableEntries);
+
+        const allLecturers = await getLecturers();
+        setLecturers(allLecturers);
       }
       finally {
 
@@ -288,6 +308,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
     deleteRoomService(id);
   };
 
+
+  const addProfessor = async (email: string, name: string) => {
+    const password = "12345"; 
+    await registerProfessor(email, password, name);
+    await sendEmailToProfessorForPassword(email, password);
+    await refreshLecturers();
+  };
+
+  const updateOfficeHours = async (id: string, time: string, room: string) => {
+    await updateLecturerProfile(id, { officeHours: time, officeLocation: room });
+    await refreshLecturers();
+  };
+
+  const removeProfessor = async (id: string) => {
+    await deleteProfessorAndLecturer(id);
+    await refreshLecturers();
+  };
+
   const uploadTimetable = (roomId: string, schedule: DaySchedule[]) => {
     const updatedSchedules = customSchedules.filter(s => s.roomId !== roomId);
     updatedSchedules.push({ roomId, schedule });
@@ -334,6 +372,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         bookings,
         studentCheckins,
         classes,
+        lecturers,
         userTimetableEntries,
         getRoomSchedule,
         getStudentCheckinsForSlot,
@@ -347,6 +386,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addRoom,
         updateRoom,
         deleteRoom,
+        addProfessor,      
+        updateOfficeHours, 
+        removeProfessor,
         uploadTimetable,
         clearAllBookings,
         addClassToTimetable,
