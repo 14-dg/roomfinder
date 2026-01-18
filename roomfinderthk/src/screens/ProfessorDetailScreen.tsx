@@ -4,17 +4,18 @@ import { Card } from "@/components/ui/card";
 import ScreenHeader from "@/components/ScreenHeader";
 import { DaySchedule, TimeSlot, Professor } from "@/models";
 import { Mail, Clock, User } from "lucide-react";
+import { useData } from "@/contexts/DataContext";
 
 // ---------------------------------------------
 // Mock Data
 // ---------------------------------------------
-const mockProfessors: Professor[] = [
+/*const mockProfessors: Professor[] = [
   { id: "1", name: "Dr. Sarah Johnson", department: "Computer Science", email: "s.johnson@uni.edu", officeHours: "Mon-Wed 14:00-16:00" },
   { id: "2", name: "Prof. Michael Chen", department: "Mathematics", email: "m.chen@uni.edu", officeHours: "Tue-Thu 10:00-12:00" },
   { id: "3", name: "Dr. Emily Brown", department: "Physics", email: "e.brown@uni.edu", officeHours: "Mon-Fri 13:00-14:00" },
   { id: "4", name: "Prof. David Wilson", department: "Chemistry", email: "d.wilson@uni.edu", officeHours: "Wed-Fri 15:00-17:00" },
   { id: "5", name: "Dr. Lisa Martinez", department: "Biology", email: "l.martinez@uni.edu", officeHours: "Mon-Thu 11:00-12:00" },
-];
+];*/
 
 // ---------------------------------------------
 // Schedule Generator
@@ -90,9 +91,10 @@ function ScheduleCard({ daySchedule }: { daySchedule: DaySchedule }) {
 export default function ProfessorDetailScreen() {
   const { professorId } = useParams<{ professorId: string }>();
   const navigate = useNavigate();
+  const { lecturers } = useData();
 
   const professor = useMemo(
-    () => mockProfessors.find((p) => p.id === professorId),
+    () => lecturers.find((p) => p.id === professorId),
     [professorId]
   );
 
@@ -123,7 +125,8 @@ export default function ProfessorDetailScreen() {
             </div>
             <div className="flex-1">
               <h2 className="text-xl">{professor.name}</h2>
-              <p className="text-sm text-gray-600">{professor.department}</p>
+              <p className="text-sm text-gray-600">{professor.department || "Faculty Member"}</p>
+              <p className="text-xs text-blue-600 font-medium">Room: {professor.officeLocation || "Not assigned"}</p>
             </div>
           </div>
           <div className="space-y-2 text-sm">

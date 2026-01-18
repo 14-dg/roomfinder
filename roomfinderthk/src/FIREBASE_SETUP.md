@@ -180,7 +180,7 @@ Update `/contexts/DataContext.tsx` and `/contexts/AuthContext.tsx` to import and
 ```javascript
 {
   [roomId]: {
-    roomNumber: string,
+    roomName: string,
     floor: number,
     capacity: number,
     occupiedSeats: number,

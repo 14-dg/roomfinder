@@ -79,7 +79,7 @@ export function UserTimetable() {
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <MapPin className="w-3.5 h-3.5" />
-                                <span>{room?.roomNumber || 'Unknown'}</span>
+                                <span>{room?.roomName || 'Unknown'}</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <UserIcon className="w-3.5 h-3.5" />

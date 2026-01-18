@@ -525,9 +525,12 @@ export async function sendEmailToProfessorForPassword(email: string, password: s
 /**
  * Erstellt User-Account UND Lecturer-Profil
  */
-export async function registerProfessor(email: string, password: string, name: string) {
+export async function registerProfessor(email: string, name: string) {
   // 1. Technischer User (für Login)
-  const newUser = await registerUser(email, password, name, 'professor');
+
+  // hier richtige passwort lopgik einfügen
+  const Passwort = "12345";
+  const newUser = await registerUser(email, Passwort, name, 'professor');
   
   // 2. Öffentliches Profil (für Timetable/Sprechzeiten)
   const lecturers = JSON.parse(localStorage.getItem('lecturers') || '[]');
@@ -540,6 +543,7 @@ export async function registerProfessor(email: string, password: string, name: s
   };
   lecturers.push(newLecturer);
   localStorage.setItem('lecturers', JSON.stringify(lecturers));
+  await sendEmailToProfessorForPassword(email, Passwort);
   
   return { newUser, newLecturer };
 }
