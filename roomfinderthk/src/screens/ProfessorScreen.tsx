@@ -9,6 +9,18 @@ import { Search, User, Clock } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 
 // ---------------------------------------------
+// Mock Data
+// ---------------------------------------------
+/*const mockProfessors: Professor[] = [
+  { id: "1", name: "Dr. Sarah Johnson", department: "Computer Science", email: "s.johnson@uni.edu", officeHours: "Mon-Wed 14:00-16:00" },
+  { id: "2", name: "Prof. Michael Chen", department: "Mathematics", email: "m.chen@uni.edu", officeHours: "Tue-Thu 10:00-12:00" },
+  { id: "3", name: "Dr. Emily Brown", department: "Physics", email: "e.brown@uni.edu", officeHours: "Mon-Fri 13:00-14:00" },
+  { id: "4", name: "Prof. David Wilson", department: "Chemistry", email: "d.wilson@uni.edu", officeHours: "Wed-Fri 15:00-17:00" },
+  { id: "5", name: "Dr. Lisa Martinez", department: "Biology", email: "l.martinez@uni.edu", officeHours: "Mon-Thu 11:00-12:00" },
+];*/
+import { useData } from "@/contexts/DataContext";
+
+// ---------------------------------------------
 // Components
 // ---------------------------------------------
 function ProfessorCard({ professor, onClick }: { professor: Lecturer; onClick: () => void }) {
@@ -38,6 +50,8 @@ function ProfessorCard({ professor, onClick }: { professor: Lecturer; onClick: (
   );
 }
 
+
+
 // ---------------------------------------------
 // Main Screen
 // ---------------------------------------------
@@ -45,7 +59,17 @@ export default function ProfessorScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { lecturers } = useData();
+  const { lecturers } = useData();
 
+  const filteredProfessors = useMemo(
+    () =>
+      lecturers.filter(
+        (prof) =>
+          prof.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          prof.department.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [searchQuery]
+  );
   const filteredProfessors = useMemo(() => {
     // If no data yet, return empty array
     if (!lecturers) return [];

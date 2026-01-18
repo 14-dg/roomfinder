@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import ScreenHeader from "@/components/ScreenHeader";
+<<<<<<< HEAD
 import { Event } from "@/models"; 
 import { Mail, Clock, User, MapPin, ArrowLeft } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
@@ -9,6 +10,28 @@ import { useData } from "@/contexts/DataContext";
 // Helper to group events and filter out empty days
 function groupEventsByDay(events: Event[]) {
   const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+=======
+import { DaySchedule, TimeSlot, Professor } from "@/models";
+import { Mail, Clock, User } from "lucide-react";
+import { useData } from "@/contexts/DataContext";
+
+// ---------------------------------------------
+// Mock Data
+// ---------------------------------------------
+/*const mockProfessors: Professor[] = [
+  { id: "1", name: "Dr. Sarah Johnson", department: "Computer Science", email: "s.johnson@uni.edu", officeHours: "Mon-Wed 14:00-16:00" },
+  { id: "2", name: "Prof. Michael Chen", department: "Mathematics", email: "m.chen@uni.edu", officeHours: "Tue-Thu 10:00-12:00" },
+  { id: "3", name: "Dr. Emily Brown", department: "Physics", email: "e.brown@uni.edu", officeHours: "Mon-Fri 13:00-14:00" },
+  { id: "4", name: "Prof. David Wilson", department: "Chemistry", email: "d.wilson@uni.edu", officeHours: "Wed-Fri 15:00-17:00" },
+  { id: "5", name: "Dr. Lisa Martinez", department: "Biology", email: "l.martinez@uni.edu", officeHours: "Mon-Thu 11:00-12:00" },
+];*/
+
+// ---------------------------------------------
+// Schedule Generator
+// ---------------------------------------------
+function generateProfessorSchedule(professorId: string): DaySchedule[] {
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+>>>>>>> cd43a76 (Datacontext geändert sodass die passwort logik in firebase ist und nichtmehr im frontend ist professor detailscreen geändert sodass es nicht mehr mockdata in der datei nutzt sonder datacontext das selbe in professor screen in firebase änderung bei passwort logik)
   
   const grouped = events.reduce((acc, event) => {
     const day = event.day;
@@ -33,7 +56,11 @@ export default function ProfessorDetailScreen() {
 
   const professor = useMemo(
     () => lecturers.find((p) => p.id === professorId),
+<<<<<<< HEAD
     [lecturers, professorId]
+=======
+    [professorId]
+>>>>>>> cd43a76 (Datacontext geändert sodass die passwort logik in firebase ist und nichtmehr im frontend ist professor detailscreen geändert sodass es nicht mehr mockdata in der datei nutzt sonder datacontext das selbe in professor screen in firebase änderung bei passwort logik)
   );
 
   const scheduleByDay = useMemo(
@@ -75,12 +102,18 @@ export default function ProfessorDetailScreen() {
               <User className="w-8 h-8 text-blue-600" />
             </div>
             <div className="flex-1">
+<<<<<<< HEAD
               <h2 className="text-2xl font-bold text-slate-900">{professor.name}</h2>
               <p className="text-slate-600 font-medium">{professor.department}</p>
               <div className="flex items-center gap-1.5 text-sm text-blue-700 mt-2 bg-blue-50 w-fit px-3 py-1 rounded-full">
                 <MapPin className="w-3.5 h-3.5" />
                 <span>Office: {professor.officeLocation || "TBD"}</span>
               </div>
+=======
+              <h2 className="text-xl">{professor.name}</h2>
+              <p className="text-sm text-gray-600">{professor.department || "Faculty Member"}</p>
+              <p className="text-xs text-blue-600 font-medium">Room: {professor.officeLocation || "Not assigned"}</p>
+>>>>>>> cd43a76 (Datacontext geändert sodass die passwort logik in firebase ist und nichtmehr im frontend ist professor detailscreen geändert sodass es nicht mehr mockdata in der datei nutzt sonder datacontext das selbe in professor screen in firebase änderung bei passwort logik)
             </div>
           </div>
           
