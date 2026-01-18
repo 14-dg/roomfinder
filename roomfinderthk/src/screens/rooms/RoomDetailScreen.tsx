@@ -331,7 +331,7 @@ export default function RoomDetailScreen() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Check In to {roomNumber}</DialogTitle>
+              <DialogTitle>Check In to {roomName}</DialogTitle>
               <DialogDescription>
                 Let others know you're using this room. Multiple students can check in simultaneously.
               </DialogDescription>
