@@ -33,6 +33,7 @@ import { useData } from "../../contexts/DataContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
 import { getOccupancyColor, getOccupancyIcon } from "@/utils/occupancy";
+import { RoomDetailLegend } from "./RoomDetailLegend";
 
 /* ------------------------------ screen ------------------------------------ */
 
@@ -177,6 +178,25 @@ export default function RoomDetailScreen() {
             )}
           </Button>
 
+          {/* Checkin Button */}
+          <Button
+            onClick={handleToggleLock}
+            variant={isLocked ? "default" : "outline"}
+            className="w-full"
+          >
+            {isLocked ? (
+              <>
+                <Unlock className="w-4 h-4 mr-2" />
+                Check Out
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4 mr-2" />
+                Check In
+              </>
+            )}
+          </Button>
+
           <Button onClick={() => navigate(-1)} variant="ghost" className="w-full mt-2">
             Back
           </Button>
@@ -227,37 +247,8 @@ export default function RoomDetailScreen() {
           </Card>
         )}
 
-        {/* Legend */}
-        <div className="flex items-center gap-4 text-sm flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-            <span>Available</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
-            <span>Booked</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded"></div>
-            <span>Student Activity</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-green-600">○○○</span>
-            <span>Empty</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-yellow-300">●○○</span>
-            <span>Minimal</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-yellow-600">●●○</span>
-            <span>Moderate</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-red-600">●●●</span>
-            <span>Full</span>
-          </div>
-        </div>
+        {/* Legende */}
+        <RoomDetailLegend/>
 
         {/* Weekly Schedule */}
         {schedule.map((daySchedule) => (
