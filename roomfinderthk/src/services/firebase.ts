@@ -1,17 +1,3 @@
-/**
- * Firebase Service
- * 
- * This file contains all Firebase integration access points.
- * Currently uses localStorage for data persistence, but is structured
- * to easily integrate with Firebase when ready.
- * 
- * To implement Firebase:
- * 1. Install firebase: npm install firebase
- * 2. Initialize Firebase app with your config
- * 3. Replace localStorage implementations with Firebase SDK calls
- * 4. Update function signatures as needed for Firebase types
- */
-
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -50,12 +36,6 @@ export interface User {
   
 }
 
-/**
- * Register a new user
- * TODO: Replace with Firebase Authentication
- * - Use createUserWithEmailAndPassword from firebase/auth
- * - Store user profile in Firestore
- */
 export async function registerUser(
   email: string,
   password: string,
@@ -85,13 +65,6 @@ export async function registerUser(
   }
 }
 
-
-/**
- * Sign in with email and password
- * TODO: Replace with Firebase Authentication
- * - Use signInWithEmailAndPassword from firebase/auth
- * - Fetch user profile from Firestore
- */
 export async function loginUser(
   email: string,
   password: string
@@ -122,32 +95,8 @@ export async function loginUser(
   };
 }
 
-
-/**
- * Sign out current user
- * TODO: Replace with Firebase Authentication
- * - Use signOut from firebase/auth
- */
 export async function logoutUser(): Promise<void> {
-  // Placeholder: No action needed for localStorage
-  // Firebase implementation would use:
-  // await signOut(auth);
-  
-  return Promise.resolve();
-}
-
-/**
- * Get current user session
- * TODO: Replace with Firebase Authentication
- * - Use onAuthStateChanged from firebase/auth
- */
-export function getCurrentUser(): User | null {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // auth.currentUser and fetch from Firestore
-  
-  const currentUser = localStorage.getItem('currentUser');
-  return currentUser ? JSON.parse(currentUser) : null;
+  await signOut(auth);
 }
 
 // ============================================================================
