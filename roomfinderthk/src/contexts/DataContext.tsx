@@ -284,12 +284,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('studentCheckins', JSON.stringify(updatedCheckins));
   };
 
-  const addRoom = (room: RoomWithStatus) => {
+  const addRoom = async (room: RoomWithStatus) => {
     // const updatedRooms = [...rooms, room];
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
 
-    addRoomService(room);
+    await addRoomService(room);
+    await refreshRooms();
   };
 
   const updateRoom = async (id: string, updates: Partial<RoomWithStatus>) => {
@@ -301,7 +302,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await refreshRooms();
   };
 
-  const deleteRoom = (id: string) => {
+  const deleteRoom = async (id: string) => {
     // const updatedRooms = rooms.filter(r => r.id !== id);
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
@@ -311,7 +312,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // setBookings(updatedBookings);
     // localStorage.setItem('bookings', JSON.stringify(updatedBookings));
     
-    deleteRoomService(id);
+    await deleteRoomService(id);
+    await refreshRooms();
   };
 
 
