@@ -113,6 +113,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setRooms(updatedRooms);
   }
 
+  const refreshRooms = async () => {
+    const updatedRooms = await getAllRooms();
+    setRooms(updatedRooms);
+  }
+
   const refreshLecturers = async () => {
     const data = await getLecturers();
     setLecturers(data);
