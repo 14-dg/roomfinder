@@ -12,18 +12,31 @@
  * 4. Update function signatures as needed for Firebase types
  */
 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser
+} from "firebase/auth";
+
+import {
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
+
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule } from '@/models';
 import { app, auth, db } from '../firebase-config';
 import { initialClasses, initialRooms } from '@/mockData/mockData';
-
-// Initialize Firebase (placeholder)
-// TODO: Uncomment when implementing Firebase
-// import { initializeApp } from 'firebase/app';
-// import { getAuth } from 'firebase/auth';
-// import { getFirestore } from 'firebase/firestore';
-// const app = initializeApp(firebaseConfig);
-// export const auth = getAuth(app);
-// export const db = getFirestore(app);
 
 // ============================================================================
 // AUTHENTICATION SERVICES
@@ -49,22 +62,29 @@ export async function registerUser(
   name: string,
   role: 'student' | 'professor' | 'admin'
 ): Promise<User> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  // await setDoc(doc(db, 'users', userCredential.user.uid), { name, role });
-  
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  const newUser: User = {
-    id: Date.now().toString(),
-    email,
-    name,
-    role,
-  };
-  users.push({ ...newUser, password });
-  localStorage.setItem('users', JSON.stringify(users));
-  return newUser;
+  try {
+    const userCredential =
+      await createUserWithEmailAndPassword(auth, email, password);
+
+    await setDoc(doc(db, 'users', userCredential.user.uid), {
+      email,
+      name,
+      role,
+      createdAt: serverTimestamp(),
+    });
+
+    return {
+      id: userCredential.user.uid,
+      email,
+      name,
+      role,
+    };
+  } catch (err) {
+    console.error("REGISTER FAILED:", err);
+    throw err;
+  }
 }
+
 
 /**
  * Sign in with email and password
@@ -72,26 +92,36 @@ export async function registerUser(
  * - Use signInWithEmailAndPassword from firebase/auth
  * - Fetch user profile from Firestore
  */
-export async function loginUser(email: string, password: string): Promise<User> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  // const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-  
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  const user = users.find((u: any) => u.email === email && u.password === password);
-  
-  if (!user) {
-    throw new Error('Invalid credentials');
+export async function loginUser(
+  email: string,
+  password: string
+): Promise<User> {
+  // 1. Firebase Authentication
+  const userCredential = await signInWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+
+  const uid = userCredential.user.uid;
+
+  // 2. User-Profil aus Firestore laden
+  const userSnap = await getDoc(doc(db, 'users', uid));
+
+  if (!userSnap.exists()) {
+    throw new Error('User profile not found in Firestore');
   }
-  
+
+  const data = userSnap.data();
+
   return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
+    id: uid,
+    email: userCredential.user.email ?? email,
+    name: data.name,
+    role: data.role,
   };
 }
+
 
 /**
  * Sign out current user
@@ -525,12 +555,9 @@ export async function sendEmailToProfessorForPassword(email: string, password: s
 /**
  * Erstellt User-Account UND Lecturer-Profil
  */
-export async function registerProfessor(email: string, name: string) {
+export async function registerProfessor(email: string, password: string, name: string) {
   // 1. Technischer User (für Login)
-
-  // hier richtige passwort lopgik einfügen
-  const Passwort = "12345";
-  const newUser = await registerUser(email, Passwort, name, 'professor');
+  const newUser = await registerUser(email, password, name, 'professor');
   
   // 2. Öffentliches Profil (für Timetable/Sprechzeiten)
   const lecturers = JSON.parse(localStorage.getItem('lecturers') || '[]');
@@ -543,7 +570,6 @@ export async function registerProfessor(email: string, name: string) {
   };
   lecturers.push(newLecturer);
   localStorage.setItem('lecturers', JSON.stringify(lecturers));
-  await sendEmailToProfessorForPassword(email, Passwort);
   
   return { newUser, newLecturer };
 }
