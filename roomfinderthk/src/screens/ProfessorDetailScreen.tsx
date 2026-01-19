@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import ScreenHeader from "@/components/ScreenHeader";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Event } from "@/models"; 
 import { Mail, Clock, User, MapPin, ArrowLeft } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
@@ -32,6 +33,15 @@ import { useData } from "@/contexts/DataContext";
 function generateProfessorSchedule(professorId: string): DaySchedule[] {
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 >>>>>>> cd43a76 (Datacontext geändert sodass die passwort logik in firebase ist und nichtmehr im frontend ist professor detailscreen geändert sodass es nicht mehr mockdata in der datei nutzt sonder datacontext das selbe in professor screen in firebase änderung bei passwort logik)
+=======
+import { Event } from "@/models"; 
+import { Mail, Clock, User, MapPin, ArrowLeft } from "lucide-react";
+import { useData } from "@/contexts/DataContext";
+
+// Helper to group events and filter out empty days
+function groupEventsByDay(events: Event[]) {
+  const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+>>>>>>> 4cca253 (professorscreen suche gefixt und professordetail auf events geändert)
   
   const grouped = events.reduce((acc, event) => {
     const day = event.day;
@@ -57,10 +67,14 @@ export default function ProfessorDetailScreen() {
   const professor = useMemo(
     () => lecturers.find((p) => p.id === professorId),
 <<<<<<< HEAD
+<<<<<<< HEAD
     [lecturers, professorId]
 =======
     [professorId]
 >>>>>>> cd43a76 (Datacontext geändert sodass die passwort logik in firebase ist und nichtmehr im frontend ist professor detailscreen geändert sodass es nicht mehr mockdata in der datei nutzt sonder datacontext das selbe in professor screen in firebase änderung bei passwort logik)
+=======
+    [lecturers, professorId]
+>>>>>>> 4cca253 (professorscreen suche gefixt und professordetail auf events geändert)
   );
 
   const scheduleByDay = useMemo(
@@ -103,12 +117,16 @@ export default function ProfessorDetailScreen() {
             </div>
             <div className="flex-1">
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4cca253 (professorscreen suche gefixt und professordetail auf events geändert)
               <h2 className="text-2xl font-bold text-slate-900">{professor.name}</h2>
               <p className="text-slate-600 font-medium">{professor.department}</p>
               <div className="flex items-center gap-1.5 text-sm text-blue-700 mt-2 bg-blue-50 w-fit px-3 py-1 rounded-full">
                 <MapPin className="w-3.5 h-3.5" />
                 <span>Office: {professor.officeLocation || "TBD"}</span>
               </div>
+<<<<<<< HEAD
 =======
               <h2 className="text-xl">{professor.name}</h2>
               <p className="text-sm text-gray-600">{professor.department || "Faculty Member"}</p>
@@ -120,12 +138,19 @@ export default function ProfessorDetailScreen() {
           {/* Email, Office Hours und Office Location */}
           <div className="flex flex-col gap-3 pt-4 border-t border-slate-100 text-sm">
             {/* Email */}
+=======
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-sm">
+>>>>>>> 4cca253 (professorscreen suche gefixt und professordetail auf events geändert)
             <div className="flex items-center gap-3 text-slate-600">
               <Mail className="w-4 h-4 text-slate-400" />
               <a href={`mailto:${professor.email}`} className="hover:text-blue-600 underline-offset-4 hover:underline">
                 {professor.email}
               </a>
             </div>
+<<<<<<< HEAD
 
             
             <div className="flex items-center gap-3 text-slate-600">
@@ -137,6 +162,11 @@ export default function ProfessorDetailScreen() {
             <div className="flex items-center gap-3 text-slate-600">
               <MapPin className="w-4 h-4 text-slate-400" />
               <span>Office: {professor.officeLocation || "No room assigned"}</span>
+=======
+            <div className="flex items-center gap-3 text-slate-600">
+              <Clock className="w-4 h-4 text-slate-400" />
+              <span>Office Hours: {professor.officeHours}</span>
+>>>>>>> 4cca253 (professorscreen suche gefixt und professordetail auf events geändert)
             </div>
           </div>
         </Card>

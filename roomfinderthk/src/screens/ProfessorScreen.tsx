@@ -50,8 +50,6 @@ function ProfessorCard({ professor, onClick }: { professor: Lecturer; onClick: (
   );
 }
 
-
-
 // ---------------------------------------------
 // Main Screen
 // ---------------------------------------------
@@ -70,21 +68,6 @@ export default function ProfessorScreen() {
       ),
     [searchQuery]
   );
-  const filteredProfessors = useMemo(() => {
-    // If no data yet, return empty array
-    if (!lecturers) return [];
-
-    const query = searchQuery.toLowerCase();
-
-    return lecturers.filter((prof) => {
-      // SAFE CHECK: Use optional chaining (?.) and provide fallbacks ("") 
-      // before calling toLowerCase() to prevent crashes
-      const nameMatch = (prof.name || "").toLowerCase().includes(query);
-      const deptMatch = (prof.department || "").toLowerCase().includes(query);
-      
-      return nameMatch || deptMatch;
-    });
-  }, [searchQuery, lecturers]); // Added lecturers to dependencies to be safe
 
   return (
     <>
