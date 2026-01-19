@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useData } from '@/contexts/DataContext';
 
@@ -49,6 +50,8 @@ export default function RoomsAdmin() {
       isLocked: newRoom.isLocked,
       isAvailable: true,
     });
+
+    toast.success(`Room "${newRoom.roomName}" added successfully`);
 
     setNewRoom({
       roomName: '',
