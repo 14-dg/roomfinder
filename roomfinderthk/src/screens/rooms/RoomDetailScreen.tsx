@@ -46,7 +46,11 @@ export default function RoomDetailScreen() {
   const {
     rooms,
     studentCheckins,
+<<<<<<< HEAD
     //user,
+=======
+
+>>>>>>> 8b0624d (added user and changed RoomDetailScreen)
     getRoomSchedule,
     getLoudestActivity,
     getOccupancyLevel,
@@ -82,6 +86,11 @@ export default function RoomDetailScreen() {
 
 
   };
+
+  const handleToggleCheckin = () => {
+    updateRoom();
+
+  }
 
   return (
     <>
@@ -158,7 +167,7 @@ export default function RoomDetailScreen() {
 
           {/* Checkin Button */}
           <Button
-            onClick={handleToggleLock}
+            onClick={handleToggleCheckin}
             variant={isLocked ? "default" : "outline"}
             className="w-full"
           >
