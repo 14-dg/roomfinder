@@ -1,27 +1,58 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
-import { auth } from "@/firebase-config";
+import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/firebase-config";
+
+export type AppUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: 'student' | 'professor' | 'admin';
+};
 
 interface AuthContextType {
-  user: FirebaseUser | null;
+  user: AppUser | null;
   isAuthenticated: boolean;
   authReady: boolean;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
+  const logout = async () => {
+    await signOut(auth);
+    setUser(null);
+  };
+
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      console.log("🔥 Firebase auth state:", firebaseUser?.email ?? "null");
-      setUser(firebaseUser);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // Firestore-Profil laden
+        const docRef = doc(db, "users", firebaseUser.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setUser({
+            id: firebaseUser.uid,
+            email: firebaseUser.email ?? "",
+            name: data.name,
+            role: data.role,
+          });
+        } else {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
       setAuthReady(true);
     });
 
-    return unsub;
+    return unsubscribe;
   }, []);
 
   return (
@@ -30,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isAuthenticated: !!user,
         authReady,
+        logout,
       }}
     >
       {children}
@@ -37,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
