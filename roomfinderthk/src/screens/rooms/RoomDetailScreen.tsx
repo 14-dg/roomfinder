@@ -88,9 +88,9 @@ export default function RoomDetailScreen() {
   };
 
   const handleToggleCheckin = () => {
-    updateRoom();
+    updateRoom(roomId, {});
 
-  }
+  };
 
   return (
     <>
