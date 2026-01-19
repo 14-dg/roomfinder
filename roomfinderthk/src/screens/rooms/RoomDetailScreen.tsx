@@ -27,6 +27,8 @@ import {
   Lock,
   Unlock,
   Compass,
+  LogOut,
+  DoorOpen,
 } from "lucide-react";
 import ScreenHeader from "@/components/ScreenHeader";
 import { useData } from "../../contexts/DataContext";
@@ -44,6 +46,8 @@ export default function RoomDetailScreen() {
 
   const {
     rooms,
+    studentCheckins,
+
     getRoomSchedule,
     addStudentCheckin,
     getStudentCheckinsForSlot,
@@ -125,6 +129,11 @@ export default function RoomDetailScreen() {
     toast.success(!isLocked ? "Room marked as locked" : "Room unlocked");
   };
 
+  const handleToggleCheckin = () => {
+    updateRoom();
+
+  }
+
   return (
     <>
       <ScreenHeader title="Room Details" subtitle={`Details for ${roomName}`} />
@@ -181,7 +190,7 @@ export default function RoomDetailScreen() {
 
           {/* Checkin Button */}
           <Button
-            onClick={handleToggleLock}
+            onClick={handleToggleCheckin}
             variant={isLocked ? "default" : "outline"}
             className="w-full"
           >
