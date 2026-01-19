@@ -185,7 +185,7 @@ export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus
   // Firebase implementation would use:
   // await updateDoc(doc(db, 'rooms', roomId), updates);
   
-  const rooms = await getRooms();
+  const rooms = await getAllRooms();
   const index = rooms.findIndex(r => r.id === roomId);
   if (index !== -1) {
     rooms[index] = { ...rooms[index], ...updates };

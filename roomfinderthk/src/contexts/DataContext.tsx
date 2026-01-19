@@ -297,8 +297,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
 
-    updateRoomService(id, updates);
-    refreshRooms();
+    await updateRoomService(id, updates);
+    await refreshRooms();
   };
 
   const deleteRoom = (id: string) => {

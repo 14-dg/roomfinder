@@ -46,10 +46,7 @@ export default function RoomDetailScreen() {
 
   const {
     rooms,
-    studentCheckins,
-
     getRoomSchedule,
-    addStudentCheckin,
     getStudentCheckinsForSlot,
     getLoudestActivity,
     getOccupancyLevel,
@@ -57,68 +54,49 @@ export default function RoomDetailScreen() {
     updateRoom,
   } = useData();
 
-  const { user } = useAuth();
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<{
-    day: string;
-    start: string;
-    end: string;
-  } | null>(null);
-  const [activity, setActivity] = useState("");
-  const [duration, setDuration] = useState("2h");
-
   if (!roomId) return <p className="text-center py-10">Invalid room</p>;
 
   const room = rooms.find((r) => r.id === roomId);
   if (!room) return <p className="text-center py-10">Room not found</p>;
 
-  const {
-    roomName,
-    floor,
-    capacity,
-    hasBeamer,
-    isAvailable,
-    isLocked = false,
-  } = room;
-
-  const schedule = getRoomSchedule(roomId);
+  const schedule = getRoomSchedule(room.id);
   const currentSlot = getCurrentDayAndTimeSlot();
 
   /* --------------------------- handlers ----------------------------------- */
 
-  const handleToggleLock = () => {
-    updateRoom(roomId, { isLocked: !isLocked });
-    toast.success(!isLocked ? "Room marked as locked" : "Room unlocked");
+  const handleToggleLock = async () => {
+    if (!room) return;
+    await updateRoom(room.id, { isLocked: !room.isLocked });
+    toast.success(!room.isLocked ? "Room marked as locked" : "Room marked as unlocked");
   };
 
   const handleToggleCheckin = () => {
-    updateRoom(roomId, {});
+    updateRoom(room.id, {});
 
   };
 
   return (
     <>
-      <ScreenHeader title="Room Details" subtitle={`Details for ${roomName}`} />
+      <ScreenHeader title="Room Details" subtitle={`Details for ${room.roomName}`} />
       <div className="space-y-4">
         {/* Room Header */}
         <Card className="p-4">
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h2>{roomName}</h2>
-                {isLocked && <Lock className="w-5 h-5 text-red-600" />}
+                <h2>{room.roomName}</h2>
+                {room.isLocked && <Lock className="w-5 h-5 text-red-600" />}
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>Floor {floor}</span>
+                  <span>Floor {room.floor}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  <span>{capacity} seats</span>
+                  <span>{room.capacity} seats</span>
                 </div>
-                {hasBeamer && (
+                {room.hasBeamer && (
                   <div className="flex items-center gap-1">
                     <Projector className="w-4 h-4" />
                     <span>Beamer</span>
@@ -127,18 +105,18 @@ export default function RoomDetailScreen() {
               </div>
             </div>
 
-            <Badge variant={isLocked ? "destructive" : isAvailable ? "default" : "secondary"}>
-              {isLocked ? "Locked" : isAvailable ? "Available" : "Occupied"}
+            <Badge variant={room.isLocked ? "destructive" : room.isAvailable ? "default" : "secondary"}>
+              {room.isLocked ? "Locked" : room.isAvailable ? "Available" : "Occupied"}
             </Badge>
           </div>
 
           {/* Lock Button */}
           <Button
             onClick={handleToggleLock}
-            variant={isLocked ? "default" : "outline"}
+            variant={room.isLocked ? "default" : "outline"}
             className="w-full"
           >
-            {isLocked ? (
+            {room.isLocked ? (
               <>
                 <Unlock className="w-4 h-4 mr-2" />
                 Mark as unlocked
@@ -154,10 +132,10 @@ export default function RoomDetailScreen() {
           {/* Checkin Button */}
           <Button
             onClick={handleToggleCheckin}
-            variant={isLocked ? "default" : "outline"}
+            variant={room.isLocked ? "default" : "outline"}
             className="w-full"
           >
-            {isLocked ? (
+            {room.isLocked ? (
               <>
                 <Unlock className="w-4 h-4 mr-2" />
                 Check Out
@@ -191,7 +169,7 @@ export default function RoomDetailScreen() {
                       roomId,
                       currentSlot.day,
                       currentSlot.timeSlot,
-                      capacity
+                      room.capacity
                     )
                   )}`}
                 >
@@ -200,14 +178,14 @@ export default function RoomDetailScreen() {
                       roomId,
                       currentSlot.day,
                       currentSlot.timeSlot,
-                      capacity
+                      room.capacity
                     )
                   )}
                 </span>
                 <div className="flex items-center gap-2 mt-1">
                   <Users className="w-3 h-3 text-gray-500" />
                   <span className="text-xs text-gray-600">
-                    {getStudentCheckinsForSlot(roomId, currentSlot.day, currentSlot.timeSlot).length}/{capacity} students
+                    {getStudentCheckinsForSlot(roomId, currentSlot.day, currentSlot.timeSlot).length}/{room.capacity} students
                   </span>
                 </div>
               </div>
