@@ -103,88 +103,30 @@ export async function logoutUser(): Promise<void> {
 // ROOM SERVICES
 // ============================================================================
 
-/**
- * Get all rooms
- * TODO: Replace with Firestore query
- * - Use getDocs(collection(db, 'rooms'))
- */
 export async function getRooms(): Promise<RoomWithStatus[]> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const snapshot = await getDocs(collection(db, 'rooms'));
-  // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-  const rooms = localStorage.getItem('rooms');
-  return rooms ? JSON.parse(rooms) : [];
+  const snapshot = await getDocs(collection(db, "rooms"));
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<RoomWithStatus, "id">),
+  }));
 }
 
-/**
- * Get a single room by ID
- * TODO: Replace with Firestore query
- * - Use getDoc(doc(db, 'rooms', roomId))
- */
 export async function getRoom(roomId: string): Promise<RoomWithStatus | null> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const docSnap = await getDoc(doc(db, 'rooms', roomId));
-  // return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
-  
-  const rooms = await getRooms();
-  return rooms.find(r => r.id === roomId) || null;
+  const docSnap = await getDoc(doc(db, "rooms", roomId));
+  return docSnap.exists() ? { id: docSnap.id, ...(docSnap.data() as Omit<RoomWithStatus, "id">) } : null;
 }
 
-/**
- * Add a new room
- * TODO: Replace with Firestore write
- * - Use addDoc(collection(db, 'rooms'), roomData)
- */
-export async function addRoom(room: Omit<RoomWithStatus, 'id'>): Promise<RoomWithStatus> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const docRef = await addDoc(collection(db, 'rooms'), room);
-  // return { id: docRef.id, ...room };
-  
-  const rooms = await getRooms();
-  const newRoom: RoomWithStatus = {
-    ...room,
-    id: Date.now().toString(),
-  };
-  rooms.push(newRoom);
-  localStorage.setItem('rooms', JSON.stringify(rooms));
-  return newRoom;
+export async function addRoom(room: Omit<RoomWithStatus, "id">): Promise<RoomWithStatus> {
+  const docRef = await addDoc(collection(db, "rooms"), room);
+  return { id: docRef.id, ...room };
 }
 
-/**
- * Update a room
- * TODO: Replace with Firestore update
- * - Use updateDoc(doc(db, 'rooms', roomId), updates)
- */
 export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus>): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await updateDoc(doc(db, 'rooms', roomId), updates);
-  
-  const rooms = await getRooms();
-  const index = rooms.findIndex(r => r.id === roomId);
-  if (index !== -1) {
-    rooms[index] = { ...rooms[index], ...updates };
-    localStorage.setItem('rooms', JSON.stringify(rooms));
-  }
+  await updateDoc(doc(db, "rooms", roomId), updates);
 }
 
-/**
- * Delete a room
- * TODO: Replace with Firestore delete
- * - Use deleteDoc(doc(db, 'rooms', roomId))
- */
 export async function deleteRoom(roomId: string): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await deleteDoc(doc(db, 'rooms', roomId));
-  
-  const rooms = await getRooms();
-  const filteredRooms = rooms.filter(r => r.id !== roomId);
-  localStorage.setItem('rooms', JSON.stringify(filteredRooms));
+  await deleteDoc(doc(db, "rooms", roomId));
 }
 
 // ============================================================================
