@@ -104,6 +104,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // });
   const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>([]);
 
+  const refreshRooms = async () => {
+    const updatedRooms = await getAllRooms();
+    setRooms(updatedRooms);
+  }
+
   const refreshLecturers = async () => {
     const data = await getLecturers();
     setLecturers(data);
@@ -287,12 +292,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     addRoomService(room);
   };
 
-  const updateRoom = (id: string, updates: Partial<RoomWithStatus>) => {
-    // const updatedRooms = rooms.map(r => r.id === id ? { ...r, ...updates } : r);
+  const updateRoom = async (id: string, updates: Partial<RoomWithStatus>) => {
+    // const updatedRooms = rooms.map((r) => r.id === id ? { ...r, ...updates } : r);
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
 
     updateRoomService(id, updates);
+    refreshRooms();
   };
 
   const deleteRoom = (id: string) => {
