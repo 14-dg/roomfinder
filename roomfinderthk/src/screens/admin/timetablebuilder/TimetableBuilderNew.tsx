@@ -2,54 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import './timetablebuilderNew.css';
-import { Room } from '@/models';
+import { useData } from '@/contexts/DataContext';
+import { Timetable, Event as TimetableEvent, Lecturer, Module, RoomWithStatus, Event} from '@/models';
 
-// Typdefinitionen
-interface Lecturer {
-  id: string;
-  name: string;
-  department: string;
-  email: string;
-  officeHours: string;
-  events: Event[];
-}
 
-// interface Room {
-//   id: number;
-//   roomNumber: string;
-//   floor: number;
-//   capacity: number;
-//   occupiedSeats: number;
-//   hasBeamer: boolean;
-//   isLocked: boolean;
-// }
-
-interface Module {
-  id: number;
-  name: string;
-}
-
-interface Event {
-  id?: number;
-  day: string;
-  startTime: string;
-  endTime: string;
-  name: string;
-  lecturer: Lecturer | null;
-  room: Room | null;
-  module: Module | null;
-  typeOf: string;
-  duration: number;
-  column: number;
-}
-
-interface Timetable {
-  courseOfStudy: string;
-  semester: string;
-  year: number;
-  days: string[];
-  events: Event[];
-}
 
 interface TimetableBuilderProps {
   courseOfStudy: string;
@@ -78,66 +34,17 @@ const typeOptions = [
   'Other'
 ];
 
-// Utility-Funktionen
-const saveTimetable = (key: string, timetable: Timetable): void => {
-  localStorage.setItem(key, JSON.stringify(timetable));
-};
-
-const loadTimetable = (key: string): Timetable | null => {
-  const data = localStorage.getItem(key);
-  if(!data) return null;
-  const parsedData = JSON.parse(data);
-  return {
-    ...parsedData,
-    events: parsedData.events || []
-  };
-};
-
-const createTimetable = (
-  courseOfStudy: string,
-  semester: string,
-  year: number,
-  includeSaturday: boolean = false
-): Timetable => {
-  return {
-    courseOfStudy,
-    semester,
-    year,
-    days: includeSaturday ? [...initialDays, 'Saturday'] : initialDays,
-    events: []
-  };
-};
-
-const loadLecturers = (): Lecturer[] => {
-  const data = localStorage.getItem('lecturers');
-  return data ? JSON.parse(data) : [];
-}
-
-const loadRooms = (): Room[] => {
-  const data = localStorage.getItem('rooms');
-  return data ? JSON.parse(data) : []
-}
-
-const saveModules = (modules: Module[]): void => {
-  localStorage.setItem('modules', JSON.stringify(modules));
-};
-
-const loadModules =(): Module[] => {
-  const data = localStorage.getItem('modules');
-  return data ? JSON.parse(data) : [];
-}
-
 // EventForm-Komponente
 interface EventFormProps {
-  formData: Partial<Event>;
-  setFormData: React.Dispatch<React.SetStateAction<Partial<Event>>>;
+  formData: Partial<TimetableEvent>;
+  setFormData: React.Dispatch<React.SetStateAction<Partial<TimetableEvent>>>;
   onSubmit: () => void;
   onCancel: () => void;
   onDelete?: () => void;
   isEditing: boolean;
   includeSaturday: boolean;
   lecturers: Lecturer[];
-  rooms: Room[];
+  rooms: RoomWithStatus[];
   modules: Module[];
   addModule: (newModule: Module) => void;
 }
@@ -258,11 +165,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
       }}>
         <div className="form-group">
           <label>Tag:</label>
-          {/* <input
-            name='day'
-            value={formData.day || ''}
-            readOnly
-          /> */}
           <select
             name="day"
             value={formData.day || ''}
@@ -290,7 +192,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
           </select>
         </div>
 
-        {/* Duration-Dropdown */}
         <div className="form-group">
           <label>Dauer (Zeitslots):</label>
           <select
@@ -307,7 +208,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
           </select>
         </div>
 
-        {/* EndTime-Dropdown */}
         <div className="form-group">
           <label>Endzeit:</label>
           <select
@@ -364,7 +264,7 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
           >
             <option value="">Wählen Sie einen Raum</option>
             {rooms.map(room => (
-              <option key={room.id} value={room.roomName}>{room.roomName}</option>
+              <option key={room.id} value={room.id}>{room.roomName}</option>
             ))}
           </select>
         </div>
@@ -438,7 +338,7 @@ const TimetableCell = ({
   day: string;
   timeSlot: string;
   timeSlots: string[];
-  events: Event[];
+  events: TimetableEvent[];
   column: number;
   onClick: (e: React.MouseEvent, day: string, timeSlot: string, column: number) => void;
 }) => {
@@ -464,7 +364,7 @@ const TimetableCell = ({
     }
   };
 
-  const isFirstTimeSlotOfEvent = (event: Event) => {
+  const isFirstTimeSlotOfEvent = (event: TimetableEvent) => {
     return timeSlots.indexOf(event.startTime) === timeSlots.indexOf(timeSlot);
   };
 
@@ -488,7 +388,7 @@ const TimetableCell = ({
           <div className="event-info">
             <div className="event-name">{event.name}</div>
             <div className="event-details">
-              {event.lecturer?.name} | {event.room?.roomName} | {event.typeOf}
+              {event.lecturer?.name} | {event.room?.roomNumber} | {event.typeOf}
             </div>
           </div>
         </div>
@@ -500,15 +400,15 @@ const TimetableCell = ({
 // Hauptkomponente
 const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, semester, year }) => {
   const [includeSaturday, setIncludeSaturday] = useState(false);
-  const [timetable, setTimetable] = useState<Timetable | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [lecturers, setLecturers] = useState<Lecturer[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [modules, setModules] = useState<Module[]>([]);
+  const { timetables, rooms, lecturers, modules, saveTimetable, loadTimetables } = useData();
+
+  // Erstellen Sie einen eindeutigen Schlüssel für diesen Stundenplan
+  const timetableKey = `timetable_${courseOfStudy}_${semester}_${year}`;
 
   // Initialer Formulardaten
-  const initialFormData: Partial<Event> = {
+  const initialFormData: Partial<TimetableEvent> = {
     day: '',
     startTime: '08:00',
     endTime: '08:50',
@@ -521,36 +421,40 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     module: null
   };
 
-  const [formData, setFormData] = useState<Partial<Event>>(initialFormData);
+  const [formData, setFormData] = useState<Partial<TimetableEvent>>(initialFormData);
+  const [selectedTimetable, setSelectedTimetable] = useState<Timetable | null>(null);
 
-  // Erstellen Sie einen eindeutigen Schlüssel für diesen Stundenplan
-  const timetableKey = `timetable_${courseOfStudy}_${semester}_${year}`;
+  // Erstellen eines neuen Stundenplans
+  const createTimetable = (): Timetable => {
+    return {
+      id: Date.now().toString(),
+      courseOfStudy,
+      semester,
+      year,
+      days: includeSaturday ? [...initialDays, 'Saturday'] : initialDays,
+      events: []
+    };
+  };
 
   // Laden oder Erstellen des Stundenplans beim ersten Render
   useEffect(() => {
-    const loadedTimetable = loadTimetable(timetableKey);
-    const lecturers = loadLecturers();
-    const rooms = loadRooms();
-    const modules = loadModules();
+    const allTimetables = loadTimetables();
+    const existingTimetable = allTimetables.find(t => t.courseOfStudy === courseOfStudy && t.semester === semester && t.year === year);
 
-    if (loadedTimetable) {
-      setTimetable(loadedTimetable);
-      setIncludeSaturday(loadedTimetable.days.includes('Saturday'));
+    if (existingTimetable) {
+      setSelectedTimetable(existingTimetable);
+      setIncludeSaturday(existingTimetable.days.includes('Saturday'));
     } else {
-      const newTimetable = createTimetable(courseOfStudy, semester, year, includeSaturday);
-      saveTimetable(timetableKey, newTimetable);
-      setTimetable(newTimetable);
+      const newTimetable = createTimetable();
+      saveTimetable(newTimetable);
+      setSelectedTimetable(newTimetable);
     }
-
-    if(lecturers.length > 0) setLecturers(lecturers);
-    if(rooms.length > 0) setRooms(rooms);
-    if(modules.length > 0) setModules(modules);
-  }, [courseOfStudy, semester, year, timetableKey]);
+  }, [courseOfStudy, semester, year]);
 
   const handleCellClick = (e: React.MouseEvent, day: string, timeSlot: string, column: number) => {
-    if (!timetable) return;
+    if (!selectedTimetable) return;
 
-    const event = timetable.events.find((e: Event) =>
+    const event = selectedTimetable.events.find((e: Event) =>
       e.day === day &&
       e.column === column &&
       timeSlots.indexOf(e.startTime) <= timeSlots.indexOf(timeSlot) &&
@@ -579,7 +483,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
   };
 
   const handleFormSubmit = () => {
-    if (!timetable) return;
+    if (!selectedTimetable) return;
 
     if (
       !formData.day ||
@@ -594,7 +498,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
       return;
     }
 
-    let updatedEvents: Event[] = [...timetable.events];
+    let updatedEvents: Event[] = [...selectedTimetable.events];
 
     if (editingEvent) {
       updatedEvents = updatedEvents.map((e: Event) =>
@@ -602,8 +506,8 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
       );
     } else {
       const newEvent: Event = {
-        id: timetable.events.length > 0
-        ? Math.max(...timetable.events.map((e: Event) => e.id || 0)) + 1
+        id: selectedTimetable.events.length > 0
+        ? Math.max(...selectedTimetable.events.map((e: Event) => e.id || 0)) + 1
         : 1,
         day: formData.day!,
         startTime: formData.startTime!,
@@ -620,65 +524,52 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     }
 
     const updatedTimetable: Timetable = {
-      ...timetable,
+      ...selectedTimetable,
       events: updatedEvents
     };
 
-    setTimetable(updatedTimetable);
-    saveTimetable(timetableKey, updatedTimetable);
+    saveTimetable(updatedTimetable);
+    setSelectedTimetable(updatedTimetable);
     setShowForm(false);
     setFormData(initialFormData);
   };
 
   const handleDelete = () => {
-    if (!timetable || !editingEvent) return;
+    if (!selectedTimetable || !editingEvent) return;
 
-    const updatedEvents: Event[] = timetable.events.filter((e: Event) => e.id !== editingEvent.id);
+    const updatedEvents: Event[] = selectedTimetable.events.filter((e: Event) => e.id !== editingEvent.id);
     const updatedTimetable: Timetable = {
-      ...timetable,
+      ...selectedTimetable,
       events: updatedEvents
     };
 
-    setTimetable(updatedTimetable);
-    saveTimetable(timetableKey, updatedTimetable);
+    saveTimetable(updatedTimetable);
+    setSelectedTimetable(updatedTimetable);
     setShowForm(false);
     setFormData(initialFormData);
   };
 
   const handleIncludeSaturdayChange = (checked: boolean) => {
-    if (!timetable) return;
+    if (!selectedTimetable) return;
 
     const updatedTimetable: Timetable = {
-      ...timetable,
+      ...selectedTimetable,
       days: checked ? [...initialDays, 'Saturday'] : initialDays
     };
 
     setIncludeSaturday(checked);
-    saveTimetable(timetableKey, updatedTimetable);
-    setTimetable(updatedTimetable);
+    saveTimetable(updatedTimetable);
+    setSelectedTimetable(updatedTimetable);
   };
 
-  const addModule = (newModule: Module) => {
-    const currentModules = loadModules();
-    const updatedModules = [...currentModules, newModule];
-    saveModules(updatedModules);
-    setModules(updatedModules)
-  }
-
-  if (!timetable) return <div>Loading...</div>;
+  if (!selectedTimetable) return <div>Loading...</div>;
 
   return (
     <div className="timetable-builder">
       <h3>Stundenplan: {courseOfStudy}, {semester} Semester, {year}</h3>
 
       <div className="flex items-center gap-2">
-        {/* <input
-          type="checkbox"
-          id="include-saturday"
-          checked={includeSaturday}
-          onChange={(e) => handleIncludeSaturdayChange(e.target.checked)}
-        /> */}
-        <Switch 
+        <Switch
           id='include-saturday'
           checked={includeSaturday}
           onCheckedChange={handleIncludeSaturdayChange}
@@ -693,13 +584,10 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
               <th className='day-column'>Tag</th>
               <th className='time-column'>Zeit</th>
               <th colSpan={5}>Veranstaltung</th>
-              {/* {Array.from({ length: 5 }, (_, i) => (
-                <th key={i}>Veranstaltung {i+1}</th>
-              ))} */}
             </tr>
           </thead>
           <tbody>
-            {timetable.days.map((day: string) => (
+            {selectedTimetable.days.map((day: string) => (
               <React.Fragment key={day}>
                 {timeSlots.map((timeSlot) => (
                   <tr key={`${day}-${timeSlot}`}>
@@ -711,7 +599,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
                         day={day}
                         timeSlot={timeSlot}
                         timeSlots={timeSlots}
-                        events={timetable.events}
+                        events={selectedTimetable.events}
                         column={column}
                         onClick={handleCellClick}
                       />
@@ -743,7 +631,10 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
             lecturers={lecturers}
             rooms={rooms}
             modules={modules}
-            addModule={addModule}
+            addModule={(newModule: Module) => {
+              const updatedModules = [...modules, newModule];
+              localStorage.setItem('modules', JSON.stringify(updatedModules));
+            }}
           />
         </div>
       )}

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule } from '@/models';
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule, Timetable, Module } from '@/models';
 import {initialClasses, initialRooms, defaultSchedulePattern, days} from "../mockData/mockData";
 import {
   getAllBookings,
@@ -19,8 +19,13 @@ import {
   updateLecturerProfile,
   deleteProfessorAndLecturer,
   sendEmailToProfessorForPassword,
+<<<<<<< HEAD
   addStudentCheckin as addStudentCheckinService,
   removeStudentCheckin as removeStudentCheckinService,
+=======
+  loadTimetables,
+  loadModules
+>>>>>>> restore-work
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
@@ -42,6 +47,8 @@ interface DataContextType {
   studentCheckins: CheckIn[];
   classes: Lecture[];
   lecturers: any[];
+  timetables: Timetable[];
+  modules: Module[];
   userTimetableEntries: UserTimetableEntry[];
   getRoomSchedule: (roomId: string) => DaySchedule[];
   getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => CheckIn[];
@@ -63,6 +70,10 @@ interface DataContextType {
   addClassToTimetable: (classId: string, userId: string) => void;
   removeClassFromTimetable: (classId: string, userId: string) => void;
   getUserClasses: (userId: string) => Lecture[];
+  saveTimetable: (timetable: Timetable) => void;
+  loadTimetables: () => Timetable[];
+  saveModules: (modules: Module[]) => void;
+  loadModules: () => Module[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -101,6 +112,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 
   const [lecturers, setLecturers] = useState<any[]>([]);
+
+  const [timetables, setTimetables] = useState<Timetable[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
 
   // const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>(() => {
   //   const savedEntries = localStorage.getItem('userTimetableEntries');
@@ -147,6 +161,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         const allLecturers = await getLecturers();
         setLecturers(allLecturers);
+
+        const allTimetables = await loadTimetables();
+        setTimetables(allTimetables);
+        
+        const allModules = await loadModules();
+        setModules(allModules);
       }
       finally {
 
@@ -308,8 +328,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await refreshRooms();
   };
 
+<<<<<<< HEAD
   const updateRoom = async (id: string, updates: Partial<RoomWithStatus>) => {
     // const updatedRooms = rooms.map((r) => r.id === id ? { ...r, ...updates } : r);
+=======
+
+  const updateRoom = (id: string, updates: Partial<RoomWithStatus>) => {
+    // const updatedRooms = rooms.map(r => r.id === id ? { ...r, ...updates } : r);
+>>>>>>> restore-work
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
 
@@ -348,6 +374,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await deleteProfessorAndLecturer(id);
     await refreshLecturers();
   };
+
+  const saveTimetable = async (timetable: Timetable) => {
+    await saveTimetable(timetable);
+  }
+
+  const saveModules = async (modules: Module[]) => {
+    await saveModules(modules);
+  }
 
   const uploadTimetable = (roomId: string, schedule: DaySchedule[]) => {
     const updatedSchedules = customSchedules.filter(s => s.roomId !== roomId);
@@ -397,6 +431,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         classes,
         lecturers,
         userTimetableEntries,
+        timetables,
+        modules,
         getRoomSchedule,
         getStudentCheckinsForSlot,
         getLoudestActivity,
@@ -417,6 +453,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addClassToTimetable,
         removeClassFromTimetable,
         getUserClasses,
+        saveTimetable,
+        loadTimetables,
+        saveModules,
+        loadModules
       }}
     >
       {children}

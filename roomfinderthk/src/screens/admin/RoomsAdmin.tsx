@@ -30,10 +30,15 @@ import { RoomWithStatus, RoomCategory } from '@/models/RoomWithStatus';
 export default function RoomsAdmin() {
   const { rooms, addRoom, deleteRoom } = useData();
 
+<<<<<<< HEAD
   // Initial state uses Partial<RoomWithStatus> for the form
   const [newRoom, setNewRoom] = useState<Partial<RoomWithStatus>>({
     roomName: '',
     roomType: 'seminarraum',
+=======
+  const [newRoom, setNewRoom] = useState({
+    roomName: '',
+>>>>>>> restore-work
     floor: 1,
     building: 'Main Building',
     campus: 'Deutz',
@@ -44,22 +49,38 @@ export default function RoomsAdmin() {
   });
 
   const handleAddRoom = () => {
+<<<<<<< HEAD
     if (!newRoom.roomName || !newRoom.roomType) {
       toast.error("Please provide room name and category");
       return;
     }
+=======
+    if (!newRoom.roomName) return;
+>>>>>>> restore-work
 
     // Completing the object and passing it to the context
     addRoom({
       ...newRoom,
       id: Date.now().toString(),
+<<<<<<< HEAD
+=======
+      roomName: newRoom.roomName,
+      floor: newRoom.floor,
+      capacity: newRoom.capacity,
+      occupiedSeats: newRoom.occupiedSeats,
+      hasBeamer: newRoom.hasBeamer,
+      isLocked: newRoom.isLocked,
+>>>>>>> restore-work
       isAvailable: true,
     });
 
     // Reset Form
     setNewRoom({
       roomName: '',
+<<<<<<< HEAD
       roomType: 'seminarraum',
+=======
+>>>>>>> restore-work
       floor: 1,
       building: 'Main Building',
       campus: 'Deutz',
@@ -78,12 +99,23 @@ export default function RoomsAdmin() {
         <div className="grid grid-cols-2 gap-4 mb-4">
           {/* Room Name */}
           <div>
+<<<<<<< HEAD
             <Label htmlFor="roomName">Room Number / Name</Label>
             <Input
               id="roomName"
               placeholder="e.g. ZW5-5"
               value={newRoom.roomName}
               onChange={(e) => setNewRoom({ ...newRoom, roomName: e.target.value })}
+=======
+            <Label htmlFor="roomName">Room Number</Label>
+            <Input
+              id="roomName"
+              placeholder="ZW5-5"
+              value={newRoom.roomName}
+              onChange={(e) =>
+                setNewRoom({ ...newRoom, roomName: e.target.value })
+              }
+>>>>>>> restore-work
               className="mt-2"
             />
           </div>
@@ -209,12 +241,18 @@ export default function RoomsAdmin() {
             <TableBody>
               {rooms.map((room: RoomWithStatus) => (
                 <TableRow key={room.id}>
+<<<<<<< HEAD
                   <TableCell className="font-medium">{room.roomName}</TableCell>
                   <TableCell className="capitalize">
                     {room.roomType === 'seminarraum' ? 'Seminar Room' : 
                      room.roomType === 'labor' ? 'Laboratory' : 'PC Pool'}
                   </TableCell>
                   <TableCell>{room.campus} - {room.building} (Floor {room.floor})</TableCell>
+=======
+                  <TableCell>{room.roomName}</TableCell>
+                  <TableCell>{room.floor}</TableCell>
+                  <TableCell>{room.capacity}</TableCell>
+>>>>>>> restore-work
                   <TableCell>
                     <Badge variant={room.hasBeamer ? "secondary" : "outline"}>
                       {room.hasBeamer ? "Yes" : "No"}
