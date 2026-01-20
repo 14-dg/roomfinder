@@ -365,13 +365,11 @@ export function subscribeToBookings(callback: (bookings: Booking[]) => void): ()
 // DataContext ruft diese Funktionen auf, um alle Daten zu bekommen
 
 export async function getAllRooms(): Promise<RoomWithStatus[]> {
-  const allRooms = localStorage.getItem('rooms');
-  return allRooms ? JSON.parse(allRooms) : initialRooms;
+  return await getRooms();
 }
 
 export async function getAllBookings(): Promise<Booking[]> {
-  const savedBookings = localStorage.getItem('bookings');
-    return savedBookings ? JSON.parse(savedBookings) : [];
+  return await getBookings();
 }
 
 export async function getAllStudentCheckins(): Promise<CheckIn[]> {
