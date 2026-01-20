@@ -300,7 +300,7 @@ export async function clearAllBookings(): Promise<void> {
 // CHECKIN SERVICES
 // ============================================================================
 
-export async function addStudentCheckinService(checkin: CheckIn): Promise<void> {
+export async function addStudentCheckin(checkin: CheckIn): Promise<void> {
   
   const allCheckins = await getAllStudentCheckins();
   
@@ -309,7 +309,7 @@ export async function addStudentCheckinService(checkin: CheckIn): Promise<void> 
   localStorage.setItem('studentCheckins', JSON.stringify(allCheckins));
 }
 
-export async function removeStudentCheckinService(id: string): Promise<void> {
+export async function removeStudentCheckin(id: string): Promise<void> {
   const allCheckins = await getAllStudentCheckins();
   const updated = allCheckins.filter(c => c.id !== id);
   localStorage.setItem('studentCheckins', JSON.stringify(updated));
