@@ -5,9 +5,9 @@ export function getOccupancyColor(level: OccupancyLevel) {
     case "empty":
       return "text-green-600";
     case "minimal":
-      return "text-yellow-600";
+      return "text-yellow-300";
     case "moderate":
-      return "text-orange-600";
+      return "text-yellow-600";
     case "full":
       return "text-red-600";
   }
