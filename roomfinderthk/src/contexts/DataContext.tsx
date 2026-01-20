@@ -21,6 +21,9 @@ import {
   sendEmailToProfessorForPassword,
   addStudentCheckin as addStudentCheckinService,
   removeStudentCheckin as removeStudentCheckinService,
+  addBooking as addBookingService,
+  deleteBooking as deleteBookingService,
+  clearAllBookings as clearAllBookingsService,
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
@@ -255,21 +258,52 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
-  const addBooking = (booking: Omit<Booking, 'id' | 'createdAt'>) => {
-    const newBooking: Booking = {
-      ...booking,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-    const updatedBookings = [...bookings, newBooking];
-    setBookings(updatedBookings);
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+  const addBooking = async (booking: Omit<Booking, 'id' | 'createdAt'>) => {
+    try {
+      // 1. Firebase Service aufrufen (gibt das neue Booking-Objekt inkl. ID zurück)
+      // Wir importieren addBooking als addBookingService oben (siehe Import-Sektion unten)
+      const savedBooking = await addBookingService(booking);
+
+      // 2. Lokalen State aktualisieren
+      setBookings(prev => [...prev, savedBooking]);
+      
+      toast.success("Raum erfolgreich gebucht");
+    } catch (error) {
+      console.error("Booking failed:", error);
+      toast.error("Buchung fehlgeschlagen");
+    }
   };
 
-  const removeBooking = (id: string) => {
-    const updatedBookings = bookings.filter(b => b.id !== id);
-    setBookings(updatedBookings);
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+  const removeBooking = async (id: string) => {
+    try {
+      // 1. In Firestore löschen (importiert als deleteBookingService)
+      await deleteBookingService(id);
+
+      // 2. Lokalen State aktualisieren
+      setBookings(prev => prev.filter(b => b.id !== id));
+      
+      toast.success("Buchung storniert");
+    } catch (error) {
+      console.error("Delete booking failed:", error);
+      toast.error("Stornierung fehlgeschlagen");
+    }
+  };
+
+  const clearAllBookings = async () => {
+    try {
+      if (confirm("Möchten Sie wirklich ALLE Buchungen löschen?")) {
+        // 1. Firestore Service aufrufen
+        await clearAllBookingsService();
+        
+        // 2. State leeren
+        setBookings([]);
+        
+        toast.success("Alle Buchungen wurden gelöscht");
+      }
+    } catch (error) {
+      console.error("Clear bookings failed:", error);
+      toast.error("Fehler beim Löschen der Buchungen");
+    }
   };
 
   const addStudentCheckin = async (checkin: Omit<CheckIn, 'id'>) => {
@@ -388,11 +422,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     updatedSchedules.push({ roomId, schedule });
     setCustomSchedules(updatedSchedules);
     localStorage.setItem('customSchedules', JSON.stringify(updatedSchedules));
-  };
-
-  const clearAllBookings = () => {
-    setBookings([]);
-    localStorage.setItem('bookings', JSON.stringify([]));
   };
 
   const addClassToTimetable = (classId: string, userId: string) => {
