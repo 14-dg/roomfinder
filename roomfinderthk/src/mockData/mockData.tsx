@@ -36,36 +36,25 @@ export const defaultSchedulePattern: TimeSlot[] = [
 export const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 export const initialClasses: Lecture[] = [
-  // Computer Science
-  { id: "c1", name: "Introduction to Programming", subject: "Computer Science", professor: "Dr. Smith", roomId: "2", day: "Monday", timeSlot: "08:00-10:00" },
-  { id: "c2", name: "Data Structures", subject: "Computer Science", professor: "Dr. Smith", roomId: "5", day: "Tuesday", timeSlot: "10:00-12:00" },
-  { id: "c3", name: "Algorithms", subject: "Computer Science", professor: "Dr. Johnson", roomId: "9", day: "Wednesday", timeSlot: "14:00-16:00" },
-  { id: "c4", name: "Database Systems", subject: "Computer Science", professor: "Dr. Williams", roomId: "10", day: "Thursday", timeSlot: "08:00-10:00" },
-  { id: "c5", name: "Web Development", subject: "Computer Science", professor: "Dr. Brown", roomId: "6", day: "Friday", timeSlot: "12:00-14:00" },
-  
-  // Mathematics
-  { id: "c6", name: "Calculus I", subject: "Mathematics", professor: "Prof. Davis", roomId: "17", day: "Monday", timeSlot: "10:00-12:00" },
-  { id: "c7", name: "Linear Algebra", subject: "Mathematics", professor: "Prof. Davis", roomId: "17", day: "Wednesday", timeSlot: "08:00-10:00" },
-  { id: "c8", name: "Statistics", subject: "Mathematics", professor: "Prof. Miller", roomId: "5", day: "Thursday", timeSlot: "14:00-16:00" },
-  { id: "c9", name: "Discrete Mathematics", subject: "Mathematics", professor: "Prof. Wilson", roomId: "10", day: "Tuesday", timeSlot: "16:00-18:00" },
-  
-  // Physics
-  { id: "c10", name: "Classical Mechanics", subject: "Physics", professor: "Dr. Anderson", roomId: "8", day: "Monday", timeSlot: "14:00-16:00" },
-  { id: "c11", name: "Electromagnetism", subject: "Physics", professor: "Dr. Anderson", roomId: "8", day: "Wednesday", timeSlot: "10:00-12:00" },
-  { id: "c12", name: "Quantum Physics", subject: "Physics", professor: "Dr. Taylor", roomId: "15", day: "Friday", timeSlot: "08:00-10:00" },
-  
-  // Business
-  { id: "c13", name: "Marketing Fundamentals", subject: "Business", professor: "Prof. Martinez", roomId: "20", day: "Tuesday", timeSlot: "08:00-10:00" },
-  { id: "c14", name: "Financial Accounting", subject: "Business", professor: "Prof. Garcia", roomId: "18", day: "Monday", timeSlot: "12:00-14:00" },
-  { id: "c15", name: "Business Strategy", subject: "Business", professor: "Prof. Martinez", roomId: "20", day: "Thursday", timeSlot: "10:00-12:00" },
-  
-  // Engineering
-  { id: "c16", name: "Circuit Design", subject: "Engineering", professor: "Dr. Lee", roomId: "13", day: "Tuesday", timeSlot: "14:00-16:00" },
-  { id: "c17", name: "Thermodynamics", subject: "Engineering", professor: "Dr. Lee", roomId: "13", day: "Thursday", timeSlot: "16:00-18:00" },
-  { id: "c18", name: "Materials Science", subject: "Engineering", professor: "Dr. White", roomId: "4", day: "Friday", timeSlot: "10:00-12:00" },
-  
-  // Biology
-  { id: "c19", name: "Cell Biology", subject: "Biology", professor: "Prof. Clark", roomId: "7", day: "Monday", timeSlot: "16:00-18:00" },
-  { id: "c20", name: "Genetics", subject: "Biology", professor: "Prof. Clark", roomId: "7", day: "Wednesday", timeSlot: "12:00-14:00" },
-  { id: "c21", name: "Ecology", subject: "Biology", professor: "Dr. Harris", roomId: "12", day: "Friday", timeSlot: "14:00-16:00" },
+  { id: "c1", name: "Introduction to Programming",  subject: "Computer Science",  professor: "Dr. Smith",      roomId: "2",   day: "Monday",        startTime: "08:00", endTime: "10:00", type: "Vorlesung" },
+  { id: "c2", name: "Data Structures",              subject: "Computer Science",  professor: "Dr. Smith",      roomId: "5",   day: "Tuesday",      startTime: "10:00", endTime: "12:00", type: "Vorlesung" },
+  { id: "c3", name: "Algorithms",                   subject: "Computer Science",  professor: "Dr. Johnson",    roomId: "9",   day: "Wednesday",      startTime: "14:00", endTime: "16:00", type: "Übung" },
+  { id: "c4", name: "Database Systems",             subject: "Computer Science",  professor: "Dr. Williams",   roomId: "10",  day: "Thursday",    startTime: "08:00", endTime: "10:00", type: "Vorlesung" },
+  { id: "c5", name: "Web Development",              subject: "Computer Science",  professor: "Dr. Brown",      roomId: "6",   day: "Friday",       startTime: "12:00", endTime: "14:00", type: "Praktikum" },
+  { id: "c6", name: "Calculus I",                   subject: "Mathematics",       professor: "Prof. Davis",    roomId: "17",  day: "Monday",        startTime: "10:00", endTime: "12:00", type: "Vorlesung" },
+  { id: "c7", name: "Linear Algebra",               subject: "Mathematics",       professor: "Prof. Davis",    roomId: "17",  day: "Wednesday",      startTime: "08:00", endTime: "10:00", type: "Übung" },
+  { id: "c8", name: "Statistics",                   subject: "Mathematics",       professor: "Prof. Miller",   roomId: "5",   day: "Thursday",    startTime: "14:00", endTime: "16:00", type: "Vorlesung" },
+  { id: "c9", name: "Discrete Mathematics",         subject: "Mathematics",       professor: "Prof. Wilson",   roomId: "10",  day: "Tuesday",      startTime: "16:00", endTime: "18:00", type: "Tutorium" },
+  { id: "c10", name: "Classical Mechanics",        subject: "Physics",            professor: "Dr. Anderson",   roomId: "8",   day: "Monday",        startTime: "14:00", endTime: "16:00", type: "Vorlesung" },
+  { id: "c11", name: "Electromagnetism",           subject: "Physics",            professor: "Dr. Anderson",   roomId: "8",   day: "Wednesday",      startTime: "10:00", endTime: "12:00", type: "Praktikum" },
+  { id: "c12", name: "Quantum Physics",            subject: "Physics",            professor: "Dr. Taylor",     roomId: "15",  day: "Friday",       startTime: "08:00", endTime: "10:00", type: "Vorlesung" },
+  { id: "c13", name: "Marketing Fundamentals",     subject: "Business",           professor: "Prof. Martinez", roomId: "20",  day: "Tuesday",      startTime: "08:00", endTime: "10:00", type: "Vorlesung" },
+  { id: "c14", name: "Financial Accounting",       subject: "Business",           professor: "Prof. Garcia",   roomId: "18",  day: "Monday",        startTime: "12:00", endTime: "14:00", type: "Übung" },
+  { id: "c15", name: "Business Strategy",          subject: "Business",           professor: "Prof. Martinez", roomId: "20",  day: "Thursday",    startTime: "10:00", endTime: "12:00", type: "Vorlesung" },
+  { id: "c16", name: "Circuit Design",             subject: "Engineering",        professor: "Dr. Lee",        roomId: "13",  day: "Tuesday",      startTime: "14:00", endTime: "16:00", type: "Praktikum" },
+  { id: "c17", name: "Thermodynamics",             subject: "Engineering",        professor: "Dr. Lee",        roomId: "13",  day: "Thursday",    startTime: "16:00", endTime: "18:00", type: "Vorlesung" },
+  { id: "c18", name: "Materials Science",          subject: "Engineering",        professor: "Dr. White",      roomId: "4",   day: "Friday",       startTime: "10:00", endTime: "12:00", type: "Vorlesung" },
+  { id: "c19", name: "Cell Biology",               subject: "Biology",            professor: "Prof. Clark",    roomId: "7",   day: "Monday",        startTime: "16:00", endTime: "18:00", type: "Vorlesung" },
+  { id: "c20", name: "Genetics",                   subject: "Biology",            professor: "Prof. Clark",    roomId: "7",   day: "Wednesday",      startTime: "12:00", endTime: "14:00", type: "Übung" },
+  { id: "c21", name: "Ecology",                    subject: "Biology",            professor: "Dr. Harris",     roomId: "12",  day: "Friday",       startTime: "14:00", endTime: "16:00", type: "Praktikum" },
 ];
