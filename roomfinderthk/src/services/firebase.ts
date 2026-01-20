@@ -596,7 +596,7 @@ export async function deleteProfessorAndLecturer(id: string) {
 
 
 // TimetableBuilder Funktionen oder so
-export const saveTimetable = (timetable: Timetable): void => {
+export const saveTimetableFire = (timetable: Timetable): void => {
   const updatedTimetables = loadTimetables();
   const existingIndex = updatedTimetables.findIndex(t => t.id === timetable.id);
 

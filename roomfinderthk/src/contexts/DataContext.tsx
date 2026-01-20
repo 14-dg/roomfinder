@@ -22,7 +22,8 @@ import {
   addStudentCheckin as addStudentCheckinService,
   removeStudentCheckin as removeStudentCheckinService,
   loadTimetables,
-  loadModules
+  loadModules,
+  saveTimetableFire
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
@@ -396,7 +397,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const saveTimetable = async (timetable: Timetable) => {
-    await saveTimetable(timetable);
+    await saveTimetableFire(timetable);
   }
 
   const saveModules = async (modules: Module[]) => {
