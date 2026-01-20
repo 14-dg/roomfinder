@@ -128,7 +128,20 @@ export async function addRoom(room: Omit<RoomWithStatus, "id">): Promise<RoomWit
 }
 
 export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus>): Promise<void> {
+// <<<<<<< HEAD
   await updateDoc(doc(db, "rooms", roomId), updates);
+// =======
+//   // Placeholder: Using localStorage
+//   // Firebase implementation would use:
+//   // await updateDoc(doc(db, 'rooms', roomId), updates);
+  
+//   const rooms = await getAllRooms();
+//   const index = rooms.findIndex(r => r.id === roomId);
+//   if (index !== -1) {
+//     rooms[index] = { ...rooms[index], ...updates };
+//     localStorage.setItem('rooms', JSON.stringify(rooms));
+//   }
+// >>>>>>> master
 }
 
 export async function deleteRoom(roomId: string): Promise<void> {
@@ -185,6 +198,26 @@ export async function clearAllBookings(): Promise<void> {
     snapshot.docs.map(d => deleteDoc(d.ref))
   );
 }
+
+// ============================================================================
+// CHECKIN SERVICES
+// ============================================================================
+
+export async function addStudentCheckin(checkin: CheckIn): Promise<void> {
+  
+  const allCheckins = await getAllStudentCheckins();
+  
+  allCheckins.push(checkin);
+  
+  localStorage.setItem('studentCheckins', JSON.stringify(allCheckins));
+}
+
+export async function removeStudentCheckin(id: string): Promise<void> {
+  const allCheckins = await getAllStudentCheckins();
+  const updated = allCheckins.filter(c => c.id !== id);
+  localStorage.setItem('studentCheckins', JSON.stringify(updated));
+}
+
 
 // ============================================================================
 // FAVORITES SERVICES

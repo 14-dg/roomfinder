@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase-config";
+import { logoutUser } from "@/services/firebase";
 
 export type AppUser = {
   id: string;
@@ -24,8 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authReady, setAuthReady] = useState(false);
 
   const logout = async () => {
-    await signOut(auth);
-    setUser(null);
+    logoutUser();
   };
 
   useEffect(() => {

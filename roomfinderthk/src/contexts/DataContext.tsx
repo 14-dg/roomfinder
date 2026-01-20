@@ -17,7 +17,7 @@ import {
 } from "@/models";
 
 import {
-  getRooms,
+  getAllRooms,
   getAllBookings,
   getAllLectures,
   getAllStudentCheckins,
@@ -30,7 +30,12 @@ import {
   registerProfessor,
   updateLecturerProfile,
   deleteProfessorAndLecturer,
-} from "@/services/firebase";
+  sendEmailToProfessorForPassword,
+  addStudentCheckin as addStudentCheckinService,
+  removeStudentCheckin as removeStudentCheckinService,
+  } from "@/services/firebase";
+import { start } from 'repl';
+import { toast } from 'sonner';
 
 import { days, defaultSchedulePattern } from "@/mockData/mockData";
 
@@ -76,39 +81,36 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadAll = async () => {
-      setIsLoading(true);
 
-      const [
-        roomsData,
-        bookingsData,
-        checkinsData,
-        schedulesData,
-        classesData,
-        timetableData,
-        lecturersData,
-      ] = await Promise.all([
-        getRooms(),
-        getAllBookings(),
-        getAllStudentCheckins(),
-        getAllCustomSchedules(),
-        getAllLectures(),
-        getAllUserTimetableEntries(),
-        getLecturers(),
-      ]);
+    const fetchData = async () => {
+      try {
+        const allRooms = await getAllRooms();
+        setRooms(allRooms);
 
-      setRooms(roomsData);
-      setBookings(bookingsData);
-      setStudentCheckins(checkinsData);
-      setCustomSchedules(schedulesData);
-      setClasses(classesData);
-      setUserTimetableEntries(timetableData);
-      setLecturers(lecturersData);
+        const allBookings = await getAllBookings();
+        setBookings(allBookings);
 
-      setIsLoading(false);
-    };
+        const allStudentCheckins = await getAllStudentCheckins();
+        setStudentCheckins(allStudentCheckins);
 
-    loadAll();
+        const allCustomSchedules = await getAllCustomSchedules();
+        setCustomSchedules(allCustomSchedules);
+
+        const allLectures = await getAllLectures();
+        setClasses(allLectures);
+
+        const allUserTimetableEntries = await getAllUserTimetableEntries();
+        setUserTimetableEntries(allUserTimetableEntries);
+
+        const allLecturers = await getLecturers();
+        setLecturers(allLecturers);
+      }
+      finally {
+
+      }
+    }
+
+    fetchData();
   }, []);
 
   const getRoomSchedule = (roomId: string): DaySchedule[] => {
@@ -168,19 +170,125 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return "full";
   };
 
-  const addRoom = async (room: Omit<RoomWithStatus, "id">) => {
+  const getCurrentDayAndTimeSlot = (): { day: string; timeSlot: string } | null => {
+    const now = new Date();
+    const currentDay = days[now.getDay() - 1]; // Adjust for 0-based index
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    for (const slot of defaultSchedulePattern) {
+      const [startHour, startMinute] = slot.start.split(':').map(Number);
+      const [endHour, endMinute] = slot.end.split(':').map(Number);
+
+      if (
+        (currentHour > startHour || (currentHour === startHour && currentMinute >= startMinute)) &&
+        (currentHour < endHour || (currentHour === endHour && currentMinute < endMinute))
+      ) {
+        return { day: currentDay, timeSlot: `${slot.start}-${slot.end}` };
+      }
+    }
+
+    return null;
+  };
+
+  const addBooking = (booking: Omit<Booking, 'id' | 'createdAt'>) => {
+    const newBooking: Booking = {
+      ...booking,
+      id: Date.now().toString(),
+      createdAt: new Date(),
+    };
+    const updatedBookings = [...bookings, newBooking];
+    setBookings(updatedBookings);
+    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+  };
+
+  const removeBooking = (id: string) => {
+    const updatedBookings = bookings.filter(b => b.id !== id);
+    setBookings(updatedBookings);
+    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+  };
+
+  const addStudentCheckin = async (checkin: Omit<CheckIn, 'id'>) => {
+    const newCheckin: CheckIn = {
+      ...checkin,
+      id: Date.now().toString(),
+    };
+    try {
+      setStudentCheckins(prev => [...prev, newCheckin]);
+      await addStudentCheckinService(newCheckin);
+
+      setRooms(prevRooms => prevRooms.map(room => {
+        if (room.id === checkin.roomId) {
+          return { ...room, checkins: (room.checkins || 0) + 1 }; 
+        }
+        return room;
+      }));
+
+      const room = rooms.find(r => r.id === checkin.roomId);
+      if (room) {
+         await updateRoomService(room.id, { checkins: (room.checkins || 0) + 1 });
+      }
+
+    } catch(error) {
+      toast.error("Check-in fehlgeschlagen");
+    }
+  };
+
+  const removeStudentCheckin = async (id: string) => {
+    try {
+
+      const checkInToRemove = studentCheckins.find(c => c.id === id);
+
+      setStudentCheckins(prev => prev.filter(c => c.id !== id));
+
+      await removeStudentCheckinService(id);
+      
+      if (checkInToRemove) {
+        setRooms(prevRooms => prevRooms.map(room => {
+          if (room.id === checkInToRemove.roomId) {
+            // Sicherstellen, dass man nicht unter 0 checkins haben kann
+            const newCount = (room.checkins || 0) - 1;
+            return { ...room, checkins: newCount < 0 ? 0 : newCount };
+          }
+          return room;
+        }));
+      }
+      
+    } catch(error) {
+      toast.error("Check-out fehlgeschlagen");
+    }
+  };
+
+  const addRoom = async (room: RoomWithStatus) => {
+    // const updatedRooms = [...rooms, room];
+    // setRooms(updatedRooms);
+    // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
+
     await addRoomService(room);
-    setRooms(await getRooms());
+    await refreshRooms();
   };
 
   const updateRoom = async (id: string, updates: Partial<RoomWithStatus>) => {
+    // const updatedRooms = rooms.map((r) => r.id === id ? { ...r, ...updates } : r);
+    // setRooms(updatedRooms);
+    // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
+
     await updateRoomService(id, updates);
-    setRooms(await getRooms());
+    await refreshRooms();
   };
 
   const deleteRoom = async (id: string) => {
+    // const updatedRooms = rooms.filter(r => r.id !== id);
+    // setRooms(updatedRooms);
+    // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
+    
+    // // Also remove bookings for this room
+    // const updatedBookings = bookings.filter(b => b.roomId !== id);
+    // setBookings(updatedBookings);
+    // localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+    
     await deleteRoomService(id);
-    setRooms(await getRooms());
+    await refreshRooms();
   };
 
   const addProfessor = async (email: string, name: string) => {

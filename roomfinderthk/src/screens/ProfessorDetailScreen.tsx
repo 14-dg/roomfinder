@@ -84,16 +84,26 @@ export default function ProfessorDetailScreen() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-sm">
+          {/* Email, Office Hours und Office Location */}
+          <div className="flex flex-col gap-3 pt-4 border-t border-slate-100 text-sm">
+            {/* Email */}
             <div className="flex items-center gap-3 text-slate-600">
               <Mail className="w-4 h-4 text-slate-400" />
               <a href={`mailto:${professor.email}`} className="hover:text-blue-600 underline-offset-4 hover:underline">
                 {professor.email}
               </a>
             </div>
+
+            
             <div className="flex items-center gap-3 text-slate-600">
               <Clock className="w-4 h-4 text-slate-400" />
-              <span>Office Hours: {professor.officeHours}</span>
+              <span>Office Hours: {professor.officeHours || "Not set"}</span>
+            </div>
+
+            
+            <div className="flex items-center gap-3 text-slate-600">
+              <MapPin className="w-4 h-4 text-slate-400" />
+              <span>Office: {professor.officeLocation || "No room assigned"}</span>
             </div>
           </div>
         </Card>

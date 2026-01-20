@@ -1,10 +1,7 @@
 export interface CheckIn {
     id: string;
     roomId: string;
-    day: string;
-    timeSlot: string;
-    studentId: string;
-    studentName: string;
-    activity: string;
-    createdAt: Date;
+    userId: string;
+    startTime: string; // ISO String: "2024-01-20T13:33:00.000Z"
+    endTime: string;
 }

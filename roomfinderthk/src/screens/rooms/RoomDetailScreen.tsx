@@ -34,7 +34,7 @@ import ScreenHeader from "@/components/ScreenHeader";
 import { useData } from "../../contexts/DataContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
-import { getOccupancyColor, getOccupancyIcon } from "@/utils/occupancy";
+import { getOccupancyColor, getOccupancyIcon, getOccupancyLevel } from "@/utils/occupancy";
 import { RoomDetailLegend } from "./RoomDetailLegend";
 import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
 
@@ -43,82 +43,107 @@ import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
 export default function RoomDetailScreen() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
+  // für checkin Dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [duration, setDuration] = useState("60");
 
   const {
     rooms,
     studentCheckins,
-
     getRoomSchedule,
-    addStudentCheckin,
-    getStudentCheckinsForSlot,
-    getLoudestActivity,
-    getOccupancyLevel,
     getCurrentDayAndTimeSlot,
     updateRoom,
+    addStudentCheckin,
+    removeStudentCheckin,
   } = useData();
 
-  const { user } = useAuth();
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<{
-    day: string;
-    start: string;
-    end: string;
-  } | null>(null);
-  const [activity, setActivity] = useState("");
-  const [duration, setDuration] = useState("2h");
+  const {
+    user,
+  } = useAuth();
 
   if (!roomId) return <p className="text-center py-10">Invalid room</p>;
 
   const room = rooms.find((r) => r.id === roomId);
   if (!room) return <p className="text-center py-10">Room not found</p>;
 
-  const {
-    roomName,
-    floor,
-    capacity,
-    hasBeamer,
-    isAvailable,
-    isLocked = false,
-  } = room;
-
-  const schedule = getRoomSchedule(roomId);
+  const schedule = getRoomSchedule(room.id);
   const currentSlot = getCurrentDayAndTimeSlot();
+
+  const myCheckIn = studentCheckins.find(c => c.userId === user?.id);
+  const isCheckedInHere = myCheckIn?.roomId === roomId;
 
   /* --------------------------- handlers ----------------------------------- */
 
-  const handleToggleLock = () => {
-    updateRoom(roomId, { isLocked: !isLocked });
-    toast.success(!isLocked ? "Room marked as locked" : "Room unlocked");
+  const handleToggleLock = async () => {
+    if (!room) return;
+    await updateRoom(room.id, { isLocked: !room.isLocked });
+    toast.success(!room.isLocked ? "Room marked as locked" : "Room marked as unlocked");
   };
 
-  const handleToggleCheckin = () => {
-    updateRoom(roomId, {});
+  const handleToggleCheckin = async () => {
 
+    if (!room) return;
+
+    if (isCheckedInHere) {
+      
+      if (myCheckIn) {
+        removeStudentCheckin(myCheckIn.id);
+        toast.success("Erfolgreich ausgecheckt");
+      }
+    } else {
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleConfirmCheckIn = async () => {
+    if (!user || !room) return;
+
+    if (myCheckIn) {
+      await removeStudentCheckin(myCheckIn.id);
+    }
+
+    const now = new Date();
+    const minutesToAdd = parseInt(duration);
+    const endTime = new Date(now.getTime() + minutesToAdd * 60000);
+
+    // neues checkin erstellen
+    await addStudentCheckin({
+      roomId: room.id,
+      userId: user.id,
+      startTime: now.toISOString(),
+      endTime: endTime.toISOString(),
+    });
+
+    toast.success(`Eingecheckt in ${room.roomName}`, {
+      description: `Bis ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} Uhr`
+    });
+    
+    // 4. Dialog schließen & Reset
+    setIsDialogOpen(false);
   };
 
   return (
     <>
-      <ScreenHeader title="Room Details" subtitle={`Details for ${roomName}`} />
+      <ScreenHeader title="Room Details" subtitle={`Details for ${room.roomName}`} />
       <div className="space-y-4">
         {/* Room Header */}
         <Card className="p-4">
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h2>{roomName}</h2>
-                {isLocked && <Lock className="w-5 h-5 text-red-600" />}
+                <h2>{room.roomName}</h2>
+                {room.isLocked && <Lock className="w-5 h-5 text-red-600" />}
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>Floor {floor}</span>
+                  <span>Floor {room.floor}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  <span>{capacity} seats</span>
+                  <span>{room.capacity} seats</span>
                 </div>
-                {hasBeamer && (
+                {room.hasBeamer && (
                   <div className="flex items-center gap-1">
                     <Projector className="w-4 h-4" />
                     <span>Beamer</span>
@@ -127,18 +152,18 @@ export default function RoomDetailScreen() {
               </div>
             </div>
 
-            <Badge variant={isLocked ? "destructive" : isAvailable ? "default" : "secondary"}>
-              {isLocked ? "Locked" : isAvailable ? "Available" : "Occupied"}
+            <Badge variant={room.isLocked ? "destructive" : room.isAvailable ? "default" : "secondary"}>
+              {room.isLocked ? "Locked" : room.isAvailable ? "Available" : "Occupied"}
             </Badge>
           </div>
 
           {/* Lock Button */}
           <Button
             onClick={handleToggleLock}
-            variant={isLocked ? "default" : "outline"}
+            variant={room.isLocked ? "default" : "outline"}
             className="w-full"
           >
-            {isLocked ? (
+            {room.isLocked ? (
               <>
                 <Unlock className="w-4 h-4 mr-2" />
                 Mark as unlocked
@@ -154,17 +179,21 @@ export default function RoomDetailScreen() {
           {/* Checkin Button */}
           <Button
             onClick={handleToggleCheckin}
-            variant={isLocked ? "default" : "outline"}
-            className="w-full"
+            variant={isCheckedInHere ? "default" : "outline"}
+            className={`w-full ${
+              isCheckedInHere 
+                ? "border-red-200 text-red-600 hover:bg-red-50" 
+                : "bg-green-600 hover:bg-green-700"
+            }`}
           >
-            {isLocked ? (
+            {isCheckedInHere ? (
               <>
-                <Unlock className="w-4 h-4 mr-2" />
+                <LogOut className="w-4 h-4 mr-2" />
                 Check Out
               </>
             ) : (
               <>
-                <Lock className="w-4 h-4 mr-2" />
+                <DoorOpen className="w-4 h-4 mr-2" />
                 Check In
               </>
             )}
@@ -176,7 +205,7 @@ export default function RoomDetailScreen() {
         </Card>
 
         {/* Current Status */}
-        {currentSlot && (
+        {(
           <Card className="p-4 bg-blue-50 border-blue-200">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-5 h-5 text-blue-600" />
@@ -184,37 +213,25 @@ export default function RoomDetailScreen() {
             </div>
             <div className="flex items-center justify-between p-3 rounded border bg-white">
               <div>
-                <span className="text-sm">Now ({currentSlot.timeSlot})</span>
                 <span
                   className={`ml-2 text-xs ${getOccupancyColor(
                     getOccupancyLevel(
-                      roomId,
-                      currentSlot.day,
-                      currentSlot.timeSlot,
-                      capacity
+                      room.checkins
                     )
                   )}`}
                 >
                   {getOccupancyIcon(
                     getOccupancyLevel(
-                      roomId,
-                      currentSlot.day,
-                      currentSlot.timeSlot,
-                      capacity
+                      room.checkins
                     )
                   )}
                 </span>
                 <div className="flex items-center gap-2 mt-1">
                   <Users className="w-3 h-3 text-gray-500" />
                   <span className="text-xs text-gray-600">
-                    {getStudentCheckinsForSlot(roomId, currentSlot.day, currentSlot.timeSlot).length}/{capacity} students
+                    {room.checkins}/{room.capacity} students
                   </span>
                 </div>
-              </div>
-              <div>
-                <Badge variant={getLoudestActivity(roomId, currentSlot.day, currentSlot.timeSlot) ? "secondary" : "default"}>
-                  {getLoudestActivity(roomId, currentSlot.day, currentSlot.timeSlot) || "Available"}
-                </Badge>
               </div>
             </div>
           </Card>
@@ -227,6 +244,42 @@ export default function RoomDetailScreen() {
         {/*<RoomWeeklySchedule></RoomWeeklySchedule>*/}
 
         {/* Check In Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Check In: {room?.roomName}</DialogTitle>
+            <DialogDescription>
+              Wähle deine Aufenthaltsdauer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            
+            {/* Dauer Auswahl */}
+            <div className="space-y-2">
+              <Label>Wie lange bleibst du?</Label>
+              <Select value={duration} onValueChange={setDuration}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Dauer wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30">30 Minuten</SelectItem>
+                  <SelectItem value="60">1 Stunde</SelectItem>
+                  <SelectItem value="90">1.5 Stunden</SelectItem>
+                  <SelectItem value="120">2 Stunden</SelectItem>
+                  <SelectItem value="240">4 Stunden</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+               <Button onClick={handleConfirmCheckIn} className="w-full">
+                 Jetzt Einchecken
+               </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </>
   );
