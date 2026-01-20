@@ -297,6 +297,26 @@ export async function clearAllBookings(): Promise<void> {
 }
 
 // ============================================================================
+// CHECKIN SERVICES
+// ============================================================================
+
+export async function addStudentCheckinService(checkin: CheckIn): Promise<void> {
+  
+  const allCheckins = await getAllStudentCheckins();
+  
+  allCheckins.push(checkin);
+  
+  localStorage.setItem('studentCheckins', JSON.stringify(allCheckins));
+}
+
+export async function removeStudentCheckinService(id: string): Promise<void> {
+  const allCheckins = await getAllStudentCheckins();
+  const updated = allCheckins.filter(c => c.id !== id);
+  localStorage.setItem('studentCheckins', JSON.stringify(updated));
+}
+
+
+// ============================================================================
 // FAVORITES SERVICES
 // ============================================================================
 
