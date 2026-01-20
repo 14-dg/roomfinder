@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import TimetableBuilder from './timetablebuilder/TimetableBuilder';
+import TimetableBuilder from './timetablebuilder/TimetableBuilderNew';
 
 import { useData } from '@/contexts/DataContext';
 import { scheduler } from 'timers/promises';
