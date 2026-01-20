@@ -25,7 +25,7 @@ export default function RoomsScreen() {
   const [selectedFloor, setSelectedFloor] = useState("all");
   const [selectedSize, setSelectedSize] = useState("all");
   const [beamerOnly, setBeamerOnly] = useState(false);
-  const [availableOnly, setAvailableOnly] = useState(true);
+  const [availableOnly, setAvailableOnly] = useState(false);
 
   // --------------------------------------------------
   // Filters
@@ -57,7 +57,7 @@ export default function RoomsScreen() {
     selectedFloor !== "all",
     selectedSize !== "all",
     beamerOnly,
-    !availableOnly,
+    availableOnly,
   ].filter(Boolean).length;
 
   // --------------------------------------------------
