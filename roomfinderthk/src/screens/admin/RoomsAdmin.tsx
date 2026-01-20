@@ -28,7 +28,7 @@ export default function RoomsAdmin() {
   const { rooms, addRoom, deleteRoom } = useData();
 
   const [newRoom, setNewRoom] = useState({
-    roomNumber: '',
+    roomName: '',
     floor: 1,
     capacity: 20,
     occupiedSeats: 0,
@@ -37,11 +37,11 @@ export default function RoomsAdmin() {
   });
 
   const handleAddRoom = () => {
-    if (!newRoom.roomNumber) return;
+    if (!newRoom.roomName) return;
 
     addRoom({
       id: Date.now().toString(),
-      roomNumber: newRoom.roomNumber,
+      roomName: newRoom.roomName,
       floor: newRoom.floor,
       capacity: newRoom.capacity,
       occupiedSeats: newRoom.occupiedSeats,
@@ -51,7 +51,7 @@ export default function RoomsAdmin() {
     });
 
     setNewRoom({
-      roomNumber: '',
+      roomName: '',
       floor: 1,
       capacity: 20,
       occupiedSeats: 0,
@@ -69,13 +69,13 @@ export default function RoomsAdmin() {
         <div className="grid grid-cols-2 gap-4 mb-4">
           {/* Room Number */}
           <div>
-            <Label htmlFor="roomNumber">Room Number</Label>
+            <Label htmlFor="roomName">Room Number</Label>
             <Input
-              id="roomNumber"
+              id="roomName"
               placeholder="ZW5-5"
-              value={newRoom.roomNumber}
+              value={newRoom.roomName}
               onChange={(e) =>
-                setNewRoom({ ...newRoom, roomNumber: e.target.value })
+                setNewRoom({ ...newRoom, roomName: e.target.value })
               }
               className="mt-2"
             />
@@ -193,7 +193,7 @@ export default function RoomsAdmin() {
             <TableBody>
               {rooms.map((room) => (
                 <TableRow key={room.id}>
-                  <TableCell>{room.roomNumber}</TableCell>
+                  <TableCell>{room.roomName}</TableCell>
                   <TableCell>{room.floor}</TableCell>
                   <TableCell>{room.capacity}</TableCell>
                   <TableCell>

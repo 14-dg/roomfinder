@@ -73,7 +73,7 @@ export default function BookingsAdmin() {
                           {isProfessor ? 'High' : 'Normal'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{room?.roomNumber}</TableCell>
+                      <TableCell>{room?.roomName}</TableCell>
                       <TableCell>{b.day}</TableCell>
                       <TableCell>{b.timeSlot}</TableCell>
                       <TableCell>{b.subject}</TableCell>
