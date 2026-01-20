@@ -34,7 +34,7 @@ import ScreenHeader from "@/components/ScreenHeader";
 import { useData } from "../../contexts/DataContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
-import { getOccupancyColor, getOccupancyIcon } from "@/utils/occupancy";
+import { getOccupancyColor, getOccupancyIcon, getOccupancyLevel } from "@/utils/occupancy";
 import { RoomDetailLegend } from "./RoomDetailLegend";
 import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
 
@@ -50,10 +50,7 @@ export default function RoomDetailScreen() {
   const {
     rooms,
     studentCheckins,
-    //user,
     getRoomSchedule,
-    getLoudestActivity,
-    getOccupancyLevel,
     getCurrentDayAndTimeSlot,
     updateRoom,
     addStudentCheckin,
@@ -208,7 +205,7 @@ export default function RoomDetailScreen() {
         </Card>
 
         {/* Current Status */}
-        {currentSlot && (
+        {(
           <Card className="p-4 bg-blue-50 border-blue-200">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-5 h-5 text-blue-600" />
@@ -216,23 +213,16 @@ export default function RoomDetailScreen() {
             </div>
             <div className="flex items-center justify-between p-3 rounded border bg-white">
               <div>
-                <span className="text-sm">Now ({currentSlot.timeSlot})</span>
                 <span
                   className={`ml-2 text-xs ${getOccupancyColor(
                     getOccupancyLevel(
-                      roomId,
-                      currentSlot.day,
-                      currentSlot.timeSlot,
-                      room.capacity
+                      room.checkins
                     )
                   )}`}
                 >
                   {getOccupancyIcon(
                     getOccupancyLevel(
-                      roomId,
-                      currentSlot.day,
-                      currentSlot.timeSlot,
-                      room.capacity
+                      room.checkins
                     )
                   )}
                 </span>
@@ -242,11 +232,6 @@ export default function RoomDetailScreen() {
                     {room.checkins}/{room.capacity} students
                   </span>
                 </div>
-              </div>
-              <div>
-                <Badge variant={getLoudestActivity(roomId, currentSlot.day, currentSlot.timeSlot) ? "secondary" : "default"}>
-                  {getLoudestActivity(roomId, currentSlot.day, currentSlot.timeSlot) || "Available"}
-                </Badge>
               </div>
             </div>
           </Card>
@@ -264,7 +249,7 @@ export default function RoomDetailScreen() {
           <DialogHeader>
             <DialogTitle>Check In: {room?.roomName}</DialogTitle>
             <DialogDescription>
-              Wähle deine Aktivität und Aufenthaltsdauer.
+              Wähle deine Aufenthaltsdauer.
             </DialogDescription>
           </DialogHeader>
 
