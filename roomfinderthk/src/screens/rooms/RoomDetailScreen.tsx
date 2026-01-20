@@ -43,6 +43,9 @@ import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
 export default function RoomDetailScreen() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
+  // für checkin Dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [duration, setDuration] = useState("60");
 
   const {
     rooms,
@@ -57,6 +60,10 @@ export default function RoomDetailScreen() {
     removeStudentCheckin,
   } = useData();
 
+  const {
+    user,
+  } = useAuth();
+
   if (!roomId) return <p className="text-center py-10">Invalid room</p>;
 
   const room = rooms.find((r) => r.id === roomId);
@@ -65,10 +72,7 @@ export default function RoomDetailScreen() {
   const schedule = getRoomSchedule(room.id);
   const currentSlot = getCurrentDayAndTimeSlot();
 
-  // für checkin Dialog
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [duration, setDuration] = useState("60");
-  const myCheckIn = studentCheckins.find(c => c.userId === User.id);
+  const myCheckIn = studentCheckins.find(c => c.userId === user?.id);
   const isCheckedInHere = myCheckIn?.roomId === roomId;
 
   /* --------------------------- handlers ----------------------------------- */
@@ -81,7 +85,44 @@ export default function RoomDetailScreen() {
 
   const handleToggleCheckin = async () => {
 
+    if (!room) return;
 
+    if (isCheckedInHere) {
+      
+      if (myCheckIn) {
+        removeStudentCheckin(myCheckIn.id);
+        toast.success("Erfolgreich ausgecheckt");
+      }
+    } else {
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleConfirmCheckIn = async () => {
+    if (!user || !room) return;
+
+    if (myCheckIn) {
+      await removeStudentCheckin(myCheckIn.id);
+    }
+
+    const now = new Date();
+    const minutesToAdd = parseInt(duration);
+    const endTime = new Date(now.getTime() + minutesToAdd * 60000);
+
+    // neues checkin erstellen
+    await addStudentCheckin({
+      roomId: room.id,
+      userId: user.id,
+      startTime: now.toISOString(),
+      endTime: endTime.toISOString(),
+    });
+
+    toast.success(`Eingecheckt in ${room.roomName}`, {
+      description: `Bis ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} Uhr`
+    });
+    
+    // 4. Dialog schließen & Reset
+    setIsDialogOpen(false);
   };
 
   return (
@@ -141,17 +182,21 @@ export default function RoomDetailScreen() {
           {/* Checkin Button */}
           <Button
             onClick={handleToggleCheckin}
-            variant={room.isLocked ? "default" : "outline"}
-            className="w-full"
+            variant={isCheckedInHere ? "default" : "outline"}
+            className={`w-full ${
+              isCheckedInHere 
+                ? "border-red-200 text-red-600 hover:bg-red-50" 
+                : "bg-green-600 hover:bg-green-700"
+            }`}
           >
-            {room.isLocked ? (
+            {isCheckedInHere ? (
               <>
-                <Unlock className="w-4 h-4 mr-2" />
+                <LogOut className="w-4 h-4 mr-2" />
                 Check Out
               </>
             ) : (
               <>
-                <Lock className="w-4 h-4 mr-2" />
+                <DoorOpen className="w-4 h-4 mr-2" />
                 Check In
               </>
             )}
@@ -214,6 +259,42 @@ export default function RoomDetailScreen() {
         {/*<RoomWeeklySchedule></RoomWeeklySchedule>*/}
 
         {/* Check In Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Check In: {room?.roomName}</DialogTitle>
+            <DialogDescription>
+              Wähle deine Aktivität und Aufenthaltsdauer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            
+            {/* Dauer Auswahl */}
+            <div className="space-y-2">
+              <Label>Wie lange bleibst du?</Label>
+              <Select value={duration} onValueChange={setDuration}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Dauer wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30">30 Minuten</SelectItem>
+                  <SelectItem value="60">1 Stunde</SelectItem>
+                  <SelectItem value="90">1.5 Stunden</SelectItem>
+                  <SelectItem value="120">2 Stunden</SelectItem>
+                  <SelectItem value="240">4 Stunden</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+               <Button onClick={handleConfirmCheckIn} className="w-full">
+                 Jetzt Einchecken
+               </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </>
   );
