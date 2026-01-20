@@ -69,8 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (email: string, password: string, name: string, role: UserRole) => {
+
     // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // await new Promise(resolve => setTimeout(resolve, 500));
 
     // Check if user already exists
     const existingUser = mockUsers.find(u => u.email === email);

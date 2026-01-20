@@ -1,2 +1,8 @@
 node_modules/
+build/
 *.pdf
+
+secrets/
+
+*.env
+*.env.local

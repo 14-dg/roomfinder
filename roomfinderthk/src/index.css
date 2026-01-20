@@ -1587,12 +1587,20 @@
     color: var(--color-red-700);
   }
 
+  .fill-red-600 {
+    fill: var(--color-red-600);
+  }
+
   .text-secondary-foreground {
     color: var(--secondary-foreground);
   }
 
   .text-white {
     color: var(--color-white);
+  }
+
+  .text-yellow-300 {
+    color: var(--color-yellow-300);
   }
 
   .text-yellow-600 {

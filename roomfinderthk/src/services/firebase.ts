@@ -12,18 +12,9 @@
  * 4. Update function signatures as needed for Firebase types
  */
 
-import type { Room, Booking, DaySchedule } from '../contexts/DataContext';
-
-// Firebase configuration (placeholder)
-// TODO: Replace with actual Firebase config when implementing
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule } from '@/models';
+import { app, auth, db } from '../firebase-config';
+import { initialClasses, initialRooms } from '@/mockData/mockData';
 
 // Initialize Firebase (placeholder)
 // TODO: Uncomment when implementing Firebase
@@ -43,6 +34,7 @@ export interface User {
   email: string;
   name: string;
   role: 'student' | 'professor' | 'admin';
+  
 }
 
 /**
@@ -137,7 +129,7 @@ export function getCurrentUser(): User | null {
  * TODO: Replace with Firestore query
  * - Use getDocs(collection(db, 'rooms'))
  */
-export async function getRooms(): Promise<Room[]> {
+export async function getRooms(): Promise<RoomWithStatus[]> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const snapshot = await getDocs(collection(db, 'rooms'));
@@ -152,7 +144,7 @@ export async function getRooms(): Promise<Room[]> {
  * TODO: Replace with Firestore query
  * - Use getDoc(doc(db, 'rooms', roomId))
  */
-export async function getRoom(roomId: string): Promise<Room | null> {
+export async function getRoom(roomId: string): Promise<RoomWithStatus | null> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const docSnap = await getDoc(doc(db, 'rooms', roomId));
@@ -167,14 +159,14 @@ export async function getRoom(roomId: string): Promise<Room | null> {
  * TODO: Replace with Firestore write
  * - Use addDoc(collection(db, 'rooms'), roomData)
  */
-export async function addRoom(room: Omit<Room, 'id'>): Promise<Room> {
+export async function addRoom(room: Omit<RoomWithStatus, 'id'>): Promise<RoomWithStatus> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const docRef = await addDoc(collection(db, 'rooms'), room);
   // return { id: docRef.id, ...room };
   
   const rooms = await getRooms();
-  const newRoom: Room = {
+  const newRoom: RoomWithStatus = {
     ...room,
     id: Date.now().toString(),
   };
@@ -188,12 +180,12 @@ export async function addRoom(room: Omit<Room, 'id'>): Promise<Room> {
  * TODO: Replace with Firestore update
  * - Use updateDoc(doc(db, 'rooms', roomId), updates)
  */
-export async function updateRoom(roomId: string, updates: Partial<Room>): Promise<void> {
+export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus>): Promise<void> {
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // await updateDoc(doc(db, 'rooms', roomId), updates);
   
-  const rooms = await getRooms();
+  const rooms = await getAllRooms();
   const index = rooms.findIndex(r => r.id === roomId);
   if (index !== -1) {
     rooms[index] = { ...rooms[index], ...updates };
@@ -305,6 +297,66 @@ export async function clearAllBookings(): Promise<void> {
 }
 
 // ============================================================================
+// CHECKIN SERVICES
+// ============================================================================
+
+export async function addStudentCheckin(checkin: CheckIn): Promise<void> {
+  
+  const allCheckins = await getAllStudentCheckins();
+  
+  allCheckins.push(checkin);
+  
+  localStorage.setItem('studentCheckins', JSON.stringify(allCheckins));
+}
+
+export async function removeStudentCheckin(id: string): Promise<void> {
+  const allCheckins = await getAllStudentCheckins();
+  const updated = allCheckins.filter(c => c.id !== id);
+  localStorage.setItem('studentCheckins', JSON.stringify(updated));
+}
+
+
+// ============================================================================
+// FAVORITES SERVICES
+// ============================================================================
+
+/**
+ * Get favorites for a user
+ * 
+ * TODO: Replace with Firestore query
+ * - Use getDoc(doc(db, 'favorites', userId))
+ */
+export async function getFavoritesFromFirestore(userId: string): Promise<string[]> {
+  // const docSnap = await getDoc(doc(db, 'favorites', userId));
+  // return docSnap.exists() ? docSnap.data().roomIds : [];
+
+  // -----------------------------
+  // Placeholder: localStorage
+  // -----------------------------
+  const raw = localStorage.getItem(`favorites_${userId}`);
+  return raw ? JSON.parse(raw) : [];
+}
+
+/**
+ * Save favorites for a user
+ * 
+ * TODO: Replace with Firestore write
+ * - Use setDoc(doc(db, 'favorites', userId), { roomIds })
+ */
+export async function saveFavoritesToFirestore(
+  userId: string,
+  roomIds: string[]
+): Promise<void> {
+  // await setDoc(doc(db, 'favorites', userId), {
+  //   roomIds,
+  //   updatedAt: serverTimestamp(),
+  // });
+
+  localStorage.setItem(`favorites_${userId}`, JSON.stringify(roomIds));
+}
+
+
+// ============================================================================
 // TIMETABLE SERVICES
 // ============================================================================
 
@@ -318,7 +370,7 @@ interface RoomSchedule {
  * TODO: Replace with Firestore query
  * - Use getDoc(doc(db, 'timetables', roomId))
  */
-export async function getRoomTimetable(roomId: string): Promise<DaySchedule[] | null> {
+export async function getRoomDetailScreen(roomId: string): Promise<DaySchedule[] | null> { 
   // Placeholder: Using localStorage
   // Firebase implementation would use:
   // const docSnap = await getDoc(doc(db, 'timetables', roomId));
@@ -382,7 +434,7 @@ export async function deleteTimetable(roomId: string): Promise<void> {
  * TODO: Implement with Firestore real-time listener
  * - Use onSnapshot(collection(db, 'rooms'), callback)
  */
-export function subscribeToRooms(callback: (rooms: Room[]) => void): () => void {
+export function subscribeToRooms(callback: (rooms: RoomWithStatus[]) => void): () => void {
   // Placeholder: No real-time updates with localStorage
   // Firebase implementation would use:
   // return onSnapshot(collection(db, 'rooms'), (snapshot) => {
@@ -412,6 +464,41 @@ export function subscribeToBookings(callback: (bookings: Booking[]) => void): ()
 }
 
 // ============================================================================
+// Startup Functions
+// ============================================================================
+// DataContext ruft diese Funktionen auf, um alle Daten zu bekommen
+
+export async function getAllRooms(): Promise<RoomWithStatus[]> {
+  const allRooms = localStorage.getItem('rooms');
+  return allRooms ? JSON.parse(allRooms) : initialRooms;
+}
+
+export async function getAllBookings(): Promise<Booking[]> {
+  const savedBookings = localStorage.getItem('bookings');
+    return savedBookings ? JSON.parse(savedBookings) : [];
+}
+
+export async function getAllStudentCheckins(): Promise<CheckIn[]> {
+    const savedCheckins = localStorage.getItem('studentCheckins');
+    return savedCheckins ? JSON.parse(savedCheckins) : [];
+}
+
+export async function getAllCustomSchedules(): Promise<RoomSchedule[]> {
+    const savedSchedules = localStorage.getItem('customSchedules');
+    return savedSchedules ? JSON.parse(savedSchedules) : [];
+}
+
+export async function getAllLectures(): Promise<Lecture[]> {
+    const savedLectures = localStorage.getItem('classes');
+    return savedLectures ? JSON.parse(savedLectures) : initialClasses;
+  }
+  
+  export async function getAllUserTimetableEntries(): Promise<UserTimetableEntry[]> {
+    const savedEntries = localStorage.getItem('userTimetableEntries');
+    return savedEntries ? JSON.parse(savedEntries) : [];
+  }
+
+// ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
@@ -433,4 +520,75 @@ export async function isTimeSlotAvailable(
 export async function getUserBookings(userId: string): Promise<Booking[]> {
   const bookings = await getBookings();
   return bookings.filter(b => b.bookedBy === userId);
+}
+
+
+
+// ============================================================================
+// PROFESSOR SERVICES
+// ============================================================================
+/**
+ * Holt alle Nutzer mit der Rolle 'professor'
+ * TODO: Firebase Query: query(collection(db, 'users'), where('role', '==', 'professor'))
+ */
+// --- In firebase.ts HINZUFÜGEN oder ERSETZEN ---
+
+/**
+ * Simuliert das Senden einer Email (z.B. via EmailJS oder Cloud Functions)
+ */
+export async function sendEmailToProfessorForPassword(email: string, password: string) {
+  console.log(`Email gesendet an ${email} mit Passwort: ${password}`);
+  // Hier würde später dein echter Email-Service-Aufruf stehen
+  return new Promise((resolve) => setTimeout(resolve, 800)); 
+}
+
+/**
+ * Erstellt User-Account UND Lecturer-Profil
+ */
+export async function registerProfessor(email: string, name: string) {
+  // 1. Technischer User (für Login)
+
+  // hier richtige passwort lopgik einfügen
+  const Passwort = "12345";
+  const newUser = await registerUser(email, Passwort, name, 'professor');
+  
+  // 2. Öffentliches Profil (für Timetable/Sprechzeiten)
+  const lecturers = JSON.parse(localStorage.getItem('lecturers') || '[]');
+  const newLecturer = {
+    id: newUser.id, // Verknüpfung über gleiche ID
+    name,
+    email,
+    officeHours: '',
+    officeLocation: '',
+  };
+  lecturers.push(newLecturer);
+  localStorage.setItem('lecturers', JSON.stringify(lecturers));
+  await sendEmailToProfessorForPassword(email, Passwort);
+  
+  return { newUser, newLecturer };
+}
+
+// Holen aller Lecturer
+export async function getLecturers(): Promise<any[]> {
+  const data = localStorage.getItem('lecturers');
+  return data ? JSON.parse(data) : [];
+}
+
+// Update Profil (Sprechzeiten)
+export async function updateLecturerProfile(id: string, updates: any) {
+  const lecturers = await getLecturers();
+  const index = lecturers.findIndex(l => l.id === id);
+  if (index !== -1) {
+    lecturers[index] = { ...lecturers[index], ...updates };
+    localStorage.setItem('lecturers', JSON.stringify(lecturers));
+  }
+}
+
+// Löschen beider Einträge
+export async function deleteProfessorAndLecturer(id: string) {
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  localStorage.setItem('users', JSON.stringify(users.filter((u: any) => u.id !== id)));
+  
+  const lecturers = await getLecturers();
+  localStorage.setItem('lecturers', JSON.stringify(lecturers.filter(l => l.id !== id)));
 }
