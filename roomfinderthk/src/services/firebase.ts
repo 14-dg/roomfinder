@@ -203,19 +203,17 @@ export async function clearAllBookings(): Promise<void> {
 // CHECKIN SERVICES
 // ============================================================================
 
-export async function addStudentCheckin(checkin: CheckIn): Promise<void> {
-  
-  const allCheckins = await getAllStudentCheckins();
-  
-  allCheckins.push(checkin);
-  
-  localStorage.setItem('studentCheckins', JSON.stringify(allCheckins));
+export async function addStudentCheckin(checkin: Omit<CheckIn, 'id'>): Promise<string> {
+  // Wir speichern den Check-in in einer eigenen Collection
+  const docRef = await addDoc(collection(db, "checkins"), {
+    ...checkin,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id; // Gibt die von Firestore generierte ID zurück
 }
 
 export async function removeStudentCheckin(id: string): Promise<void> {
-  const allCheckins = await getAllStudentCheckins();
-  const updated = allCheckins.filter(c => c.id !== id);
-  localStorage.setItem('studentCheckins', JSON.stringify(updated));
+  await deleteDoc(doc(db, "checkins", id));
 }
 
 
@@ -373,8 +371,11 @@ export async function getAllBookings(): Promise<Booking[]> {
 }
 
 export async function getAllStudentCheckins(): Promise<CheckIn[]> {
-    const savedCheckins = localStorage.getItem('studentCheckins');
-    return savedCheckins ? JSON.parse(savedCheckins) : [];
+  const snapshot = await getDocs(collection(db, "checkins"));
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<CheckIn, "id">),
+  }));
 }
 
 export async function getAllCustomSchedules(): Promise<RoomSchedule[]> {

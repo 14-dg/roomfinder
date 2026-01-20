@@ -273,52 +273,62 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const addStudentCheckin = async (checkin: Omit<CheckIn, 'id'>) => {
-    const newCheckin: CheckIn = {
-      ...checkin,
-      id: Date.now().toString(),
-    };
     try {
+      // 1. In Firestore speichern und ID erhalten
+      const newId = await addStudentCheckinService(checkin);
+      
+      const newCheckin: CheckIn = {
+        ...checkin,
+        id: newId,
+      };
+
+      // 2. Lokalen State aktualisieren für sofortiges UI-Feedback
       setStudentCheckins(prev => [...prev, newCheckin]);
-      await addStudentCheckinService(newCheckin);
 
-      setRooms(prevRooms => prevRooms.map(room => {
-        if (room.id === checkin.roomId) {
-          return { ...room, checkins: (room.checkins || 0) + 1 }; 
-        }
-        return room;
-      }));
-
+      // 3. Raum-Counter in Firestore inkrementieren
       const room = rooms.find(r => r.id === checkin.roomId);
       if (room) {
-         await updateRoomService(room.id, { checkins: (room.checkins || 0) + 1 });
+        const newCount = (room.checkins || 0) + 1;
+        await updateRoomService(room.id, { checkins: newCount });
+        
+        // Lokalen Raum-State ebenfalls syncen
+        setRooms(prevRooms => prevRooms.map(r => 
+          r.id === room.id ? { ...r, checkins: newCount } : r
+        ));
       }
 
+      toast.success("Check-in erfolgreich");
     } catch(error) {
+      console.error(error);
       toast.error("Check-in fehlgeschlagen");
     }
   };
 
   const removeStudentCheckin = async (id: string) => {
     try {
-
       const checkInToRemove = studentCheckins.find(c => c.id === id);
+      if (!checkInToRemove) return;
 
+      // 1. Aus Firestore löschen
+      await removeStudentCheckinService(id);
+
+      // 2. Lokalen State aktualisieren
       setStudentCheckins(prev => prev.filter(c => c.id !== id));
 
-      await removeStudentCheckinService(id);
-      
-      if (checkInToRemove) {
-        setRooms(prevRooms => prevRooms.map(room => {
-          if (room.id === checkInToRemove.roomId) {
-            // Sicherstellen, dass man nicht unter 0 checkins haben kann
-            const newCount = (room.checkins || 0) - 1;
-            return { ...room, checkins: newCount < 0 ? 0 : newCount };
-          }
-          return room;
-        }));
+      // 3. Raum-Counter dekrementieren
+      const room = rooms.find(r => r.id === checkInToRemove.roomId);
+      if (room) {
+        const newCount = Math.max(0, (room.checkins || 0) - 1);
+        await updateRoomService(room.id, { checkins: newCount });
+        
+        setRooms(prevRooms => prevRooms.map(r => 
+          r.id === room.id ? { ...r, checkins: newCount } : r
+        ));
       }
       
+      toast.success("Check-out erfolgreich");
     } catch(error) {
+      console.error(error);
       toast.error("Check-out fehlgeschlagen");
     }
   };
