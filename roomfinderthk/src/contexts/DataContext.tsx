@@ -18,8 +18,12 @@ import {
   registerProfessor,
   updateLecturerProfile,
   deleteProfessorAndLecturer,
-  sendEmailToProfessorForPassword
+  sendEmailToProfessorForPassword,
+  addStudentCheckin as addStudentCheckinService,
+  removeStudentCheckin as removeStudentCheckinService,
   } from "@/services/firebase";
+import { start } from 'repl';
+import { toast } from 'sonner';
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {
@@ -122,7 +126,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setRooms(allRooms);
 
         const allBookings = await getAllBookings();
-        setBookings(allBookings); 
+        setBookings(allBookings);
+
         const allStudentCheckins = await getAllStudentCheckins();
         setStudentCheckins(allStudentCheckins);
 
@@ -267,21 +272,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('bookings', JSON.stringify(updatedBookings));
   };
 
-  const addStudentCheckin = (checkin: Omit<CheckIn, 'id' | 'createdAt'>) => {
+  const addStudentCheckin = async (checkin: Omit<CheckIn, 'id'>) => {
     const newCheckin: CheckIn = {
       ...checkin,
       id: Date.now().toString(),
-      createdAt: new Date(),
     };
-    const updatedCheckins = [...studentCheckins, newCheckin];
-    setStudentCheckins(updatedCheckins);
-    localStorage.setItem('studentCheckins', JSON.stringify(updatedCheckins));
+    try {
+      setStudentCheckins(prev => [...prev, newCheckin]);
+      await addStudentCheckinService(newCheckin);
+    } catch(error) {
+      toast.error("Check-in fehlgeschlagen");
+    }
   };
 
-  const removeStudentCheckin = (id: string) => {
-    const updatedCheckins = studentCheckins.filter(c => c.id !== id);
-    setStudentCheckins(updatedCheckins);
-    localStorage.setItem('studentCheckins', JSON.stringify(updatedCheckins));
+  const removeStudentCheckin = async (id: string) => {
+    try {
+      setStudentCheckins(prev => prev.filter(c => c.id !== id));
+      await removeStudentCheckinService(id);
+    } catch(error) {
+      toast.error("Check-out fehlgeschlagen");
+    }
   };
 
   const addRoom = (room: RoomWithStatus) => {
