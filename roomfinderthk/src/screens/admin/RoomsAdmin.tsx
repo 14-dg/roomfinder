@@ -54,9 +54,7 @@ export default function RoomsAdmin() {
       ...newRoom,
       id: Date.now().toString(),
       isAvailable: true,
-    } as RoomWithStatus);
-
-    toast.success(`Room "${newRoom.roomName}" added successfully`);
+    });
 
     // Reset Form
     setNewRoom({
