@@ -24,17 +24,12 @@ import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySched
 import { app, auth, db } from '../firebase-config';
 import { initialClasses, initialRooms } from '@/mockData/mockData';
 
+import User from "@/models/User";
+
 // ============================================================================
 // AUTHENTICATION SERVICES
 // ============================================================================
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'student' | 'professor' | 'admin';
-  
-}
 
 export async function registerUser(
   email: string,
@@ -46,24 +41,31 @@ export async function registerUser(
     const userCredential =
       await createUserWithEmailAndPassword(auth, email, password);
 
-    await setDoc(doc(db, 'users', userCredential.user.uid), {
+    const uid = userCredential.user.uid;
+
+    await setDoc(doc(db, 'users', uid), {
       email,
       name,
       role,
+      favourites: [],
+      timetable: [],
       createdAt: serverTimestamp(),
     });
 
     return {
-      id: userCredential.user.uid,
+      id: uid,
       email,
       name,
       role,
+      favourites: [],
+      timetable: [],
     };
   } catch (err) {
     console.error("REGISTER FAILED:", err);
     throw err;
   }
 }
+
 
 export async function loginUser(
   email: string,
@@ -92,6 +94,8 @@ export async function loginUser(
     email: userCredential.user.email ?? email,
     name: data.name,
     role: data.role,
+    favourites: data.favourites ?? [],
+    timetable: data.timetable ?? [],
   };
 }
 
