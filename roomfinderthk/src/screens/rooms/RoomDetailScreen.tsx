@@ -46,12 +46,15 @@ export default function RoomDetailScreen() {
 
   const {
     rooms,
+    studentCheckins,
+    //user,
     getRoomSchedule,
-    getStudentCheckinsForSlot,
     getLoudestActivity,
     getOccupancyLevel,
     getCurrentDayAndTimeSlot,
     updateRoom,
+    addStudentCheckin,
+    removeStudentCheckin,
   } = useData();
 
   if (!roomId) return <p className="text-center py-10">Invalid room</p>;
@@ -62,6 +65,12 @@ export default function RoomDetailScreen() {
   const schedule = getRoomSchedule(room.id);
   const currentSlot = getCurrentDayAndTimeSlot();
 
+  // für checkin Dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [duration, setDuration] = useState("60");
+  const myCheckIn = studentCheckins.find(c => c.userId === User.id);
+  const isCheckedInHere = myCheckIn?.roomId === roomId;
+
   /* --------------------------- handlers ----------------------------------- */
 
   const handleToggleLock = async () => {
@@ -70,8 +79,8 @@ export default function RoomDetailScreen() {
     toast.success(!room.isLocked ? "Room marked as locked" : "Room marked as unlocked");
   };
 
-  const handleToggleCheckin = () => {
-    updateRoom(room.id, {});
+  const handleToggleCheckin = async () => {
+
 
   };
 
@@ -185,7 +194,7 @@ export default function RoomDetailScreen() {
                 <div className="flex items-center gap-2 mt-1">
                   <Users className="w-3 h-3 text-gray-500" />
                   <span className="text-xs text-gray-600">
-                    {getStudentCheckinsForSlot(roomId, currentSlot.day, currentSlot.timeSlot).length}/{room.capacity} students
+                    {room.checkins}/{room.capacity} students
                   </span>
                 </div>
               </div>
