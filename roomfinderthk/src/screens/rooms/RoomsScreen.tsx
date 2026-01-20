@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { RoomCard } from "@/screens/rooms/RoomCard";
@@ -17,19 +17,8 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 import { RoomWithStatus } from "@/models";
 
-import { getRooms } from "@/services/firebase";
-
 export default function RoomsScreen() {
-  const [rooms, setRooms] = useState<RoomWithStatus[]>([]);
-
-  useEffect(() => {
-    const fetchRooms = async () => {
-      const data = await getRooms();
-      setRooms(data);
-    };
-    fetchRooms();
-  }, []);
-
+  const { rooms } = useData();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");
