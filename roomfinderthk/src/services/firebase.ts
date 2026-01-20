@@ -139,88 +139,51 @@ export async function deleteRoom(roomId: string): Promise<void> {
 // BOOKING SERVICES
 // ============================================================================
 
-/**
- * Get all bookings
- * TODO: Replace with Firestore query
- * - Use getDocs(collection(db, 'bookings'))
- */
 export async function getBookings(): Promise<Booking[]> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const snapshot = await getDocs(collection(db, 'bookings'));
-  // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-  const bookings = localStorage.getItem('bookings');
-  return bookings ? JSON.parse(bookings) : [];
+  const snapshot = await getDocs(collection(db, "bookings"));
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<Booking, "id">),
+  }));
 }
 
-/**
- * Get bookings for a specific room
- * TODO: Replace with Firestore query
- * - Use query(collection(db, 'bookings'), where('roomId', '==', roomId))
- */
 export async function getRoomBookings(roomId: string): Promise<Booking[]> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const q = query(collection(db, 'bookings'), where('roomId', '==', roomId));
-  // const snapshot = await getDocs(q);
-  // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-  const bookings = await getBookings();
-  return bookings.filter(b => b.roomId === roomId);
+  const q = query(
+    collection(db, "bookings"),
+    where("roomId", "==", roomId)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<Booking, "id">),
+  }));
 }
 
-/**
- * Add a new booking
- * TODO: Replace with Firestore write
- * - Use addDoc(collection(db, 'bookings'), bookingData)
- */
-export async function addBooking(booking: Omit<Booking, 'id' | 'createdAt'>): Promise<Booking> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const docRef = await addDoc(collection(db, 'bookings'), { ...booking, createdAt: serverTimestamp() });
-  // return { id: docRef.id, ...booking, createdAt: new Date() };
-  
-  const bookings = await getBookings();
-  const newBooking: Booking = {
+export async function addBooking(
+  booking: Omit<Booking, "id" | "createdAt">
+): Promise<Booking> {
+  const docRef = await addDoc(collection(db, "bookings"), {
     ...booking,
-    id: Date.now().toString(),
+    createdAt: serverTimestamp(),
+  });
+
+  return {
+    id: docRef.id,
+    ...booking,
     createdAt: new Date(),
   };
-  bookings.push(newBooking);
-  localStorage.setItem('bookings', JSON.stringify(bookings));
-  return newBooking;
 }
 
-/**
- * Delete a booking
- * TODO: Replace with Firestore delete
- * - Use deleteDoc(doc(db, 'bookings', bookingId))
- */
 export async function deleteBooking(bookingId: string): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await deleteDoc(doc(db, 'bookings', bookingId));
-  
-  const bookings = await getBookings();
-  const filteredBookings = bookings.filter(b => b.id !== bookingId);
-  localStorage.setItem('bookings', JSON.stringify(filteredBookings));
+  await deleteDoc(doc(db, "bookings", bookingId));
 }
 
-/**
- * Delete all bookings (Admin only)
- * TODO: Replace with Firestore batch delete
- * - Use batch writes to delete all booking documents
- */
 export async function clearAllBookings(): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const batch = writeBatch(db);
-  // const snapshot = await getDocs(collection(db, 'bookings'));
-  // snapshot.docs.forEach(doc => batch.delete(doc.ref));
-  // await batch.commit();
-  
-  localStorage.setItem('bookings', JSON.stringify([]));
+  const snapshot = await getDocs(collection(db, "bookings"));
+  await Promise.all(
+    snapshot.docs.map(d => deleteDoc(d.ref))
+  );
 }
 
 // ============================================================================
