@@ -280,6 +280,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       setStudentCheckins(prev => [...prev, newCheckin]);
       await addStudentCheckinService(newCheckin);
+
+      setRooms(prevRooms => prevRooms.map(room => {
+        if (room.id === checkin.roomId) {
+          return { ...room, checkins: (room.checkins || 0) + 1 }; 
+        }
+        return room;
+      }));
+
+      const room = rooms.find(r => r.id === checkin.roomId);
+      if (room) {
+         await updateRoomService(room.id, { checkins: (room.checkins || 0) + 1 });
+      }
+
     } catch(error) {
       toast.error("Check-in fehlgeschlagen");
     }
@@ -287,8 +300,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const removeStudentCheckin = async (id: string) => {
     try {
+
+      const checkInToRemove = studentCheckins.find(c => c.id === id);
+
       setStudentCheckins(prev => prev.filter(c => c.id !== id));
+
       await removeStudentCheckinService(id);
+      
+      if (checkInToRemove) {
+        setRooms(prevRooms => prevRooms.map(room => {
+          if (room.id === checkInToRemove.roomId) {
+            // Sicherstellen, dass man nicht unter 0 checkins haben kann
+            const newCount = (room.checkins || 0) - 1;
+            return { ...room, checkins: newCount < 0 ? 0 : newCount };
+          }
+          return room;
+        }));
+      }
+      
     } catch(error) {
       toast.error("Check-out fehlgeschlagen");
     }
