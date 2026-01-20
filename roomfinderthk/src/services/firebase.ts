@@ -18,6 +18,8 @@ import {
   query,
   where,
   serverTimestamp,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule } from '@/models';
@@ -225,39 +227,32 @@ export async function clearAllBookings(): Promise<void> {
 // FAVORITES SERVICES
 // ============================================================================
 
-/**
- * Get favorites for a user
- * 
- * TODO: Replace with Firestore query
- * - Use getDoc(doc(db, 'favorites', userId))
- */
 export async function getFavoritesFromFirestore(userId: string): Promise<string[]> {
-  // const docSnap = await getDoc(doc(db, 'favorites', userId));
-  // return docSnap.exists() ? docSnap.data().roomIds : [];
+  const userRef = doc(db, "users", userId);
+  const snap = await getDoc(userRef);
 
-  // -----------------------------
-  // Placeholder: localStorage
-  // -----------------------------
-  const raw = localStorage.getItem(`favorites_${userId}`);
-  return raw ? JSON.parse(raw) : [];
+  if (!snap.exists()) return [];
+  return snap.data().favourites ?? [];
 }
 
-/**
- * Save favorites for a user
- * 
- * TODO: Replace with Firestore write
- * - Use setDoc(doc(db, 'favorites', userId), { roomIds })
- */
-export async function saveFavoritesToFirestore(
+export async function addFavoriteToFirestore(
   userId: string,
-  roomIds: string[]
+  roomId: string
 ): Promise<void> {
-  // await setDoc(doc(db, 'favorites', userId), {
-  //   roomIds,
-  //   updatedAt: serverTimestamp(),
-  // });
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, {
+    favourites: arrayUnion(roomId),
+  });
+}
 
-  localStorage.setItem(`favorites_${userId}`, JSON.stringify(roomIds));
+export async function removeFavoriteFromFirestore(
+  userId: string,
+  roomId: string
+): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, {
+    favourites: arrayRemove(roomId),
+  });
 }
 
 
