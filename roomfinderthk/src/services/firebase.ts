@@ -12,7 +12,7 @@
  * 4. Update function signatures as needed for Firebase types
  */
 
-import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule } from '@/models';
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, Timetable, Module, } from '@/models';
 import { app, auth, db } from '../firebase-config';
 import { initialClasses, initialRooms } from '@/mockData/mockData';
 
@@ -568,3 +568,33 @@ export async function deleteProfessorAndLecturer(id: string) {
   const lecturers = await getLecturers();
   localStorage.setItem('lecturers', JSON.stringify(lecturers.filter(l => l.id !== id)));
 }
+
+
+
+// TimetableBuilder Funktionen oder so
+export const saveTimetable = (timetable: Timetable): void => {
+  const updatedTimetables = loadTimetables();
+  const existingIndex = updatedTimetables.findIndex(t => t.id === timetable.id);
+
+  if(existingIndex >= 0) {
+    updatedTimetables[existingIndex] = timetable;
+  } else {
+    updatedTimetables.push(timetable);
+  }
+
+  localStorage.setItem('timetables', JSON.stringify(updatedTimetables));
+};
+
+export const loadTimetables = (): Timetable[] => {
+  const data = localStorage.getItem('timetables');
+  return data ? JSON.parse(data) : [];
+}
+
+export const saveModules = (modules: Module[]): void => {
+  localStorage.setItem('modules', JSON.stringify(modules));
+};
+
+export const loadModules = (): Module[] => {
+  const data = localStorage.getItem('modules');
+  return data ? JSON.parse(data) : [];
+};
