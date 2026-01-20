@@ -50,6 +50,7 @@ export default function RoomDetailScreen() {
   const {
     rooms,
     studentCheckins,
+    classes,
     getRoomSchedule,
     getCurrentDayAndTimeSlot,
     updateRoom,
@@ -71,6 +72,7 @@ export default function RoomDetailScreen() {
 
   const myCheckIn = studentCheckins.find(c => c.userId === user?.id);
   const isCheckedInHere = myCheckIn?.roomId === roomId;
+  const roomLectures = classes.filter(l => l.roomId === room.id);
 
   /* --------------------------- handlers ----------------------------------- */
 
@@ -242,6 +244,10 @@ export default function RoomDetailScreen() {
 
         {/* Weekly Schedule */}
         {/*<RoomWeeklySchedule></RoomWeeklySchedule>*/}
+        <div className="mt-6">
+            <h3 className="text-lg font-medium mb-3">Wochenplan</h3>
+            <RoomWeeklySchedule lectures={roomLectures} />
+        </div>
 
         {/* Check In Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
