@@ -95,12 +95,10 @@ async function registerUserWithoutLogin(
 
     await setDoc(doc(db, 'users', uid), userProfile);
 
-    // KORREKTUR HIER:
     await deleteApp(tempApp); 
 
     return { id: uid, ...userProfile } as User;
   } catch (err) {
-    // AUCH IM CATCH-BLOCK KORRIGIEREN:
     await deleteApp(tempApp);
     console.error("REGISTER WITHOUT LOGIN FAILED:", err);
     throw err;
@@ -167,20 +165,7 @@ export async function addRoom(room: Omit<RoomWithStatus, "id">): Promise<RoomWit
 }
 
 export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus>): Promise<void> {
-// <<<<<<< HEAD
   await updateDoc(doc(db, "rooms", roomId), updates);
-// =======
-//   // Placeholder: Using localStorage
-//   // Firebase implementation would use:
-//   // await updateDoc(doc(db, 'rooms', roomId), updates);
-  
-//   const rooms = await getAllRooms();
-//   const index = rooms.findIndex(r => r.id === roomId);
-//   if (index !== -1) {
-//     rooms[index] = { ...rooms[index], ...updates };
-//     localStorage.setItem('rooms', JSON.stringify(rooms));
-//   }
-// >>>>>>> master
 }
 
 export async function deleteRoom(roomId: string): Promise<void> {
