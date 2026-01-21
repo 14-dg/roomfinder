@@ -87,6 +87,7 @@ interface DataContextType {
   addLecture: (lecture: Omit<Lecture, 'id'>) => Promise<Lecture | null>;
   removeLecture: (id: string) => Promise<void>;
   getRoomLectures: (roomId: string) => Lecture[];
+  getProfessorLectures: (professorId: string) => Lecture[];
   getRoomBookings: (roomId: string) => Booking[];
 }
 
@@ -211,9 +212,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
+
   // Spezialisierter Selektor für Raum-Vorlesungen
   const getRoomLectures = useCallback((roomId: string): Lecture[] => {
     return classes.filter(l => l.roomId === roomId);
+  }, [classes]);
+
+  // Spezialisierter Selektor für Professor-Vorlesungen
+  const getProfessorLectures = useCallback((professorId: string): Lecture[] => {
+    return classes.filter(l => l.professor === professorId);
   }, [classes]);
 
   // Spezialisierter Selektor für Raum-Buchungen
@@ -688,6 +695,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addLecture,
         removeLecture,
         getRoomLectures,
+        getProfessorLectures,
         getRoomBookings,
       }}
     >
