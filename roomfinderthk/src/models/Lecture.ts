@@ -8,8 +8,8 @@ export interface Lecture {
     professor: string;
     roomId: string;
     day: string;
-    startTime: string;
-    endTime: string;
+    startTime: string;  // HH:MM
+    endTime: string;    // HH:MM
     startDate?: string;
     endDate?: string;
 }
