@@ -91,10 +91,21 @@ export default function ClassesScreen() {
 
     try {
       if (isEventInTimetable(lecture.id)) {
-        await removeEventFromUserTimetable(lecture.uniqueKey || lecture.id.toString(), user.id);
+        await removeEventFromUserTimetable(lecture.id.toString(), user.id);
         toast.success('Lecture removed from your timetable');
       } else {
-        await addEventToUserTimetable(lecture.uniqueKey || lecture.id.toString(), user.id, lecture);
+        // Pass only the lecture id and minimal info, so DataContext can match it in ProfileScreen
+        await addEventToUserTimetable(lecture.id.toString(), user.id, {
+          id: lecture.id,
+          name: lecture.name,
+          type: lecture.type,
+          professor: lecture.professor,
+          roomId: lecture.roomId,
+          day: lecture.day,
+          startTime: lecture.startTime,
+          endTime: lecture.endTime,
+          subject: lecture.subject
+        });
         toast.success('Lecture added to your timetable');
       }
     } catch (error) {
