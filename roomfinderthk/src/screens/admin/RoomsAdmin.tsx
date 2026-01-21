@@ -51,7 +51,6 @@ export default function RoomsAdmin() {
 
     addRoom({
       ...newRoom,
-      id: Date.now().toString(),
       isAvailable: true,
     } as RoomWithStatus);
 
