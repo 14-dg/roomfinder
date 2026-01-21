@@ -1,5 +1,3 @@
-import { Lecturer, Room, Module } from ;
-
 //  use in:
 //      - src/screens/admin/timetablebuilder/TimetableBuilder.tsx
 //  for:
@@ -11,9 +9,9 @@ export interface Event {
     startTime: string;
     endTime: string;
     name: string;
-    lecturer: Lecturer;
-    room: Room;
-    module: Module;
+    lecturer: string;
+    room: string;
+    module: string;
     typeOf: string;
     duration: number;
     column: number;
