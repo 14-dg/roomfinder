@@ -485,9 +485,12 @@ export async function deleteProfessorAndLecturer(id: string) {
 }
 
 
+// ============================================================================
+//                            TIMETABLEBUILDER
+// ============================================================================
 
-// TimetableBuilder Funktionen oder so
-export const saveTimetableFire = (timetable: Timetable): void => {
+
+export function saveTimetableFire(timetable: Timetable) {
   const updatedTimetables = loadTimetables();
   const existingIndex = updatedTimetables.findIndex(t => t.id === timetable.id);
 
@@ -505,7 +508,7 @@ export const loadTimetables = (): Timetable[] => {
   return data ? JSON.parse(data) : [];
 }
 
-export const saveModules = (modules: Module[]): void => {
+export const saveModulesFire = (modules: Module[]): void => {
   localStorage.setItem('modules', JSON.stringify(modules));
 };
 
