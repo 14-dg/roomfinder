@@ -3,7 +3,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import './timetablebuilderNew.css';
 import { useData } from '@/contexts/DataContext';
-import { Timetable, Event as TimetableEvent, Lecturer, Module, RoomWithStatus, Event} from '@/models';
+import { Timetable, Event as TimetableEvent, Lecturer, Module, RoomWithStatus, Event, Lecture, LectureType} from '@/models';
+import { addLecture, removeLecture } from '@/services/firebase';
 
 interface TimetableBuilderProps {
   courseOfStudy: string;
@@ -468,7 +469,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setShowForm(true);
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     if (!selectedTimetable) return;
 
     if (
@@ -506,6 +507,25 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
         room: formData.room || null,
         module: formData.module || null
       };
+
+      const newLecture: Lecture = {
+        id: selectedTimetable.events.length > 0
+        ? (Math.max(...selectedTimetable.events.map((e: Event) => e.id || 0))).toString() + 1
+        : "1",
+        name: formData.name,
+        type: formData.typeOf as LectureType,
+        professor: formData.lecturer,
+        roomId: formData.room,
+        day: formData.day,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        startDate: (semester === "Wintersemester") ? "01.10." + year : "01.04." + year,
+        endDate: (semester === "Wintersemester") ? "31.01." + (year + 1) : "31.07." + year,
+      }
+
+      
+      await addLecture(newLecture);
+
       updatedEvents.push(newEvent);
     }
 
@@ -520,7 +540,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setFormData(initialFormData);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedTimetable || !editingEvent) return;
 
     const updatedEvents: Event[] = selectedTimetable.events.filter((e: Event) => e.id !== editingEvent.id);
@@ -533,6 +553,8 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setSelectedTimetable(updatedTimetable);
     setShowForm(false);
     setFormData(initialFormData);
+
+    await removeLecture(editingEvent.id.toString());
   };
 
   const handleIncludeSaturdayChange = (checked: boolean) => {
