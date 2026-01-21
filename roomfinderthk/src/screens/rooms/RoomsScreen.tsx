@@ -1,8 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { RoomCard } from "@/screens/rooms/RoomCard";
-
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -10,10 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ScreenHeader from "@/components/ScreenHeader";
-
 import { Search } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
-import { RoomWithStatus } from "@/models";
 
 export default function RoomsScreen() {
   const { rooms } = useData();
@@ -51,12 +47,6 @@ export default function RoomsScreen() {
     });
   }, [rooms, searchQuery, selectedFloor, selectedSize, beamerOnly, availableOnly]);
 
-  const activeFiltersCount = [
-    selectedFloor !== "all",
-    selectedSize !== "all",
-    beamerOnly,
-    availableOnly,
-  ].filter(Boolean).length;
 
   // --------------------------------------------------
   // Room list
@@ -87,7 +77,7 @@ export default function RoomsScreen() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All floors</SelectItem>
-                {[1, 2, 3, 4, 5].map(f => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(f => (
                   <SelectItem key={f} value={String(f)}>
                     Floor {f}
                   </SelectItem>
