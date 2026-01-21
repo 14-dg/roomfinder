@@ -11,7 +11,6 @@ interface TimetableBuilderProps {
   year: number;
 }
 
-// Zeit-Slots
 const timeSlots = [
   '08:00', '08:50', '09:45', '10:35', '11:30', '12:20', '13:15', '14:05',
   '15:00', '15:50', '16:45', '17:35', '18:30', '19:20'
@@ -33,7 +32,6 @@ const typeOptions = [
   'Other'
 ];
 
-// EventForm-Komponente
 interface EventFormProps {
   formData: Partial<TimetableEvent>;
   setFormData: React.Dispatch<React.SetStateAction<Partial<TimetableEvent>>>;
@@ -56,14 +54,12 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-  // Berechne verfügbare Endzeiten basierend auf der Startzeit
   const getAvailableEndTimes = () => {
     if (!formData.startTime) return [];
     const startIndex = dayTimes.indexOf(formData.startTime);
     return dayTimes.slice(startIndex + 1);
   };
 
-  // Berechne verfügbare Dauer-Optionen basierend auf der Startzeit
   const getAvailableDurations = () => {
     if (!formData.startTime) return [];
     const startIndex = dayTimes.indexOf(formData.startTime);
@@ -71,7 +67,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     return Array.from({ length: maxDuration }, (_, i) => i + 1);
   };
 
-  // Berechne die Endzeit basierend auf Startzeit und Dauer
   const calculateEndTime = (duration: number) => {
     if (!formData.startTime) return '';
     const startIndex = dayTimes.indexOf(formData.startTime);
@@ -79,7 +74,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     return endIndex < dayTimes.length ? dayTimes[endIndex] : dayTimes[dayTimes.length - 1];
   };
 
-  // Berechne die Dauer basierend auf Startzeit und Endzeit
   const calculateDuration = (endTime: string) => {
     if (!formData.startTime) return 1;
     const startIndex = dayTimes.indexOf(formData.startTime);
@@ -87,7 +81,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     return endIndex >= startIndex ? (endIndex - startIndex) : 1;
   };
 
-  // Aktualisiere die Endzeit, wenn sich die Dauer ändert
   const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const duration = parseInt(e.target.value);
     const endTime = calculateEndTime(duration);
@@ -98,7 +91,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     });
   };
 
-  // Aktualisiere die Dauer, wenn sich die Endzeit ändert
   const handleEndTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const endTime = e.target.value;
     const duration = calculateDuration(endTime);
@@ -326,7 +318,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
   );
 };
 
-// TimetableCell-Komponente
 const TimetableCell = ({
   day,
   timeSlot,
@@ -399,17 +390,15 @@ const TimetableCell = ({
   );
 };
 
-// Hauptkomponente
 const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, semester, year }) => {
   const [includeSaturday, setIncludeSaturday] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const { timetables, rooms, lecturers, modules, saveTimetable, loadTimetables, saveModules, loadModules } = useData();
+  const { rooms, lecturers, modules, saveTimetable, loadTimetables, saveModules } = useData();
 
-  // Erstellen Sie einen eindeutigen Schlüssel für diesen Stundenplan
-  const timetableKey = `timetable_${courseOfStudy}_${semester}_${year}`;
+  // maybe needed for future usage
+  // const timetableKey = `timetable_${courseOfStudy}_${semester}_${year}`;
 
-  // Initialer Formulardaten
   const initialFormData: Partial<TimetableEvent> = {
     day: '',
     startTime: '08:00',
@@ -426,7 +415,6 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
   const [formData, setFormData] = useState<Partial<TimetableEvent>>(initialFormData);
   const [selectedTimetable, setSelectedTimetable] = useState<Timetable | null>(null);
 
-  // Erstellen eines neuen Stundenplans
   const createTimetable = (): Timetable => {
     return {
       id: Date.now().toString(),
@@ -438,7 +426,6 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     };
   };
 
-  // Laden oder Erstellen des Stundenplans beim ersten Rendern
   useEffect(() => {
     const allTimetables = loadTimetables();
     const existingTimetable = allTimetables.find(t => t.courseOfStudy === courseOfStudy && t.semester === semester && t.year === year);
