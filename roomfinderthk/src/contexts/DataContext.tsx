@@ -54,7 +54,6 @@ interface DataContextType {
   userTimetableEntries: UserTimetableEntry[];
   timetables: Timetable[];
   modules: Module[];
-  userEvents: UserEvent[];
   getRoomSchedule: (roomId: string) => DaySchedule[];
   getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => CheckIn[];
   getLoudestActivity: (roomId: string, day: string, timeSlot: string) => string;
