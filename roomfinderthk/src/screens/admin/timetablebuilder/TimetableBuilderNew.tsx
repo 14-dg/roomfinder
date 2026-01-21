@@ -403,7 +403,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
   const [includeSaturday, setIncludeSaturday] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const { timetables, rooms, lecturers, modules, saveTimetable, loadTimetables } = useData();
+  const { timetables, rooms, lecturers, modules, saveTimetable, loadTimetables, saveModules, loadModules } = useData();
 
   // Erstellen Sie einen eindeutigen Schlüssel für diesen Stundenplan
   const timetableKey = `timetable_${courseOfStudy}_${semester}_${year}`;
@@ -634,7 +634,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
             modules={modules}
             addModule={(newModule: Module) => {
               const updatedModules = [...modules, newModule];
-              localStorage.setItem('modules', JSON.stringify(updatedModules));
+              saveModules(updatedModules);
             }}
           />
         </div>

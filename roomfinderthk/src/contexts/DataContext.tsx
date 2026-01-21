@@ -24,6 +24,7 @@ import {
   loadTimetables,
   loadModules,
   saveTimetableFire,
+  saveModulesFire,
   addUserEvent as addUserEventService,
   removeUserEvent as removeUserEventService,
   getUserEventsByUserId as getUserEventsByUserIdService,
@@ -142,6 +143,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const refreshModules = async () => {
     const data = await loadModules();
     setModules(data);
+  }
+
+  const refreshTimetable = async () => {
+    const data = await loadTimetables();
+    setTimetables(data);
   }
 
   const refreshUserTimetableEntries = async () => {
@@ -411,11 +417,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const saveTimetable = async (timetable: Timetable) => {
     await saveTimetableFire(timetable);
+    await refreshTimetable();
   }
 
   const saveModules = async (modules: Module[]) => {
-    await saveModules(modules);
-    await refreshModules;
+    await saveModulesFire(modules);
+    await refreshModules();
   }
 
   const uploadTimetable = (roomId: string, schedule: DaySchedule[]) => {
