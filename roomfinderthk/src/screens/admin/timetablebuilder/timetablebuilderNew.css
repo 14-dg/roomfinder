@@ -81,6 +81,10 @@
   background-color: #c6f0ff; /* Hellorange für Übungen */
 }
 
+.event-tutorial {
+  background-color: #aaaaaa
+}
+
 .event-seminar {
   background-color: #f3e5f5; /* Helllila für Seminare */
 }

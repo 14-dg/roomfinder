@@ -28,6 +28,7 @@ const typeOptions = [
   'Lecture',
   'Practical Course',
   'Exercise',
+  'Tutorial',
   'Seminar',
   'Other'
 ];
@@ -355,6 +356,8 @@ const TimetableCell = ({
         return 'event-practical-course';
       case 'exercise':
         return 'event-exercise';
+      case 'tutorial':
+        return 'event-tutorial';
       case 'seminar':
         return 'event-seminar';
       default:
