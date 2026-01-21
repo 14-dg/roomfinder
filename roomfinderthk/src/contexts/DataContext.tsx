@@ -33,6 +33,7 @@ import {
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
+import { checkRoomAvailability } from '@/utils/availability';
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {
@@ -54,7 +55,6 @@ interface DataContextType {
   userTimetableEntries: UserTimetableEntry[];
   timetables: Timetable[];
   modules: Module[];
-  userEvents: UserEvent[];
   getRoomSchedule: (roomId: string) => DaySchedule[];
   getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => CheckIn[];
   getLoudestActivity: (roomId: string, day: string, timeSlot: string) => string;
@@ -122,6 +122,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [lecturers, setLecturers] = useState<any[]>([]);
 
   const [timetables, setTimetables] = useState<Timetable[]>([]);
+
   const [modules, setModules] = useState<Module[]>([]);
 
   // const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>(() => {
@@ -129,6 +130,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   //   return savedEntries ? JSON.parse(savedEntries) : [];
   // });
   const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>([]);
+
+  const [tick, setTick] = useState(0);
 
   const refreshRooms = async () => {
     const updatedRooms = await getAllRooms();
@@ -192,6 +195,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    // Aktualisiert die Ansicht jede Minute, damit "Available" live umspringt
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 60000); 
+    return () => clearInterval(interval);
   }, []);
 
   const getRoomSchedule = (roomId: string): DaySchedule[] => {
@@ -520,10 +531,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
   }, [userTimetableEntries, timetables]);
 
+  const roomsWithDerivedStatus = rooms.map(room => ({
+    ...room,
+    isAvailable: checkRoomAvailability(room.id, classes, bookings)
+  }));
+
   return (
     <DataContext.Provider
       value={{
-        rooms,
+        rooms: roomsWithDerivedStatus,
         bookings,
         studentCheckins,
         classes,
