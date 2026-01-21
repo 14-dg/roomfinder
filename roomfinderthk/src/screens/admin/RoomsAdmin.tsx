@@ -22,15 +22,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// --- Imports from central types and context ---
 import { useData } from '@/contexts/DataContext';
 import { RoomWithStatus, RoomCategory } from '@/models/RoomWithStatus';
 
+// Admin-Screen zur Verwaltung von Räumen: Hinzufügen, Bearbeiten und Löschen
 export default function RoomsAdmin() {
   const { rooms, addRoom, deleteRoom } = useData();
 
-  // Initial state uses Partial<RoomWithStatus> for the form
+  // Formularstatus für neue Räume
   const [newRoom, setNewRoom] = useState<Partial<RoomWithStatus>>({
     roomName: '',
     roomType: 'seminarraum',
@@ -43,13 +42,13 @@ export default function RoomsAdmin() {
     isLocked: false,
   });
 
+  // Fügt einen neuen Raum hinzu und setzt das Formular zurück
   const handleAddRoom = () => {
     if (!newRoom.roomName || !newRoom.roomType) {
       toast.error("Please provide room name and category");
       return;
     }
 
-    // Completing the object and passing it to the context
     addRoom({
       ...newRoom,
       id: Date.now().toString(),
@@ -58,7 +57,7 @@ export default function RoomsAdmin() {
 
     toast.success(`Room "${newRoom.roomName}" added successfully`);
 
-    // Reset Form
+    // Setzt Formular auf Standardwerte zurück
     setNewRoom({
       roomName: '',
       roomType: 'seminarraum',
@@ -78,7 +77,7 @@ export default function RoomsAdmin() {
         <h3 className="mb-4 text-lg font-semibold">Add New Room</h3>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
-          {/* Room Name */}
+          {/* Raumnummer/Name */}
           <div>
             <Label htmlFor="roomName">Room Number / Name</Label>
             <Input
@@ -90,7 +89,7 @@ export default function RoomsAdmin() {
             />
           </div>
 
-          {/* Category */}
+          {/* Raumtyp (z.B. Seminarraum, Labor, etc.) */}
           <div>
             <Label htmlFor="roomType">Category</Label>
             <Select
@@ -110,7 +109,7 @@ export default function RoomsAdmin() {
             </Select>
           </div>
 
-          {/* Campus (Hardcoded) */}
+          {/* Campus (derzeit nur Deutz verfügbar) */}
           <div>
             <Label htmlFor="campus">Campus</Label>
             <Select
@@ -126,7 +125,7 @@ export default function RoomsAdmin() {
             </Select>
           </div>
 
-          {/* Building (Restricted to Main Building) */}
+          {/* Gebäude (derzeit nur Hauptgebäude) */}
           <div>
             <Label htmlFor="building">Building</Label>
             <Select
@@ -142,7 +141,7 @@ export default function RoomsAdmin() {
             </Select>
           </div>
 
-          {/* Floor & Capacity */}
+          {/* Stockwerk und Raumkapazität */}
           <div>
             <Label htmlFor="floor">Floor</Label>
             <Input
@@ -165,7 +164,7 @@ export default function RoomsAdmin() {
             />
           </div>
 
-          {/* Equipment & Status */}
+          {/* Ausstattung: Beamer und Sperrungsstatus */}
           <div className="col-span-2 flex items-center gap-10 pt-2">
             <div className="flex items-center gap-2">
               <Switch
@@ -193,7 +192,7 @@ export default function RoomsAdmin() {
         </Button>
       </Card>
 
-      {/* Room List */}
+      {/* Alle Räume anzeigen */}
       <Card className="p-6">
         <h3 className="mb-4 text-lg font-semibold">Manage Rooms ({rooms.length})</h3>
         <div className="overflow-x-auto">
@@ -212,21 +211,26 @@ export default function RoomsAdmin() {
               {rooms.map((room: RoomWithStatus) => (
                 <TableRow key={room.id}>
                   <TableCell className="font-medium">{room.roomName}</TableCell>
+                  {/* Raumtyp anzeigen */}
                   <TableCell className="capitalize">
                     {room.roomType === 'seminarraum' ? 'Seminar Room' : 
                      room.roomType === 'labor' ? 'Laboratory' : 'PC Pool'}
                   </TableCell>
+                  {/* Standort: Campus, Gebäude und Stockwerk */}
                   <TableCell>{room.campus} - {room.building} (Floor {room.floor})</TableCell>
+                  {/* Beamer-Status */}
                   <TableCell>
                     <Badge variant={room.hasBeamer ? "secondary" : "outline"}>
                       {room.hasBeamer ? "Yes" : "No"}
                     </Badge>
                   </TableCell>
+                  {/* Verfügbarkeitsstatus (grün = frei, rot = belegt) */}
                   <TableCell>
                     <Badge className={room.isAvailable ? "bg-green-500 hover:bg-green-500" : "bg-red-500 hover:bg-red-500"}>
                       {room.isAvailable ? "Available" : "Occupied"}
                     </Badge>
                   </TableCell>
+                  {/* Löschen-Button */}
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => deleteRoom(room.id)}>
                       <Trash2 className="w-4 h-4 text-red-600" />

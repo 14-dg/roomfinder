@@ -6,6 +6,11 @@ import TimetablesAdmin from './TimetablesAdmin';
 import BookingsAdmin from './BookingsAdmin';
 import ProfessorsAdmin from './ProfessorsAdmin';
 
+
+//------------------------------ screen ------------------------------------ //
+// hier wird der Admin Screen mit Tabs für die verschiedenen Admin Bereiche erstellt
+// und aufgerufen
+
 export default function AdminScreen() {
   return (
     <>
