@@ -48,23 +48,7 @@ import { Event, Timetable } from "@/models";
  * Helper to group events by day and sort them by start time.
  * Filters out days that have no events.
  */
-function groupEventsByDay(events: Event[]) {
-  const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  
-  const grouped = events.reduce((acc, event) => {
-    const day = event.day;
-    if (!acc[day]) acc[day] = [];
-    acc[day].push(event);
-    return acc;
-  }, {} as Record<string, Event[]>);
 
-  return daysOrder
-    .filter(day => grouped[day] && grouped[day].length > 0)
-    .map(day => ({
-      day,
-      slots: grouped[day].sort((a, b) => a.startTime.localeCompare(b.startTime))
-    }));
-}
 
 export default function RoomDetailScreen() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -77,13 +61,10 @@ export default function RoomDetailScreen() {
     rooms,
     studentCheckins,
     classes,
-    getRoomSchedule,
-    getCurrentDayAndTimeSlot,
+    bookings,
     updateRoom,
     addStudentCheckin,
     removeStudentCheckin,
-    bookings,
-    timetables,
   } = useData();
 
   const {
@@ -95,32 +76,10 @@ export default function RoomDetailScreen() {
   const room = rooms.find((r) => r.id === roomId);
   if (!room) return <p className="text-center py-10">Room not found</p>;
 
-  const schedule = getRoomSchedule(room.id);
-  const currentSlot = getCurrentDayAndTimeSlot();
-
-  // Get room bookings (timetable entries)
-  const roomBookings = bookings.filter(b => b.roomId === roomId);
-
-  // Get room events from timetables
-  const roomEvents = useMemo(() => {
-    if (!timetables) return [];
-
-    const eventsInRoom: Event[] = timetables.flatMap((timetable: Timetable) =>
-      timetable.events
-        .filter(event => event.room?.id === roomId)
-        .map(event => ({
-          ...event,
-          courseOfStudy: timetable.courseOfStudy,
-          semester: timetable.semester
-        }))
-    );
-
-    return groupEventsByDay(eventsInRoom);
-  }, [roomId, timetables]);
-
   const myCheckIn = studentCheckins.find(c => c.userId === user?.id);
   const isCheckedInHere = myCheckIn?.roomId === roomId;
-  const roomLectures = classes.filter(l => l.roomId === room.id);
+  const roomLectures = classes.filter(l => l.roomId === room.id); 
+  const roomBookings = bookings.filter(b => b.roomId === roomId);
 
   /* --------------------------- handlers ----------------------------------- */
 
@@ -135,7 +94,7 @@ export default function RoomDetailScreen() {
     if (!room) return;
 
     if (isCheckedInHere) {
-      
+
       if (myCheckIn) {
         removeStudentCheckin(myCheckIn.id);
         toast.success("Erfolgreich ausgecheckt");
@@ -165,10 +124,9 @@ export default function RoomDetailScreen() {
     });
 
     toast.success(`Eingecheckt in ${room.roomName}`, {
-      description: `Bis ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} Uhr`
+      description: `Bis ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Uhr`
     });
-    
-    // 4. Dialog schließen & Reset
+
     setIsDialogOpen(false);
   };
 
@@ -202,6 +160,7 @@ export default function RoomDetailScreen() {
               </div>
             </div>
 
+            {/*TODO*/}
             <Badge variant={room.isLocked ? "destructive" : room.isAvailable ? "default" : "secondary"}>
               {room.isLocked ? "Locked" : room.isAvailable ? "Available" : "Occupied"}
             </Badge>
@@ -230,11 +189,10 @@ export default function RoomDetailScreen() {
           <Button
             onClick={handleToggleCheckin}
             variant={isCheckedInHere ? "default" : "outline"}
-            className={`w-full ${
-              isCheckedInHere 
-                ? "border-red-200 text-red-600 hover:bg-red-50" 
+            className={`w-full ${isCheckedInHere
+                ? "border-red-200 text-red-600 hover:bg-red-50"
                 : "bg-green-600 hover:bg-green-700"
-            }`}
+              }`}
           >
             {isCheckedInHere ? (
               <>
@@ -288,137 +246,48 @@ export default function RoomDetailScreen() {
         )}
 
         {/* Legende */}
-        <RoomDetailLegend/>
+        <RoomDetailLegend />
 
-        {/* Timetable - Room Bookings */}
-        {roomBookings.length > 0 && (
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold">Room Bookings</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Day</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Booked By</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {roomBookings.map((booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell className="font-medium">{booking.day}</TableCell>
-                      <TableCell>{booking.timeSlot}</TableCell>
-                      <TableCell>{booking.subject}</TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {booking.bookedByName}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        )}
-
-        {/* Events/Lectures in this Room */}
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Scheduled Lectures</h3>
-
-          {roomEvents.length > 0 ? (
-            <div className="space-y-6">
-              {roomEvents.map((dayGroup) => (
-                <div key={dayGroup.day} className="space-y-3">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 border-b pb-1">
-                    {dayGroup.day}
-                  </h4>
-                  <div className="grid gap-3">
-                    {dayGroup.slots.map((event) => (
-                      <div
-                        key={event.id}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-white border-slate-200 hover:border-blue-300 hover:shadow-md transition-all group"
-                      >
-                        <div className="mb-2 sm:mb-0">
-                          <p className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">
-                            {event.name}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-4 mt-1 text-xs text-slate-500">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5 text-slate-400" />
-                              {event.startTime} - {event.endTime}
-                            </span>
-                            {event.lecturer && (
-                              <span className="flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5 text-slate-400" />
-                                {event.lecturer.name}
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1 text-blue-600 font-medium">
-                              <GraduationCap className="w-3.5 h-3.5" />
-                              {(event as any).courseOfStudy}, Sem. {(event as any).semester}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Card className="p-10 text-center border-dashed border-slate-300 bg-slate-50/50">
-              <p className="text-sm text-slate-500 italic">No scheduled lectures found for this room.</p>
-            </Card>
-          )}
-        </div>
-
-        
-        {/*<RoomWeeklySchedule></RoomWeeklySchedule>*/}
-        <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Wochenplan</h3>
-            <RoomWeeklySchedule lectures={roomLectures} />
-        </div>
+        {/*RoomSchedule*/}
+        <RoomWeeklySchedule lectures={roomLectures} bookings={roomBookings} />
 
         {/* Check In Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Check In: {room?.roomName}</DialogTitle>
-            <DialogDescription>
-              Wähle deine Aufenthaltsdauer.
-            </DialogDescription>
-          </DialogHeader>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Check In: {room?.roomName}</DialogTitle>
+              <DialogDescription>
+                Wähle deine Aufenthaltsdauer.
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            
-            {/* Dauer Auswahl */}
-            <div className="space-y-2">
-              <Label>Wie lange bleibst du?</Label>
-              <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Dauer wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 Minuten</SelectItem>
-                  <SelectItem value="60">1 Stunde</SelectItem>
-                  <SelectItem value="90">1.5 Stunden</SelectItem>
-                  <SelectItem value="120">2 Stunden</SelectItem>
-                  <SelectItem value="240">4 Stunden</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-4 py-4">
+
+              {/* Dauer Auswahl */}
+              <div className="space-y-2">
+                <Label>Wie lange bleibst du?</Label>
+                <Select value={duration} onValueChange={setDuration}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Dauer wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 Minuten</SelectItem>
+                    <SelectItem value="60">1 Stunde</SelectItem>
+                    <SelectItem value="90">1.5 Stunden</SelectItem>
+                    <SelectItem value="120">2 Stunden</SelectItem>
+                    <SelectItem value="240">4 Stunden</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DialogFooter>
+                <Button onClick={handleConfirmCheckIn} className="w-full">
+                  Jetzt Einchecken
+                </Button>
+              </DialogFooter>
             </div>
-
-            <DialogFooter>
-               <Button onClick={handleConfirmCheckIn} className="w-full">
-                 Jetzt Einchecken
-               </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
