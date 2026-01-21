@@ -118,7 +118,8 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
       addModule(newModule);
       setFormData({
         ...formData,
-        module: newModule
+        module: newModule,
+        name: newModule.name
       });
       setNewModuleName('');
       setNewModuleId('');
