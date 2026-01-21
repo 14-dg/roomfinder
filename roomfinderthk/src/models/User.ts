@@ -6,4 +6,10 @@ export default interface User {
 
   favourites: string[];
   timetable: string[];
+
+  // Additional fields for professors
+  department?: string;
+  officeHours?: string;
+  officeLocation?: string;
+  lectures?: string[];
 }

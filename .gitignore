@@ -3,3 +3,6 @@ build/
 *.pdf
 
 secrets/
+
+*.env
+*.env.local
