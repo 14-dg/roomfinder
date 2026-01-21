@@ -425,7 +425,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
 
-    await addRoomService(room);
+    // Remove id before sending to Firebase (Firestore generates it)
+    const { id, ...roomData } = room;
+    await addRoomService(roomData);
     await refreshRooms();
   };
 
