@@ -3,7 +3,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import './timetablebuilderNew.css';
 import { useData } from '@/contexts/DataContext';
-import { Timetable, Event as TimetableEvent, Lecturer, Module, RoomWithStatus, Event} from '@/models';
+import { Timetable, Event as TimetableEvent, Lecturer, Module, RoomWithStatus, Event, Lecture, LectureType} from '@/models';
 
 interface TimetableBuilderProps {
   courseOfStudy: string;
@@ -11,7 +11,6 @@ interface TimetableBuilderProps {
   year: number;
 }
 
-// Zeit-Slots
 const timeSlots = [
   '08:00', '08:50', '09:45', '10:35', '11:30', '12:20', '13:15', '14:05',
   '15:00', '15:50', '16:45', '17:35', '18:30', '19:20'
@@ -25,15 +24,14 @@ const dayTimes = [
 const initialDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 const typeOptions = [
-  'Lecture',
-  'Practical Course',
-  'Exercise',
-  'Tutorial',
+  'Vorlesung',
+  'Uebung',
+  'Praktikum',
+  'Tutorium',
   'Seminar',
-  'Other'
+  'Anderes'
 ];
 
-// EventForm-Komponente
 interface EventFormProps {
   formData: Partial<TimetableEvent>;
   setFormData: React.Dispatch<React.SetStateAction<Partial<TimetableEvent>>>;
@@ -50,20 +48,17 @@ interface EventFormProps {
 
 const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEditing, includeSaturday, lecturers, rooms, modules, addModule }: EventFormProps) => {
   const [newModuleName, setNewModuleName] = useState('');
-  const [newModuleId, setNewModuleId] = useState('');
 
   const availableDays = includeSaturday
     ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-  // Berechne verfügbare Endzeiten basierend auf der Startzeit
   const getAvailableEndTimes = () => {
     if (!formData.startTime) return [];
     const startIndex = dayTimes.indexOf(formData.startTime);
     return dayTimes.slice(startIndex + 1);
   };
 
-  // Berechne verfügbare Dauer-Optionen basierend auf der Startzeit
   const getAvailableDurations = () => {
     if (!formData.startTime) return [];
     const startIndex = dayTimes.indexOf(formData.startTime);
@@ -71,7 +66,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     return Array.from({ length: maxDuration }, (_, i) => i + 1);
   };
 
-  // Berechne die Endzeit basierend auf Startzeit und Dauer
   const calculateEndTime = (duration: number) => {
     if (!formData.startTime) return '';
     const startIndex = dayTimes.indexOf(formData.startTime);
@@ -79,7 +73,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     return endIndex < dayTimes.length ? dayTimes[endIndex] : dayTimes[dayTimes.length - 1];
   };
 
-  // Berechne die Dauer basierend auf Startzeit und Endzeit
   const calculateDuration = (endTime: string) => {
     if (!formData.startTime) return 1;
     const startIndex = dayTimes.indexOf(formData.startTime);
@@ -87,7 +80,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     return endIndex >= startIndex ? (endIndex - startIndex) : 1;
   };
 
-  // Aktualisiere die Endzeit, wenn sich die Dauer ändert
   const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const duration = parseInt(e.target.value);
     const endTime = calculateEndTime(duration);
@@ -98,7 +90,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
     });
   };
 
-  // Aktualisiere die Dauer, wenn sich die Endzeit ändert
   const handleEndTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const endTime = e.target.value;
     const duration = calculateDuration(endTime);
@@ -110,18 +101,17 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
   };
 
   const handleAddModule = () => {
-    if (newModuleName && newModuleId) {
+    if (newModuleName) {
       const newModule = {
-        id: parseInt(newModuleId),
         name: newModuleName
       };
       addModule(newModule);
       setFormData({
         ...formData,
-        module: newModule
+        module: newModule,
+        name: newModule.name
       });
       setNewModuleName('');
-      setNewModuleId('');
     }
   };
 
@@ -141,7 +131,7 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         room: selectedRoom
       });
     } else if (name === 'module') {
-      const selectedModule = modules.find(m => m.id.toString() === value) || null;
+      const selectedModule = modules.find(m => m.id?.toString() === value) || modules.find(m => m.name === value) || null;
       setFormData({
         ...formData,
         module: selectedModule,
@@ -157,20 +147,20 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
 
   return (
     <div className="event-form-popup">
-      <h4>{isEditing ? 'Veranstaltung bearbeiten' : 'Neue Veranstaltung hinzufügen'}</h4>
+      <h4>{isEditing ? 'Edit Event' : 'Add new Event'}</h4>
       <form onSubmit={(e) => {
         e.preventDefault();
         onSubmit();
       }}>
         <div className="form-group">
-          <label>Tag:</label>
+          <label>Day:</label>
           <select
             name="day"
             value={formData.day || ''}
             onChange={handleChange}
             required
           >
-            <option value="">Wählen Sie einen Tag</option>
+            <option value="">Select a Day</option>
             {availableDays.map(option => (
               <option key={option} value={option}>{option}</option>
             ))}
@@ -178,7 +168,7 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         </div>
 
         <div className="form-group">
-          <label>Startzeit:</label>
+          <label>Start:</label>
           <select
             name="startTime"
             value={formData.startTime || ''}
@@ -192,7 +182,7 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         </div>
 
         <div className="form-group">
-          <label>Dauer (Zeitslots):</label>
+          <label>Duration (Timeslots):</label>
           <select
             name="duration"
             value={formData.duration || 1}
@@ -208,7 +198,7 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         </div>
 
         <div className="form-group">
-          <label>Endzeit:</label>
+          <label>End:</label>
           <select
             name="endTime"
             value={formData.endTime || '' }
@@ -224,14 +214,14 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         </div>
 
         <div className="form-group">
-          <label>Typ:</label>
+          <label>Type:</label>
           <select
             name="typeOf"
             value={formData.typeOf || ''}
             onChange={handleChange}
             required
           >
-            <option value="">Wählen Sie einen Typ</option>
+            <option value="">Select a Type</option>
             {typeOptions.map(option => (
               <option key={option} value={option}>{option}</option>
             ))}
@@ -239,14 +229,14 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         </div>
 
         <div className="form-group">
-          <label>Dozent:</label>
+          <label>Lecturer:</label>
           <select
             name="lecturer"
             value={formData.lecturer?.id || ''}
             onChange={handleChange}
             required
           >
-            <option value="">Wählen Sie einen Dozenten</option>
+            <option value="">Select a Lecturer</option>
             {lecturers.map(lecturer => (
               <option key={lecturer.id} value={lecturer.id}>{lecturer.name}</option>
             ))}
@@ -254,14 +244,14 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         </div>
 
         <div className="form-group">
-          <label>Raum:</label>
+          <label>Room:</label>
           <select
             name="room"
             value={formData.room?.id || ''}
             onChange={handleChange}
             required
           >
-            <option value="">Wählen Sie einen Raum</option>
+            <option value="">Select a Room</option>
             {rooms.map(room => (
               <option key={room.id} value={room.id}>{room.roomName}</option>
             ))}
@@ -269,33 +259,27 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         </div>
 
         <div className="form-group">
-          <label>Modul:</label>
+          <label>Module:</label>
           <select
             name="module"
-            value={formData.module?.id || ''}
+            value={formData.module?.name || ''}
             onChange={handleChange}
             required
           >
-            <option value="">Wählen Sie ein Modul</option>
+            <option value="">Select a Module</option>
             {modules.map(module => (
-              <option key={module.id} value={module.id}>{module.name}</option>
+              <option key={module.id || module.name} value={module.id || module.name}>{module.name}</option>
             ))}
           </select>
-          {!formData.module?.id && (
+          {!formData.module?.name && (
             <div className="new-module-container">
               <input
-                type="number"
-                placeholder="Modul-ID"
-                value={newModuleId}
-                onChange={(e) => setNewModuleId(e.target.value)}
-              />
-              <input
                 type="text"
-                placeholder="Modulname"
+                placeholder="Name"
                 value={newModuleName}
                 onChange={(e) => setNewModuleName(e.target.value)}
               />
-              <button type="button" onClick={handleAddModule}>Hinzufügen</button>
+              <button type="button" onClick={handleAddModule}>Add</button>
             </div>
           )}
         </div>
@@ -312,11 +296,11 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         </div>
 
         <div className="form-buttons">
-          <button type="submit">{isEditing ? 'Aktualisieren' : 'Hinzufügen'}</button>
-          <button type="button" onClick={onCancel}>Abbrechen</button>
+          <button type="submit">{isEditing ? 'Update' : 'Add'}</button>
+          <button type="button" onClick={onCancel}>Cancel</button>
           {isEditing && onDelete && (
             <button type="button" className="delete-button" onClick={onDelete}>
-              Löschen
+              Delete
             </button>
           )}
         </div>
@@ -325,7 +309,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
   );
 };
 
-// TimetableCell-Komponente
 const TimetableCell = ({
   day,
   timeSlot,
@@ -350,13 +333,13 @@ const TimetableCell = ({
 
   const getEventClass = (typeOf: string) => {
     switch(typeOf.toLowerCase()) {
-      case 'lecture':
+      case 'vorlesung':
         return 'event-lecture';
-      case 'practical course':
+      case 'praktikum':
         return 'event-practical-course';
-      case 'exercise':
+      case 'uebung':
         return 'event-exercise';
-      case 'tutorial':
+      case 'tutorium':
         return 'event-tutorial';
       case 'seminar':
         return 'event-seminar';
@@ -398,17 +381,12 @@ const TimetableCell = ({
   );
 };
 
-// Hauptkomponente
 const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, semester, year }) => {
   const [includeSaturday, setIncludeSaturday] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const { timetables, rooms, lecturers, modules, saveTimetable, loadTimetables } = useData();
+  const { rooms, lecturers, modules, saveTimetable, loadTimetables, saveModules, addLecture, removeLecture } = useData();
 
-  // Erstellen Sie einen eindeutigen Schlüssel für diesen Stundenplan
-  const timetableKey = `timetable_${courseOfStudy}_${semester}_${year}`;
-
-  // Initialer Formulardaten
   const initialFormData: Partial<TimetableEvent> = {
     day: '',
     startTime: '08:00',
@@ -425,7 +403,6 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
   const [formData, setFormData] = useState<Partial<TimetableEvent>>(initialFormData);
   const [selectedTimetable, setSelectedTimetable] = useState<Timetable | null>(null);
 
-  // Erstellen eines neuen Stundenplans
   const createTimetable = (): Timetable => {
     return {
       id: Date.now().toString(),
@@ -437,7 +414,6 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     };
   };
 
-  // Laden oder Erstellen des Stundenplans beim ersten Render
   useEffect(() => {
     const allTimetables = loadTimetables();
     const existingTimetable = allTimetables.find(t => t.courseOfStudy === courseOfStudy && t.semester === semester && t.year === year);
@@ -483,7 +459,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setShowForm(true);
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     if (!selectedTimetable) return;
 
     if (
@@ -495,7 +471,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
       !formData.duration ||
       formData.duration <= 0
     ) {
-      alert('Bitte füllen Sie alle erforderlichen Felder aus.');
+      alert('Please fill in all required fields.');
       return;
     }
 
@@ -521,6 +497,25 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
         room: formData.room || null,
         module: formData.module || null
       };
+
+      const newLecture: Lecture = {
+        id: selectedTimetable.events.length > 0
+        ? (Math.max(...selectedTimetable.events.map((e: Event) => e.id || 0))).toString() + 1
+        : "1",
+        name: formData.name,
+        type: formData.typeOf as LectureType,
+        professor: formData.lecturer,
+        roomId: formData.room,
+        day: formData.day,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        startDate: (semester === "Winter") ? "01.10." + year : "01.04." + year,
+        endDate: (semester === "Winter") ? "31.01." + (year + 1) : "31.07." + year,
+      }
+
+      
+      await addLecture(newLecture);
+
       updatedEvents.push(newEvent);
     }
 
@@ -535,7 +530,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setFormData(initialFormData);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedTimetable || !editingEvent) return;
 
     const updatedEvents: Event[] = selectedTimetable.events.filter((e: Event) => e.id !== editingEvent.id);
@@ -548,6 +543,8 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setSelectedTimetable(updatedTimetable);
     setShowForm(false);
     setFormData(initialFormData);
+
+    await removeLecture(editingEvent.id.toString());
   };
 
   const handleIncludeSaturdayChange = (checked: boolean) => {
@@ -575,16 +572,16 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
           checked={includeSaturday}
           onCheckedChange={handleIncludeSaturdayChange}
         />
-        <Label htmlFor="include-saturday">Samstag einschließen</Label>
+        <Label htmlFor="include-saturday">Include Saturday</Label>
       </div>
 
       <div className="timetable-container">
         <table className="timetable">
           <thead>
             <tr>
-              <th className='day-column'>Tag</th>
-              <th className='time-column'>Zeit</th>
-              <th colSpan={5}>Veranstaltung</th>
+              <th className='day-column'>Day</th>
+              <th className='time-column'>Time</th>
+              <th colSpan={5}>Events</th>
             </tr>
           </thead>
           <tbody>
@@ -634,7 +631,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
             modules={modules}
             addModule={(newModule: Module) => {
               const updatedModules = [...modules, newModule];
-              localStorage.setItem('modules', JSON.stringify(updatedModules));
+              saveModules(updatedModules);
             }}
           />
         </div>

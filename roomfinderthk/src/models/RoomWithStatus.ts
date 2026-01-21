@@ -15,6 +15,7 @@ export interface Room {
 
 // Status eines Raums
 export interface RoomStatus {
+  isAvailable?: boolean;
   isLocked: boolean;
   checkins: number;
 }

@@ -1,7 +1,16 @@
-// src/contexts/FavoritesContext.tsx
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { useAuth } from "./AuthContext"; // optional, falls Favoriten pro User gespeichert werden sollen
-import { getFavoritesFromFirestore, saveFavoritesToFirestore } from "@/services/firebase"; // Platzhalter für Firestore-Integration
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { useAuth } from "./AuthContext";
+import {
+  getFavoritesFromFirestore,
+  addFavoriteToFirestore,
+  removeFavoriteFromFirestore,
+} from "@/services/firebase";
 
 interface FavoritesContextType {
   favorites: string[];
@@ -10,42 +19,48 @@ interface FavoritesContextType {
   toggleFavorite: (roomId: string) => void;
 }
 
-const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
+const FavoritesContext = createContext<FavoritesContextType | undefined>(
+  undefined
+);
 
 export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  // optional: lade Favoriten aus Firestore, wenn user angemeldet
+  // Load favorites when user logs in
   useEffect(() => {
-    if (!user) return;
-    getFavoritesFromFirestore(user.uid).then((favs) => {
-      setFavorites(favs);
-    });
+    if (!user) {
+      setFavorites([]);
+      return;
+    }
+
+    getFavoritesFromFirestore(user.id).then(setFavorites);
   }, [user]);
 
-  const saveFavorites = (newFavorites: string[]) => {
-    setFavorites(newFavorites);
-    if (user) saveFavoritesToFirestore(user.uid, newFavorites);
+  const addFavorite = async (roomId: string) => {
+    if (!user || favorites.includes(roomId)) return;
+
+    setFavorites((prev) => [...prev, roomId]); // optimistic UI
+    await addFavoriteToFirestore(user.id, roomId);
   };
 
-  const addFavorite = (roomId: string) => {
-    if (!favorites.includes(roomId)) {
-      saveFavorites([...favorites, roomId]);
-    }
-  };
+  const removeFavorite = async (roomId: string) => {
+    if (!user) return;
 
-  const removeFavorite = (roomId: string) => {
-    saveFavorites(favorites.filter((id) => id !== roomId));
+    setFavorites((prev) => prev.filter((id) => id !== roomId));
+    await removeFavoriteFromFirestore(user.id, roomId);
   };
 
   const toggleFavorite = (roomId: string) => {
-    if (favorites.includes(roomId)) removeFavorite(roomId);
-    else addFavorite(roomId);
+    favorites.includes(roomId)
+      ? removeFavorite(roomId)
+      : addFavorite(roomId);
   };
 
   return (
-    <FavoritesContext.Provider value={{ favorites, addFavorite, removeFavorite, toggleFavorite }}>
+    <FavoritesContext.Provider
+      value={{ favorites, addFavorite, removeFavorite, toggleFavorite }}
+    >
       {children}
     </FavoritesContext.Provider>
   );

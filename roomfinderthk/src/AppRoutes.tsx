@@ -13,8 +13,19 @@ import RegisterScreen from "@/screens/loginAndRegister/RegisterScreen";
 import RoomDetailScreen from "@/screens/rooms/RoomDetailScreen";
 import ProfessorDetailScreen from "@/screens/professor/ProfessorDetailScreen";
 
+// Route Guard für rollenbasierte Zugriffskontrolle
+const ProtectedRoute = ({ element, allowedRoles }: { element: React.ReactNode; allowedRoles: string[] }) => {
+  const { user } = useAuth();
+  
+  if (!user || !allowedRoles.includes(user.role)) {
+    return <Navigate to="/rooms" replace />;
+  }
+  
+  return element;
+};
+
 export default function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
     return (
@@ -36,8 +47,10 @@ export default function AppRoutes() {
       <Route path="/professors" element={<ProfessorScreen />} />
       <Route path="/professors/:professorId" element={<ProfessorDetailScreen />} />
       <Route path="/profile" element={<ProfileScreen />} />
-      <Route path="/admin" element={<AdminScreen />} />
-      <Route path="/booking" element={<BookingScreen />} />
+      {/* Admin Panel - nur für Admins */}
+      <Route path="/admin" element={<ProtectedRoute element={<AdminScreen />} allowedRoles={['admin']} />} />
+      {/* Booking - nur für Professoren */}
+      <Route path="/booking" element={<ProtectedRoute element={<BookingScreen />} allowedRoles={['professor']} />} />
       <Route path="/classes" element={<ClassesScreen />} />
     </Routes>
   );

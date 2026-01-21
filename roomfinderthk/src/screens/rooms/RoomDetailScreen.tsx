@@ -42,29 +42,22 @@ import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Event, Timetable } from "@/models";
 
-/* ------------------------------ screen ------------------------------------ */
-
-/**
- * Helper to group events by day and sort them by start time.
- * Filters out days that have no events.
- */
-
-
 export default function RoomDetailScreen() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  // für checkin Dialog
+  
+  // States
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [duration, setDuration] = useState("60");
 
   const {
     rooms,
     studentCheckins,
-    classes,
-    bookings,
     updateRoom,
     addStudentCheckin,
     removeStudentCheckin,
+    getRoomLectures,   // Verwendung der Context-Selektoren
+    getRoomBookings,
   } = useData();
 
   const {
@@ -78,8 +71,10 @@ export default function RoomDetailScreen() {
 
   const myCheckIn = studentCheckins.find(c => c.userId === user?.id);
   const isCheckedInHere = myCheckIn?.roomId === roomId;
-  const roomLectures = classes.filter(l => l.roomId === room.id); 
-  const roomBookings = bookings.filter(b => b.roomId === roomId);
+  
+  // Daten über Context Selektoren beziehen
+  const roomLectures = getRoomLectures(room.id); 
+  const roomBookings = getRoomBookings(room.id);
 
   /* --------------------------- handlers ----------------------------------- */
 
@@ -214,13 +209,13 @@ export default function RoomDetailScreen() {
 
         {/* Current Status */}
         {(
-          <Card className="p-4 bg-blue-50 border-blue-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-5 h-5 text-blue-600" />
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-5 h-5 text-blue-600" />
               <h3 className="text-blue-900">Current Status</h3>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded border bg-white">
-              <div>
+          </div>
+          <div className="flex items-center justify-between p-3 rounded border bg-white">
+            <div>
                 <span
                   className={`ml-2 text-xs ${getOccupancyColor(
                     getOccupancyLevel(
@@ -233,23 +228,23 @@ export default function RoomDetailScreen() {
                       room.checkins
                     )
                   )}
-                </span>
-                <div className="flex items-center gap-2 mt-1">
-                  <Users className="w-3 h-3 text-gray-500" />
-                  <span className="text-xs text-gray-600">
+              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <Users className="w-3 h-3 text-gray-500" />
+                <span className="text-xs text-gray-600">
                     {room.checkins}/{room.capacity} students
-                  </span>
-                </div>
+                </span>
               </div>
             </div>
-          </Card>
+          </div>
+        </Card>
         )}
 
         {/* Legende */}
-        <RoomDetailLegend />
+          <RoomDetailLegend />
 
         {/*RoomSchedule*/}
-        <RoomWeeklySchedule lectures={roomLectures} bookings={roomBookings} />
+            <RoomWeeklySchedule lectures={roomLectures} bookings={roomBookings} />
 
         {/* Check In Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -25,12 +25,12 @@ export const initialRooms: RoomWithStatus[] = [
 ]; 
 
 export const defaultSchedulePattern: TimeSlot[] = [
-  { start: "08:00", end: "10:00", isBooked: false },
-  { start: "10:00", end: "12:00", isBooked: false },
-  { start: "12:00", end: "14:00", isBooked: false },
-  { start: "14:00", end: "16:00", isBooked: false },
-  { start: "16:00", end: "18:00", isBooked: false },
-  { start: "18:00", end: "20:00", isBooked: false },
+  { start: "08:00", end: "10:00", subject: "", room: "" },
+  { start: "10:00", end: "12:00", subject: "", room: "" },
+  { start: "12:00", end: "14:00", subject: "", room: "" },
+  { start: "14:00", end: "16:00", subject: "", room: "" },
+  { start: "16:00", end: "18:00", subject: "", room: "" },
+  { start: "18:00", end: "20:00", subject: "", room: "" },
 ];
 
 export const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];

@@ -1,4 +1,3 @@
-/* Allgemeine Stile */
 .timetable-builder {
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -68,17 +67,16 @@
   border: 4px solid #faff99;
 }
 
-/* Event-Typen Stile */
 .event-lecture {
-  background-color: #ffe6b4; /* Hellblau für Vorlesungen */
+  background-color: #ffe6b4;
 }
 
 .event-practical-course {
-  background-color: #bfffc4; /* Hellgrün für Praktika */
+  background-color: #bfffc4;
 }
 
 .event-exercise {
-  background-color: #c6f0ff; /* Hellorange für Übungen */
+  background-color: #c6f0ff;
 }
 
 .event-tutorial {
@@ -86,11 +84,11 @@
 }
 
 .event-seminar {
-  background-color: #f3e5f5; /* Helllila für Seminare */
+  background-color: #f3e5f5;
 }
 
 .event-other {
-  background-color: #808080; /* Hellgrau für Sonstiges */
+  background-color: #808080;
 }
 
 .event-info {
@@ -105,10 +103,9 @@
 
 .event-details {
   font-size: 0.8em;
-  color: #666;
+  color: #000000;
 }
 
-/* Formular-Stile */
 .form-overlay {
   position: fixed;
   top: 0;

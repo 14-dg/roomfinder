@@ -1,318 +1,242 @@
-/**
- * Firebase Service
- * 
- * This file contains all Firebase integration access points.
- * Currently uses localStorage for data persistence, but is structured
- * to easily integrate with Firebase when ready.
- * 
- * To implement Firebase:
- * 1. Install firebase: npm install firebase
- * 2. Initialize Firebase app with your config
- * 3. Replace localStorage implementations with Firebase SDK calls
- * 4. Update function signatures as needed for Firebase types
- */
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+  getAuth,
+} from "firebase/auth";
+import { initializeApp, deleteApp } from "firebase/app";
+
+import {
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  serverTimestamp,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
 
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, Timetable, Module } from '@/models';
-import { app, auth, db } from '../firebase-config';
+import { app, auth, db, firebaseConfig } from '../firebase-config';
 import { initialClasses, initialRooms } from '@/mockData/mockData';
 
-// Initialize Firebase (placeholder)
-// TODO: Uncomment when implementing Firebase
-// import { initializeApp } from 'firebase/app';
-// import { getAuth } from 'firebase/auth';
-// import { getFirestore } from 'firebase/firestore';
-// const app = initializeApp(firebaseConfig);
-// export const auth = getAuth(app);
-// export const db = getFirestore(app);
+import User from "@/models/User";
 
 // ============================================================================
 // AUTHENTICATION SERVICES
 // ============================================================================
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'student' | 'professor' | 'admin';
-  
-}
 
-/**
- * Register a new user
- * TODO: Replace with Firebase Authentication
- * - Use createUserWithEmailAndPassword from firebase/auth
- * - Store user profile in Firestore
- */
 export async function registerUser(
   email: string,
   password: string,
   name: string,
-  role: 'student' | 'professor' | 'admin'
+  role: 'student' | 'professor' | 'admin',
+  additionalData: any = {} // Ermöglicht das Mitgeben von Prof-Daten
 ): Promise<User> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  // await setDoc(doc(db, 'users', userCredential.user.uid), { name, role });
-  
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  const newUser: User = {
-    id: Date.now().toString(),
-    email,
-    name,
-    role,
-  };
-  users.push({ ...newUser, password });
-  localStorage.setItem('users', JSON.stringify(users));
-  return newUser;
-}
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
 
-/**
- * Sign in with email and password
- * TODO: Replace with Firebase Authentication
- * - Use signInWithEmailAndPassword from firebase/auth
- * - Fetch user profile from Firestore
- */
-export async function loginUser(email: string, password: string): Promise<User> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  // const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-  
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  const user = users.find((u: any) => u.email === email && u.password === password);
-  
-  if (!user) {
-    throw new Error('Invalid credentials');
+    const userProfile = {
+      email,
+      name,
+      role,
+      favourites: [],
+      timetable: [],
+      createdAt: serverTimestamp(),
+      ...additionalData, // Hier landen department, officeHours, etc.
+    };
+
+    await setDoc(doc(db, 'users', uid), userProfile);
+
+    return {
+      id: uid,
+      ...userProfile,
+    } as User;
+  } catch (err) {
+    console.error("REGISTER FAILED:", err);
+    throw err;
   }
-  
+}
+
+async function registerUserWithoutLogin(
+  email: string,
+  password: string,
+  name: string,
+  role: 'student' | 'professor' | 'admin',
+  additionalData: any = {}
+): Promise<User> {
+  const tempAppName = `temp-app-${Date.now()}`;
+  const tempApp = initializeApp(firebaseConfig, tempAppName);
+  const tempAuth = getAuth(tempApp);
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
+    const uid = userCredential.user.uid;
+
+    const userProfile = {
+      email,
+      name,
+      role,
+      favourites: [],
+      timetable: [],
+      createdAt: serverTimestamp(),
+      ...additionalData,
+    };
+
+    await setDoc(doc(db, 'users', uid), userProfile);
+
+    await deleteApp(tempApp); 
+
+    return { id: uid, ...userProfile } as User;
+  } catch (err) {
+    await deleteApp(tempApp);
+    console.error("REGISTER WITHOUT LOGIN FAILED:", err);
+    throw err;
+  }
+}
+
+
+export async function loginUser(
+  email: string,
+  password: string
+): Promise<User> {
+  // 1. Firebase Authentication
+  const userCredential = await signInWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+
+  const uid = userCredential.user.uid;
+
+  // 2. User-Profil aus Firestore laden
+  const userSnap = await getDoc(doc(db, 'users', uid));
+
+  if (!userSnap.exists()) {
+    throw new Error('User profile not found in Firestore');
+  }
+
+  const data = userSnap.data();
+
   return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
+    id: uid,
+    email: userCredential.user.email ?? email,
+    name: data.name,
+    role: data.role,
+    favourites: data.favourites ?? [],
+    timetable: data.timetable ?? [],
   };
 }
 
-/**
- * Sign out current user
- * TODO: Replace with Firebase Authentication
- * - Use signOut from firebase/auth
- */
 export async function logoutUser(): Promise<void> {
-  // Placeholder: No action needed for localStorage
-  // Firebase implementation would use:
-  // await signOut(auth);
-  
-  return Promise.resolve();
-}
-
-/**
- * Get current user session
- * TODO: Replace with Firebase Authentication
- * - Use onAuthStateChanged from firebase/auth
- */
-export function getCurrentUser(): User | null {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // auth.currentUser and fetch from Firestore
-  
-  const currentUser = localStorage.getItem('currentUser');
-  return currentUser ? JSON.parse(currentUser) : null;
+  await signOut(auth);
 }
 
 // ============================================================================
 // ROOM SERVICES
 // ============================================================================
 
-/**
- * Get all rooms
- * TODO: Replace with Firestore query
- * - Use getDocs(collection(db, 'rooms'))
- */
 export async function getRooms(): Promise<RoomWithStatus[]> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const snapshot = await getDocs(collection(db, 'rooms'));
-  // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-  const rooms = localStorage.getItem('rooms');
-  return rooms ? JSON.parse(rooms) : [];
+  const snapshot = await getDocs(collection(db, "rooms"));
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<RoomWithStatus, "id">),
+  }));
 }
 
-/**
- * Get a single room by ID
- * TODO: Replace with Firestore query
- * - Use getDoc(doc(db, 'rooms', roomId))
- */
 export async function getRoom(roomId: string): Promise<RoomWithStatus | null> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const docSnap = await getDoc(doc(db, 'rooms', roomId));
-  // return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
-  
-  const rooms = await getRooms();
-  return rooms.find(r => r.id === roomId) || null;
+  const docSnap = await getDoc(doc(db, "rooms", roomId));
+  return docSnap.exists() ? { id: docSnap.id, ...(docSnap.data() as Omit<RoomWithStatus, "id">) } : null;
 }
 
-/**
- * Add a new room
- * TODO: Replace with Firestore write
- * - Use addDoc(collection(db, 'rooms'), roomData)
- */
-export async function addRoom(room: Omit<RoomWithStatus, 'id'>): Promise<RoomWithStatus> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const docRef = await addDoc(collection(db, 'rooms'), room);
-  // return { id: docRef.id, ...room };
-  
-  const rooms = await getRooms();
-  const newRoom: RoomWithStatus = {
-    ...room,
-    id: Date.now().toString(),
-  };
-  rooms.push(newRoom);
-  localStorage.setItem('rooms', JSON.stringify(rooms));
-  return newRoom;
+export async function addRoom(room: Omit<RoomWithStatus, "id">): Promise<RoomWithStatus> {
+  const docRef = await addDoc(collection(db, "rooms"), room);
+  return { id: docRef.id, ...room };
 }
 
-/**
- * Update a room
- * TODO: Replace with Firestore update
- * - Use updateDoc(doc(db, 'rooms', roomId), updates)
- */
 export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus>): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await updateDoc(doc(db, 'rooms', roomId), updates);
-  
-  const rooms = await getAllRooms();
-  const index = rooms.findIndex(r => r.id === roomId);
-  if (index !== -1) {
-    rooms[index] = { ...rooms[index], ...updates };
-    localStorage.setItem('rooms', JSON.stringify(rooms));
-  }
+  await updateDoc(doc(db, "rooms", roomId), updates);
 }
 
-/**
- * Delete a room
- * TODO: Replace with Firestore delete
- * - Use deleteDoc(doc(db, 'rooms', roomId))
- */
 export async function deleteRoom(roomId: string): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await deleteDoc(doc(db, 'rooms', roomId));
-  
-  const rooms = await getRooms();
-  const filteredRooms = rooms.filter(r => r.id !== roomId);
-  localStorage.setItem('rooms', JSON.stringify(filteredRooms));
+  await deleteDoc(doc(db, "rooms", roomId));
 }
 
 // ============================================================================
 // BOOKING SERVICES
 // ============================================================================
 
-/**
- * Get all bookings
- * TODO: Replace with Firestore query
- * - Use getDocs(collection(db, 'bookings'))
- */
 export async function getBookings(): Promise<Booking[]> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const snapshot = await getDocs(collection(db, 'bookings'));
-  // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-  const bookings = localStorage.getItem('bookings');
-  return bookings ? JSON.parse(bookings) : [];
+  const snapshot = await getDocs(collection(db, "bookings"));
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<Booking, "id">),
+  }));
 }
 
-/**
- * Get bookings for a specific room
- * TODO: Replace with Firestore query
- * - Use query(collection(db, 'bookings'), where('roomId', '==', roomId))
- */
 export async function getRoomBookings(roomId: string): Promise<Booking[]> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const q = query(collection(db, 'bookings'), where('roomId', '==', roomId));
-  // const snapshot = await getDocs(q);
-  // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-  const bookings = await getBookings();
-  return bookings.filter(b => b.roomId === roomId);
+  const q = query(
+    collection(db, "bookings"),
+    where("roomId", "==", roomId)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<Booking, "id">),
+  }));
 }
 
-/**
- * Add a new booking
- * TODO: Replace with Firestore write
- * - Use addDoc(collection(db, 'bookings'), bookingData)
- */
-export async function addBooking(booking: Omit<Booking, 'id' | 'createdAt'>): Promise<Booking> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const docRef = await addDoc(collection(db, 'bookings'), { ...booking, createdAt: serverTimestamp() });
-  // return { id: docRef.id, ...booking, createdAt: new Date() };
-  
-  const bookings = await getBookings();
-  const newBooking: Booking = {
+export async function addBooking(
+  booking: Omit<Booking, "id" | "createdAt">
+): Promise<Booking> {
+  const docRef = await addDoc(collection(db, "bookings"), {
     ...booking,
-    id: Date.now().toString(),
-    createdAt: new Date(),
+    createdAt: serverTimestamp(),
+  });
+
+  return {
+    id: docRef.id,
+    ...booking,
   };
-  bookings.push(newBooking);
-  localStorage.setItem('bookings', JSON.stringify(bookings));
-  return newBooking;
 }
 
-/**
- * Delete a booking
- * TODO: Replace with Firestore delete
- * - Use deleteDoc(doc(db, 'bookings', bookingId))
- */
 export async function deleteBooking(bookingId: string): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await deleteDoc(doc(db, 'bookings', bookingId));
-  
-  const bookings = await getBookings();
-  const filteredBookings = bookings.filter(b => b.id !== bookingId);
-  localStorage.setItem('bookings', JSON.stringify(filteredBookings));
+  await deleteDoc(doc(db, "bookings", bookingId));
 }
 
-/**
- * Delete all bookings (Admin only)
- * TODO: Replace with Firestore batch delete
- * - Use batch writes to delete all booking documents
- */
 export async function clearAllBookings(): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const batch = writeBatch(db);
-  // const snapshot = await getDocs(collection(db, 'bookings'));
-  // snapshot.docs.forEach(doc => batch.delete(doc.ref));
-  // await batch.commit();
-  
-  localStorage.setItem('bookings', JSON.stringify([]));
+  const snapshot = await getDocs(collection(db, "bookings"));
+  await Promise.all(
+    snapshot.docs.map(d => deleteDoc(d.ref))
+  );
 }
 
 // ============================================================================
 // CHECKIN SERVICES
 // ============================================================================
 
-export async function addStudentCheckin(checkin: CheckIn): Promise<void> {
-  
-  const allCheckins = await getAllStudentCheckins();
-  
-  allCheckins.push(checkin);
-  
-  localStorage.setItem('studentCheckins', JSON.stringify(allCheckins));
+export async function addStudentCheckin(checkin: Omit<CheckIn, 'id'>): Promise<string> {
+  // Wir speichern den Check-in in einer eigenen Collection
+  const docRef = await addDoc(collection(db, "checkins"), {
+    ...checkin,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id; // Gibt die von Firestore generierte ID zurück
 }
 
 export async function removeStudentCheckin(id: string): Promise<void> {
-  const allCheckins = await getAllStudentCheckins();
-  const updated = allCheckins.filter(c => c.id !== id);
-  localStorage.setItem('studentCheckins', JSON.stringify(updated));
+  await deleteDoc(doc(db, "checkins", id));
 }
 
 
@@ -320,39 +244,32 @@ export async function removeStudentCheckin(id: string): Promise<void> {
 // FAVORITES SERVICES
 // ============================================================================
 
-/**
- * Get favorites for a user
- * 
- * TODO: Replace with Firestore query
- * - Use getDoc(doc(db, 'favorites', userId))
- */
 export async function getFavoritesFromFirestore(userId: string): Promise<string[]> {
-  // const docSnap = await getDoc(doc(db, 'favorites', userId));
-  // return docSnap.exists() ? docSnap.data().roomIds : [];
+  const userRef = doc(db, "users", userId);
+  const snap = await getDoc(userRef);
 
-  // -----------------------------
-  // Placeholder: localStorage
-  // -----------------------------
-  const raw = localStorage.getItem(`favorites_${userId}`);
-  return raw ? JSON.parse(raw) : [];
+  if (!snap.exists()) return [];
+  return snap.data().favourites ?? [];
 }
 
-/**
- * Save favorites for a user
- * 
- * TODO: Replace with Firestore write
- * - Use setDoc(doc(db, 'favorites', userId), { roomIds })
- */
-export async function saveFavoritesToFirestore(
+export async function addFavoriteToFirestore(
   userId: string,
-  roomIds: string[]
+  roomId: string
 ): Promise<void> {
-  // await setDoc(doc(db, 'favorites', userId), {
-  //   roomIds,
-  //   updatedAt: serverTimestamp(),
-  // });
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, {
+    favourites: arrayUnion(roomId),
+  });
+}
 
-  localStorage.setItem(`favorites_${userId}`, JSON.stringify(roomIds));
+export async function removeFavoriteFromFirestore(
+  userId: string,
+  roomId: string
+): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, {
+    favourites: arrayRemove(roomId),
+  });
 }
 
 
@@ -360,69 +277,50 @@ export async function saveFavoritesToFirestore(
 // TIMETABLE SERVICES
 // ============================================================================
 
-interface RoomSchedule {
-  roomId: string;
-  schedule: DaySchedule[];
-}
-
-/**
- * Get custom timetable for a room
- * TODO: Replace with Firestore query
- * - Use getDoc(doc(db, 'timetables', roomId))
- */
-export async function getRoomDetailScreen(roomId: string): Promise<DaySchedule[] | null> { 
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const docSnap = await getDoc(doc(db, 'timetables', roomId));
-  // return docSnap.exists() ? docSnap.data().schedule : null;
-  
-  const schedules = localStorage.getItem('customSchedules');
-  if (!schedules) return null;
-  
-  const parsed: RoomSchedule[] = JSON.parse(schedules);
-  const roomSchedule = parsed.find(s => s.roomId === roomId);
-  return roomSchedule ? roomSchedule.schedule : null;
-}
-
-/**
- * Upload/Update timetable for a room
- * TODO: Replace with Firestore write
- * - Use setDoc(doc(db, 'timetables', roomId), { schedule })
- */
-export async function uploadTimetable(roomId: string, schedule: DaySchedule[]): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await setDoc(doc(db, 'timetables', roomId), { schedule, updatedAt: serverTimestamp() });
-  
-  const schedules = localStorage.getItem('customSchedules');
-  const parsed: RoomSchedule[] = schedules ? JSON.parse(schedules) : [];
-  
-  const index = parsed.findIndex(s => s.roomId === roomId);
-  if (index !== -1) {
-    parsed[index] = { roomId, schedule };
-  } else {
-    parsed.push({ roomId, schedule });
+export async function getRoomLectures(roomId: string): Promise<Lecture[]> {
+  try {
+    const q = query(
+      collection(db, 'lectures'),
+      where('roomId', '==', roomId) 
+    );
+    const snapshot = await getDocs(q);
+    console.log(`Geladene Vorlesungen für Raum ${roomId}:`, snapshot.docs.length);
+    return snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    })) as Lecture[];
+  } catch (error) {
+    console.error("Fehler beim Laden der Raum-Vorlesungen:", error);
+    return [];
   }
-  
-  localStorage.setItem('customSchedules', JSON.stringify(parsed));
 }
 
-/**
- * Delete timetable for a room
- * TODO: Replace with Firestore delete
- * - Use deleteDoc(doc(db, 'timetables', roomId))
- */
-export async function deleteTimetable(roomId: string): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await deleteDoc(doc(db, 'timetables', roomId));
-  
-  const schedules = localStorage.getItem('customSchedules');
-  if (!schedules) return;
-  
-  const parsed: RoomSchedule[] = JSON.parse(schedules);
-  const filtered = parsed.filter(s => s.roomId !== roomId);
-  localStorage.setItem('customSchedules', JSON.stringify(filtered));
+export async function uploadTimetableAsLectures(roomId: string, schedule: DaySchedule[]): Promise<void> {
+  try {
+    for (const dayData of schedule) {
+      for (const slot of dayData.slots) {
+        if (slot.subject && slot.subject.trim() !== "") {
+          
+          const newLecture: Omit<Lecture, 'id'> = {
+            name: slot.subject,
+            type: 'Vorlesung',       
+            professor: 'Nicht zugewiesen', 
+            roomId: roomId,          
+            day: dayData.day,        
+            startTime: slot.start,   
+            endTime: slot.end,       
+            subject: slot.subject,   
+          };
+
+          await addLecture(newLecture);
+        }
+      }
+    }
+    console.log(`Stundenplan für Raum ${roomId} erfolgreich hochgeladen.`);
+  } catch (error) {
+    console.error("Fehler beim Upload:", error);
+    throw error;
+  }
 }
 
 // ============================================================================
@@ -469,18 +367,19 @@ export function subscribeToBookings(callback: (bookings: Booking[]) => void): ()
 // DataContext ruft diese Funktionen auf, um alle Daten zu bekommen
 
 export async function getAllRooms(): Promise<RoomWithStatus[]> {
-  const allRooms = localStorage.getItem('rooms');
-  return allRooms ? JSON.parse(allRooms) : initialRooms;
+  return await getRooms();
 }
 
 export async function getAllBookings(): Promise<Booking[]> {
-  const savedBookings = localStorage.getItem('bookings');
-    return savedBookings ? JSON.parse(savedBookings) : [];
+  return await getBookings();
 }
 
 export async function getAllStudentCheckins(): Promise<CheckIn[]> {
-    const savedCheckins = localStorage.getItem('studentCheckins');
-    return savedCheckins ? JSON.parse(savedCheckins) : [];
+  const snapshot = await getDocs(collection(db, "checkins"));
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<CheckIn, "id">),
+  }));
 }
 
 export async function getAllCustomSchedules(): Promise<RoomSchedule[]> {
@@ -489,8 +388,17 @@ export async function getAllCustomSchedules(): Promise<RoomSchedule[]> {
 }
 
 export async function getAllLectures(): Promise<Lecture[]> {
-    const savedLectures = localStorage.getItem('classes');
-    return savedLectures ? JSON.parse(savedLectures) : initialClasses;
+    // const savedLectures = localStorage.getItem('classes');
+    // return savedLectures ? JSON.parse(savedLectures) : initialClasses;
+
+    const lecturesCollection = collection(db, 'lectures');
+    const snapshot = await getDocs(lecturesCollection);
+    const lectures = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Lecture[];
+
+    return lectures;
   }
   
   export async function getAllUserTimetableEntries(): Promise<UserTimetableEntry[]> {
@@ -528,12 +436,6 @@ export async function getUserBookings(userId: string): Promise<Booking[]> {
 // PROFESSOR SERVICES
 // ============================================================================
 /**
- * Holt alle Nutzer mit der Rolle 'professor'
- * TODO: Firebase Query: query(collection(db, 'users'), where('role', '==', 'professor'))
- */
-// --- In firebase.ts HINZUFÜGEN oder ERSETZEN ---
-
-/**
  * Simuliert das Senden einer Email (z.B. via EmailJS oder Cloud Functions)
  */
 export async function sendEmailToProfessorForPassword(email: string, password: string) {
@@ -541,62 +443,56 @@ export async function sendEmailToProfessorForPassword(email: string, password: s
   // Hier würde später dein echter Email-Service-Aufruf stehen
   return new Promise((resolve) => setTimeout(resolve, 800)); 
 }
+/**
+ * Holt alle User, die die Rolle 'professor' haben
+ */
+export async function getLecturers(): Promise<any[]> {
+  const q = query(collection(db, "users"), where("role", "==", "professor"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }));
+}
 
 /**
- * Erstellt User-Account UND Lecturer-Profil
+ * Registriert einen Professor mit den erweiterten Attributen
  */
-export async function registerProfessor(email: string, name: string) {
-  // 1. Technischer User (für Login)
-
-  // hier richtige passwort lopgik einfügen
-  const Passwort = "12345";
-  const newUser = await registerUser(email, Passwort, name, 'professor');
-  
-  // 2. Öffentliches Profil (für Timetable/Sprechzeiten)
-  const lecturers = JSON.parse(localStorage.getItem('lecturers') || '[]');
-  const newLecturer = {
-    id: newUser.id, // Verknüpfung über gleiche ID
-    name,
-    email,
+export async function registerProfessor(email: string, password: string, name: string) {
+  const professorFields = {
+    department: '',
     officeHours: '',
     officeLocation: '',
+    lectures: []
   };
-  lecturers.push(newLecturer);
-  localStorage.setItem('lecturers', JSON.stringify(lecturers));
-  await sendEmailToProfessorForPassword(email, Passwort);
   
-  return { newUser, newLecturer };
+  return await registerUserWithoutLogin(email, password, name, 'professor', professorFields);
 }
 
-// Holen aller Lecturer
-export async function getLecturers(): Promise<any[]> {
-  const data = localStorage.getItem('lecturers');
-  return data ? JSON.parse(data) : [];
-}
-
-// Update Profil (Sprechzeiten)
+/**
+ * Update für Professor-spezifische Felder
+ */
 export async function updateLecturerProfile(id: string, updates: any) {
-  const lecturers = await getLecturers();
-  const index = lecturers.findIndex(l => l.id === id);
-  if (index !== -1) {
-    lecturers[index] = { ...lecturers[index], ...updates };
-    localStorage.setItem('lecturers', JSON.stringify(lecturers));
-  }
+  const userRef = doc(db, 'users', id);
+  // Wir nutzen updateDoc, um nur die geänderten Felder zu überschreiben
+  await updateDoc(userRef, updates);
 }
 
-// Löschen beider Einträge
+/**
+ * Löscht den User-Account aus Firestore
+ */
 export async function deleteProfessorAndLecturer(id: string) {
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  localStorage.setItem('users', JSON.stringify(users.filter((u: any) => u.id !== id)));
-  
-  const lecturers = await getLecturers();
-  localStorage.setItem('lecturers', JSON.stringify(lecturers.filter(l => l.id !== id)));
+  await deleteDoc(doc(db, 'users', id));
+  // Hinweis: Der Auth-Account muss ggf. separat über Admin-Funktionen gelöscht werden
 }
 
 
+// ============================================================================
+//                            TIMETABLEBUILDER
+// ============================================================================
 
-// TimetableBuilder Funktionen oder so
-export const saveTimetableFire = (timetable: Timetable): void => {
+
+export function saveTimetableFire(timetable: Timetable) {
   const updatedTimetables = loadTimetables();
   const existingIndex = updatedTimetables.findIndex(t => t.id === timetable.id);
 
@@ -614,7 +510,7 @@ export const loadTimetables = (): Timetable[] => {
   return data ? JSON.parse(data) : [];
 }
 
-export const saveModules = (modules: Module[]): void => {
+export const saveModulesFire = (modules: Module[]): void => {
   localStorage.setItem('modules', JSON.stringify(modules));
 };
 
@@ -677,4 +573,57 @@ export async function getUserEventsByUserId(userId: string): Promise<UserTimetab
   
   const entries = await getAllUserTimetableEntries();
   return entries.filter(e => e.userId === userId);
+}
+
+
+// ============================================================================
+// FIREBASE HELPER FUNCTIONS TO MANAGE ACCOUNTS AND ENTRIES   
+// ============================================================================
+/**
+ * Holt absolut alle Dokumente aus der Collection 'users'.
+ * Hilfreich für Debugging, um die Datenstruktur im Firestore zu prüfen.
+ */
+export async function getAllUsersRaw(): Promise<any[]> {
+  try {
+    const snapshot = await getDocs(collection(db, "users"));
+    const users = snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+    console.log("DEBUG - Alle User aus Firestore:", users);
+    return users;
+  } catch (error) {
+    console.error("Fehler beim Laden aller User:", error);
+    throw error;
+  }
+}
+
+// ============================================================================
+// LECTURES
+// ============================================================================
+
+export async function addLecture(lecture: Omit<Lecture, 'id'>): Promise<Lecture> {
+  try {
+
+    const newDocRef = doc(collection(db, 'lectures'));
+    const newLecture: Lecture = {
+      ...lecture,
+      id: newDocRef.id
+    };
+    await setDoc(newDocRef, newLecture);
+
+    return newLecture;
+  }
+  catch(error) {
+    throw error;
+  }
+}
+
+export async function removeLecture(id: string) {
+  try {
+    await deleteDoc(doc(db, 'lectures', id));
+  }
+  catch(error) {
+    throw error;
+  }
 }
