@@ -572,3 +572,12 @@ export async function getUserEventsByUserId(userId: string): Promise<UserTimetab
   const entries = await getAllUserTimetableEntries();
   return entries.filter(e => e.userId === userId);
 }
+
+
+export async function addLecture(lecture: Lecture) {
+  
+}
+
+export async function removeLecture(id: string) {
+
+}

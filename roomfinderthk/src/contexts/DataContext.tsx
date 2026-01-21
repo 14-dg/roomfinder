@@ -30,6 +30,8 @@ import {
   getUserEventsByUserId as getUserEventsByUserIdService,
   addBooking as addBookingService,
   deleteBooking as deleteBookingService,
+  addLecture as addLectureService,
+  removeLecture as removeLectureService,
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
@@ -532,6 +534,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
       toast.error('Failed to remove event from timetable');
     }
   };
+
+  const addLecture = async (lecture:Lecture) => {
+    try {
+      await addLectureService(lecture);
+      setClasses(prev => [...prev, lecture]);
+    }
+    catch(error) {
+      toast.error('Failed to add Lecture');
+    }
+    
+  }
+
+  const removeLecture = async (id: string) => {
+    try {
+      await removeLectureService(id);
+      setClasses(prev => prev.filter(l => l.id !== id));
+    }
+    catch(error) {
+      toast.error('Failed to remove Lecture');
+    }
+  }
 
   const getUserEvents = useCallback((userId: string): (UserTimetableEntry & { event?: Event })[] => {
     return userTimetableEntries
