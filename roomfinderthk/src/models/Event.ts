@@ -16,4 +16,5 @@ export interface Event {
     module: Module;
     typeOf: string;
     duration: number;
+    column: number;
 }

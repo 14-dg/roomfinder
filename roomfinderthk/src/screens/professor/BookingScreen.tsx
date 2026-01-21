@@ -7,21 +7,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import ScreenHeader from '@/components/ScreenHeader';
 import { Calendar, Clock, MapPin, Users, Projector, CheckCircle, X } from 'lucide-react';
-import { useData } from '../contexts/DataContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-const TIME_SLOTS = [
-  { start: '08:00', end: '10:00' },
-  { start: '10:00', end: '12:00' },
-  { start: '12:00', end: '14:00' },
-  { start: '14:00', end: '16:00' },
-  { start: '16:00', end: '18:00' },
-  { start: '18:00', end: '20:00' },
-];
+// Generiere Zeitslots von 8:00 bis 20:00 in 50-Minuten-Schritten
+const TIME_SLOTS = (() => {
+  const slots = [];
+  for (let h = 8; h < 20; h++) {
+    for (let m = 0; m < 60; m += 50) {
+      const startHour = h;
+      const startMin = m;
+      
+      let endHour = h;
+      let endMin = m + 50;
+      
+      if (endMin >= 60) {
+        endHour += 1;
+        endMin -= 60;
+      }
+      
+      if (endHour <= 20) {
+        slots.push({
+          start: `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}`,
+          end: `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
+        });
+      }
+    }
+  }
+  return slots;
+})();
 
 export default function BookingScreen() {
   const { rooms, bookings, addBooking, getRoomSchedule, removeBooking } = useData();
@@ -30,13 +48,29 @@ export default function BookingScreen() {
   const [selectedRoom, setSelectedRoom] = useState('');
   const [selectedDay, setSelectedDay] = useState('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
-  const [subject, setSubject] = useState('');
+  const [description, setDescription] = useState('');
   const [filterFloor, setFilterFloor] = useState<string>('all');
   const [filterBeamer, setFilterBeamer] = useState(false);
   const [showMyBookings, setShowMyBookings] = useState(false);
 
+  // Konvertiere TimeSlot zu Datum (Format: YYYY-MM-DD)
+  const getDateFromDay = (day: string): string => {
+    const today = new Date();
+    const dayIndex = DAYS.indexOf(day);
+    const daysUntilDay = (dayIndex - today.getDay() + 7) % 7 || 7;
+    const bookingDate = new Date(today);
+    bookingDate.setDate(today.getDate() + daysUntilDay);
+    return bookingDate.toISOString().split('T')[0];
+  };
+
+  // Konvertiere TimeSlot "HH:MM-HH:MM" zu endDate
+  const getEndDate = (date: string, timeSlot: string): string => {
+    const [_, endTime] = timeSlot.split('-');
+    return `${date}T${endTime}:00`;
+  };
+
   // Get professor's bookings
-  const myBookings = bookings.filter(b => b.bookedBy === user?.id && b.bookedByRole === 'professor');
+  const myBookings = bookings.filter(b => b.bookedBy === user?.id);
 
   // Filter rooms
   const filteredRooms = rooms.filter(room => {
@@ -60,7 +94,7 @@ export default function BookingScreen() {
   const availableSlots = getAvailableSlots();
 
   const handleBookRoom = () => {
-    if (!selectedRoom || !selectedDay || !selectedTimeSlot || !subject || !user) {
+    if (!selectedRoom || !selectedDay || !selectedTimeSlot || !description || !user) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -68,14 +102,17 @@ export default function BookingScreen() {
     const room = rooms.find(r => r.id === selectedRoom);
     if (!room) return;
 
+    const dateStr = getDateFromDay(selectedDay);
+    const [startTime, endTime] = selectedTimeSlot.split('-');
+
     addBooking({
+      id: Date.now().toString(),
       roomId: selectedRoom,
+      startDate: `${dateStr}T${startTime}:00`,
+      endDate: `${dateStr}T${endTime}:00`,
       day: selectedDay,
-      timeSlot: selectedTimeSlot,
-      subject: subject,
       bookedBy: user.id,
-      bookedByName: user.name,
-      bookedByRole: 'professor',
+      description: description,
     });
 
     toast.success(`Room ${room.roomName} booked successfully!`);
@@ -84,7 +121,7 @@ export default function BookingScreen() {
     setSelectedRoom('');
     setSelectedDay('');
     setSelectedTimeSlot('');
-    setSubject('');
+    setDescription('');
   };
 
   const handleCancelBooking = (bookingId: string) => {
@@ -130,14 +167,17 @@ export default function BookingScreen() {
                     <TableRow>
                       <TableHead>Room</TableHead>
                       <TableHead>Day</TableHead>
+                      <TableHead>Date</TableHead>
                       <TableHead>Time</TableHead>
-                      <TableHead>Subject</TableHead>
+                      <TableHead>Description</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {myBookings.map((booking) => {
                       const room = rooms.find(r => r.id === booking.roomId);
+                      const startTime = booking.startDate.split('T')[1]?.substring(0, 5) || '';
+                      const endTime = booking.endDate.split('T')[1]?.substring(0, 5) || '';
                       return (
                         <TableRow key={booking.id}>
                           <TableCell>
@@ -147,8 +187,9 @@ export default function BookingScreen() {
                             </div>
                           </TableCell>
                           <TableCell>{booking.day}</TableCell>
-                          <TableCell>{booking.timeSlot}</TableCell>
-                          <TableCell>{booking.subject}</TableCell>
+                          <TableCell>{booking.startDate.split('T')[0]}</TableCell>
+                          <TableCell>{startTime} - {endTime}</TableCell>
+                          <TableCell>{booking.description}</TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"
@@ -291,12 +332,7 @@ export default function BookingScreen() {
                       <SelectValue placeholder="Choose a time slot" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableSlots.length === 0 ? (
-                        <div className="p-4 text-sm text-gray-500 text-center">
-                          No available slots for this day
-                        </div>
-                      ) : (
-                        availableSlots.map(slot => (
+                      {TIME_SLOTS.map(slot => (
                           <SelectItem 
                             key={`${slot.start}-${slot.end}`} 
                             value={`${slot.start}-${slot.end}`}
@@ -306,20 +342,19 @@ export default function BookingScreen() {
                               {slot.start} - {slot.end}
                             </div>
                           </SelectItem>
-                        ))
-                      )}
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Step 4: Enter Subject */}
+                {/* Step 4: Enter Description */}
                 <div>
-                  <Label htmlFor="subject" className="text-base mb-2 block">4. Course/Subject Name</Label>
+                  <Label htmlFor="description" className="text-base mb-2 block">4. Course/Subject Description</Label>
                   <Input
-                    id="subject"
+                    id="description"
                     placeholder="e.g., Computer Science 101"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     disabled={!selectedTimeSlot}
                   />
                 </div>
@@ -327,7 +362,7 @@ export default function BookingScreen() {
                 {/* Submit Button */}
                 <Button 
                   onClick={handleBookRoom}
-                  disabled={!selectedRoom || !selectedDay || !selectedTimeSlot || !subject}
+                  disabled={!selectedRoom || !selectedDay || !selectedTimeSlot || !description}
                   className="w-full h-12"
                   size="lg"
                 >

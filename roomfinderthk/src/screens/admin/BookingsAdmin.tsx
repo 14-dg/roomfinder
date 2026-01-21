@@ -39,65 +39,53 @@ export default function BookingsAdmin() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Priority</TableHead>
               <TableHead>Room</TableHead>
-              <TableHead>Day</TableHead>
+              <TableHead>Date</TableHead>
               <TableHead>Time</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead />
+              <TableHead>Description</TableHead>
+              <TableHead>Booked By</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
             {bookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-gray-500 py-8">
+                <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                   No bookings
                 </TableCell>
               </TableRow>
             ) : (
-              bookings
-                .sort((a, b) =>
-                  a.bookedByRole === 'professor' ? -1 : 1
-                )
-                .map((b) => {
-                  const room = rooms.find((r) => r.id === b.roomId);
-                  const isProfessor = b.bookedByRole === 'professor';
+              bookings.map((b) => {
+                const room = rooms.find((r) => r.id === b.roomId);
+                const startTime = b.startDate.split('T')[1]?.substring(0, 5) || '';
+                const endTime = b.endDate.split('T')[1]?.substring(0, 5) || '';
+                const bookingDate = b.startDate.split('T')[0];
 
-                  return (
-                    <TableRow key={b.id} className={isProfessor ? 'bg-blue-50' : ''}>
-                      <TableCell>
-                        <Badge className={isProfessor ? 'bg-blue-600' : ''}>
-                          {isProfessor ? 'High' : 'Normal'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{room?.roomName}</TableCell>
-                      <TableCell>{b.day}</TableCell>
-                      <TableCell>{b.timeSlot}</TableCell>
-                      <TableCell>{b.subject}</TableCell>
-                      <TableCell>{b.bookedByName}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{b.bookedByRole}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm('Delete booking?')) {
-                              removeBooking(b.id);
-                              toast.success('Booking deleted');
-                            }
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                return (
+                  <TableRow key={b.id}>
+                    <TableCell className="font-medium">{room?.roomName}</TableCell>
+                    <TableCell>{bookingDate}</TableCell>
+                    <TableCell>{startTime} - {endTime}</TableCell>
+                    <TableCell>{b.description}</TableCell>
+                    <TableCell>{b.bookedBy}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm('Delete booking?')) {
+                            removeBooking(b.id);
+                            toast.success('Booking deleted');
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule } from '@/models';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule, Timetable, Module, Event } from '@/models';
 import {initialClasses, initialRooms, defaultSchedulePattern, days} from "../mockData/mockData";
 import {
   getAllBookings,
@@ -21,12 +21,18 @@ import {
   sendEmailToProfessorForPassword,
   addStudentCheckin as addStudentCheckinService,
   removeStudentCheckin as removeStudentCheckinService,
+  loadTimetables,
+  loadModules,
+  saveTimetableFire,
+  addUserEvent as addUserEventService,
+  removeUserEvent as removeUserEventService,
+  getUserEventsByUserId as getUserEventsByUserIdService,
   addBooking as addBookingService,
   deleteBooking as deleteBookingService,
-  clearAllBookings as clearAllBookingsService,
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
+import { checkRoomAvailability } from '@/utils/availability';
 
 // Activity noise levels for determining "loudest" activity
 const activityNoiseLevel: Record<string, number> = {
@@ -46,6 +52,8 @@ interface DataContextType {
   classes: Lecture[];
   lecturers: any[];
   userTimetableEntries: UserTimetableEntry[];
+  timetables: Timetable[];
+  modules: Module[];
   getRoomSchedule: (roomId: string) => DaySchedule[];
   getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => CheckIn[];
   getLoudestActivity: (roomId: string, day: string, timeSlot: string) => string;
@@ -66,6 +74,13 @@ interface DataContextType {
   addClassToTimetable: (classId: string, userId: string) => void;
   removeClassFromTimetable: (classId: string, userId: string) => void;
   getUserClasses: (userId: string) => Lecture[];
+  saveTimetable: (timetable: Timetable) => void;
+  loadTimetables: () => Timetable[];
+  saveModules: (modules: Module[]) => void;
+  loadModules: () => Module[];
+  addEventToUserTimetable: (classId: string, userId: string, event: Event) => Promise<void>;
+  removeEventFromUserTimetable: (classId: string, userId: string) => Promise<void>;
+  getUserEvents: (userId: string) => (UserTimetableEntry & { event?: Event })[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -105,11 +120,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const [lecturers, setLecturers] = useState<any[]>([]);
 
+  const [timetables, setTimetables] = useState<Timetable[]>([]);
+
+  const [modules, setModules] = useState<Module[]>([]);
+
   // const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>(() => {
   //   const savedEntries = localStorage.getItem('userTimetableEntries');
   //   return savedEntries ? JSON.parse(savedEntries) : [];
   // });
   const [userTimetableEntries, setUserTimetableEntries] = useState<UserTimetableEntry[]>([]);
+
+  const [tick, setTick] = useState(0);
 
   const refreshRooms = async () => {
     const updatedRooms = await getAllRooms();
@@ -120,6 +141,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const data = await getLecturers();
     setLecturers(data);
   };
+
+  const refreshModules = async () => {
+    const data = await loadModules();
+    setModules(data);
+  }
+
+  const refreshUserTimetableEntries = async () => {
+    const data = await getAllUserTimetableEntries();
+    setUserTimetableEntries(data);
+  }
 
   useEffect(() => {
 
@@ -145,6 +176,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         const allLecturers = await getLecturers();
         setLecturers(allLecturers);
+
+        const allTimetables = await loadTimetables();
+        setTimetables(allTimetables);
+        
+        const allModules = await loadModules();
+        setModules(allModules);
       }
       finally {
 
@@ -152,6 +189,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    // Aktualisiert die Ansicht jede Minute, damit "Available" live umspringt
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 60000); 
+    return () => clearInterval(interval);
   }, []);
 
   const getRoomSchedule = (roomId: string): DaySchedule[] => {
@@ -174,7 +219,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
               isBooked: true,
               subject: booking.subject,
               bookedBy: booking.bookedByName,
-              bookedByRole: booking.bookedByRole,
             };
           }
           return slot;
@@ -197,7 +241,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             isBooked: true,
             subject: booking.subject,
             bookedBy: booking.bookedByName,
-            bookedByRole: booking.bookedByRole,
           };
         }
         return slot;
@@ -417,6 +460,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await refreshLecturers();
   };
 
+  const saveTimetable = async (timetable: Timetable) => {
+    await saveTimetableFire(timetable);
+  }
+
+  const saveModules = async (modules: Module[]) => {
+    await saveModules(modules);
+    await refreshModules;
+  }
+
   const uploadTimetable = (roomId: string, schedule: DaySchedule[]) => {
     const updatedSchedules = customSchedules.filter(s => s.roomId !== roomId);
     updatedSchedules.push({ roomId, schedule });
@@ -451,15 +503,78 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return userClasses;
   };
 
+  const addEventToUserTimetable = async (classId: string, userId: string, event: Event) => {
+    try {
+      const newEntry: UserTimetableEntry = {
+        id: Date.now().toString(),
+        classId,
+        userId,
+      };
+      await addUserEventService(newEntry);
+      await refreshUserTimetableEntries();
+    } catch (error) {
+      toast.error('Failed to add event to timetable');
+    }
+  };
+
+  const removeEventFromUserTimetable = async (classId: string, userId: string) => {
+    try {
+      await removeUserEventService(userId, classId);
+      await refreshUserTimetableEntries();
+    } catch (error) {
+      toast.error('Failed to remove event from timetable');
+    }
+  };
+
+  const getUserEvents = useCallback((userId: string): (UserTimetableEntry & { event?: Event })[] => {
+    return userTimetableEntries
+      .filter(e => e.userId === userId)
+      .map(entry => {
+        // classId format: "timetableIdx-eventIdx-eventId"
+        const parts = entry.classId.split('-');
+        let event: Event | undefined;
+
+        if (parts.length === 3) {
+          // uniqueKey format
+          const timetableIdx = parseInt(parts[0]);
+          const eventIdx = parseInt(parts[1]);
+          const eventId = parseInt(parts[2]);
+
+          if (timetables[timetableIdx]) {
+            event = timetables[timetableIdx].events[eventIdx];
+            // Verify the event ID matches to be safe
+            if (event && event.id !== eventId) {
+              event = undefined;
+            }
+          }
+        } else {
+          // Fallback to old format (just eventId)
+          const eventId = parseInt(entry.classId);
+          event = timetables
+            .flatMap(t => t.events)
+            .find(e => e.id === eventId);
+        }
+
+        return { ...entry, event };
+      });
+  }, [userTimetableEntries, timetables]);
+
+  const roomsWithDerivedStatus = rooms.map(room => ({
+    ...room,
+    isAvailable: checkRoomAvailability(room.id, classes, bookings)
+  }));
+
   return (
     <DataContext.Provider
       value={{
-        rooms,
+        rooms: roomsWithDerivedStatus,
         bookings,
         studentCheckins,
         classes,
         lecturers,
         userTimetableEntries,
+        timetables,
+        modules,
         getRoomSchedule,
         getStudentCheckinsForSlot,
         getLoudestActivity,
@@ -480,6 +595,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addClassToTimetable,
         removeClassFromTimetable,
         getUserClasses,
+        saveTimetable,
+        loadTimetables,
+        saveModules,
+        loadModules,
+        addEventToUserTimetable,
+        removeEventFromUserTimetable,
+        getUserEvents,
       }}
     >
       {children}

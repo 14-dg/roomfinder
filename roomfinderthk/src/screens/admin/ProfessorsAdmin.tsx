@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox'; // Sicherstellen, dass die Shadcn Checkbox vorhanden ist
+import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useData } from '@/contexts/DataContext';
 
+// Generiere alle verfügbaren Zeitslots für Office Hours (8:00 - 20:30 in 30er Schritten)
 const timeOptions = (() => {
   const options = ["On Request"];
   for (let h = 8; h <= 20; h++) {
@@ -20,6 +21,7 @@ const timeOptions = (() => {
   return options;
 })();
 
+// Wochentage für die Office-Hours-Auswahl
 const daysOfWeek = [
   { id: 'Mon', label: 'Mon' },
   { id: 'Tue', label: 'Tue' },
@@ -30,23 +32,31 @@ const daysOfWeek = [
   { id: 'Sun', label: 'Sun' },
 ];
 
+// Admin-Screen zur Verwaltung von Professoren: Erstellen von Konten, Office Hours und Löschung
 export default function ProfessorsAdmin() {
   const { rooms, lecturers, addProfessor, removeProfessor, updateOfficeHours } = useData();
   
+  // Tracks welcher Professor gerade bearbeitet wird
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Formularfeld für neue Professor-Konten
   const [form, setForm] = useState({ email: '', name: '' });
+  // Zeitfenster und Raum für Office Hours
   const [hours, setHours] = useState({ start: '', end: '', room: '' });
+  // Ausgewählte Wochentage für die Office Hours
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
+  // Toggle eines Wochentags in der Office-Hours-Auswahl
   const handleDayChange = (dayId: string) => {
     setSelectedDays(prev => 
       prev.includes(dayId) ? prev.filter(d => d !== dayId) : [...prev, dayId]
     );
   };
 
+  // Erstellt einen neuen Professor und sendet Willkommens-Email
   const handleCreate = async () => {
     if (!form.email || !form.name) return toast.error("Please fill in all fields");
 
+    // Validiert dass die Email von der TH Köln ist
     const emailRegex = /^[a-zA-Z0-9._%+-]+@smail\.th-koeln\.de$/;
     if (!emailRegex.test(form.email)) {
       return toast.error("Invalid email format! Must be @smail.th-koeln.de");
@@ -61,6 +71,7 @@ export default function ProfessorsAdmin() {
     }
   };
 
+  // Speichert die Office Hours für einen ausgewählten Professor
   const handleSaveHours = async () => {
     if (!selectedId || !hours.start || !hours.end || !hours.room) {
       return toast.error("Please complete all office hour details");
@@ -70,7 +81,7 @@ export default function ProfessorsAdmin() {
       return toast.error("Please select at least one day");
     }
 
-    // Formatierung des Strings: "Start - End Days"
+    // Formatiert die Uhrzeiten schön (z.B. "14:00 - 16:00 Mon, Wed, Fri")
     const timeDisplay = hours.start === "On Request" && hours.end === "On Request" 
       ? "On Request" 
       : `${hours.start} - ${hours.end}`;
@@ -81,7 +92,8 @@ export default function ProfessorsAdmin() {
       await updateOfficeHours(selectedId, finalOfficeHours, hours.room);
       toast.success("Office hours updated in lecturer profile");
       setSelectedId(null);
-      setSelectedDays([]); // Reset der Tage
+      setSelectedDays([]);
+      setHours({ start: '', end: '', room: '' });
     } catch {
       toast.error("Failed to save changes");
     }
@@ -91,7 +103,7 @@ export default function ProfessorsAdmin() {
 
   return (
     <div className="p-4 space-y-8">
-      {/* 1. Account Creation */}
+      {/* ABSCHNITT 1: Neuen Professor registrieren */}
       <Card className="p-6">
         <h3 className="text-lg font-bold mb-4">Register New Professor</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -118,14 +130,14 @@ export default function ProfessorsAdmin() {
         </Button>
       </Card>
 
-      {/* 2. Profile Editing (Office Hours) */}
+      {/* ABSCHNITT 2: Office Hours eines Professors bearbeiten */}
       <Card className={`p-6 border-2 transition-all ${selectedId ? 'border-blue-500 shadow-lg' : 'opacity-50'}`}>
         <h3 className="text-lg font-bold mb-4">
           Manage Office Hours {currentLec && <span className="text-blue-600 ml-2">for {currentLec.name}</span>}
         </h3>
         
         <div className="space-y-6">
-          {/* Time & Room Selects */}
+          {/* Startzeit, Endzeit und Raum auswählen */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Select onValueChange={v => setHours({...hours, start: v})}>
               <SelectTrigger><SelectValue placeholder="Start Time" /></SelectTrigger>
@@ -147,7 +159,7 @@ export default function ProfessorsAdmin() {
             </Select>
           </div>
 
-          {/* Day Checkboxes */}
+          {/* Wochentage auswählen */}
           <div className="space-y-3">
             <Label>Select Days</Label>
             <div className="flex flex-wrap gap-4 p-3 bg-slate-50 rounded-lg border">
@@ -177,7 +189,7 @@ export default function ProfessorsAdmin() {
         </div>
       </Card>
 
-      {/* 3. List Section */}
+      {/* ABSCHNITT 3: Alle Professoren anzeigen und verwalten */}
       <Card className="p-6">
         <h3 className="text-lg font-bold mb-4">Lecturer List</h3>
         <Table>
@@ -197,11 +209,13 @@ export default function ProfessorsAdmin() {
                 onClick={() => setSelectedId(lec.id)}
                 className={`cursor-pointer hover:bg-slate-50 ${selectedId === lec.id ? 'bg-blue-50' : ''}`}
               >
+                {/* Klick auf eine Reihe wählt den Professor für Office-Hours-Bearbeitung */}
                 <TableCell className="font-semibold">{lec.name}</TableCell>
                 <TableCell>{lec.email}</TableCell>
                 <TableCell>{lec.officeHours || 'Not set'}</TableCell>
                 <TableCell>{lec.officeLocation || '—'}</TableCell>
                 <TableCell className="text-right">
+                  {/* Löscht den Professor nach Bestätigung */}
                   <Button 
                     variant="ghost" 
                     size="icon" 

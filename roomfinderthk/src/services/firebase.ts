@@ -22,7 +22,7 @@ import {
   arrayRemove,
 } from "firebase/firestore";
 
-import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule } from '@/models';
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, Timetable, Module } from '@/models';
 import { app, auth, db } from '../firebase-config';
 import { initialClasses, initialRooms } from '@/mockData/mockData';
 
@@ -482,4 +482,90 @@ export async function deleteProfessorAndLecturer(id: string) {
   
   const lecturers = await getLecturers();
   localStorage.setItem('lecturers', JSON.stringify(lecturers.filter(l => l.id !== id)));
+}
+
+
+
+// TimetableBuilder Funktionen oder so
+export const saveTimetableFire = (timetable: Timetable): void => {
+  const updatedTimetables = loadTimetables();
+  const existingIndex = updatedTimetables.findIndex(t => t.id === timetable.id);
+
+  if(existingIndex >= 0) {
+    updatedTimetables[existingIndex] = timetable;
+  } else {
+    updatedTimetables.push(timetable);
+  }
+
+  localStorage.setItem('timetables', JSON.stringify(updatedTimetables));
+};
+
+export const loadTimetables = (): Timetable[] => {
+  const data = localStorage.getItem('timetables');
+  return data ? JSON.parse(data) : [];
+}
+
+export const saveModules = (modules: Module[]): void => {
+  localStorage.setItem('modules', JSON.stringify(modules));
+};
+
+export const loadModules = (): Module[] => {
+  const data = localStorage.getItem('modules');
+  return data ? JSON.parse(data) : [];
+};
+
+// ============================================================================
+// USER EVENT TIMETABLE SERVICES
+// ============================================================================
+
+/**
+ * Add an event to user's timetable
+ * TODO: Replace with Firestore write
+ * - Use addDoc(collection(db, 'userEvents'), eventData)
+ */
+export async function addUserEvent(entry: UserTimetableEntry): Promise<UserTimetableEntry> {
+  // Placeholder: Using localStorage
+  // Firebase implementation would use:
+  // const docRef = await addDoc(collection(db, 'userEvents'), entry);
+  // return { id: docRef.id, ...entry };
+  
+  const entries = await getAllUserTimetableEntries();
+  const newEntry: UserTimetableEntry = {
+    ...entry,
+    id: entry.id || Date.now().toString(),
+  };
+  entries.push(newEntry);
+  localStorage.setItem('userTimetableEntries', JSON.stringify(entries));
+  return newEntry;
+}
+
+/**
+ * Remove an event from user's timetable
+ * TODO: Replace with Firestore delete
+ * - Use deleteDoc(doc(db, 'userEvents', entryId))
+ */
+export async function removeUserEvent(userId: string, classId: string): Promise<void> {
+  // Placeholder: Using localStorage
+  // Firebase implementation would use:
+  // await deleteDoc(doc(db, 'userEvents', entryId));
+  
+  const entries = await getAllUserTimetableEntries();
+  const filtered = entries.filter(e => !(e.userId === userId && e.classId === classId));
+  localStorage.setItem('userTimetableEntries', JSON.stringify(filtered));
+}
+
+/**
+ * Get all events for a user
+ * TODO: Replace with Firestore query
+ * - Use query(collection(db, 'userEvents'), where('userId', '==', userId))
+ */
+export async function getUserEventsByUserId(userId: string): Promise<UserTimetableEntry[]> {
+  // Placeholder: Using localStorage
+  // Firebase implementation would use:
+  // const q = query(collection(db, 'userEvents'), where('userId', '==', userId));
+  // const querySnapshot = await getDocs(q);
+  // return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  
+  const entries = await getAllUserTimetableEntries();
+  return entries.filter(e => e.userId === userId);
 }

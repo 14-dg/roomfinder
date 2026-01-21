@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
@@ -29,6 +29,8 @@ import {
   Compass,
   LogOut,
   DoorOpen,
+  Calendar,
+  GraduationCap,
 } from "lucide-react";
 import ScreenHeader from "@/components/ScreenHeader";
 import { useData } from "../../contexts/DataContext";
@@ -37,8 +39,16 @@ import { toast } from "sonner";
 import { getOccupancyColor, getOccupancyIcon, getOccupancyLevel } from "@/utils/occupancy";
 import { RoomDetailLegend } from "./RoomDetailLegend";
 import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Event, Timetable } from "@/models";
 
 /* ------------------------------ screen ------------------------------------ */
+
+/**
+ * Helper to group events by day and sort them by start time.
+ * Filters out days that have no events.
+ */
+
 
 export default function RoomDetailScreen() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -50,8 +60,8 @@ export default function RoomDetailScreen() {
   const {
     rooms,
     studentCheckins,
-    getRoomSchedule,
-    getCurrentDayAndTimeSlot,
+    classes,
+    bookings,
     updateRoom,
     addStudentCheckin,
     removeStudentCheckin,
@@ -66,11 +76,10 @@ export default function RoomDetailScreen() {
   const room = rooms.find((r) => r.id === roomId);
   if (!room) return <p className="text-center py-10">Room not found</p>;
 
-  const schedule = getRoomSchedule(room.id);
-  const currentSlot = getCurrentDayAndTimeSlot();
-
   const myCheckIn = studentCheckins.find(c => c.userId === user?.id);
   const isCheckedInHere = myCheckIn?.roomId === roomId;
+  const roomLectures = classes.filter(l => l.roomId === room.id); 
+  const roomBookings = bookings.filter(b => b.roomId === roomId);
 
   /* --------------------------- handlers ----------------------------------- */
 
@@ -85,7 +94,7 @@ export default function RoomDetailScreen() {
     if (!room) return;
 
     if (isCheckedInHere) {
-      
+
       if (myCheckIn) {
         removeStudentCheckin(myCheckIn.id);
         toast.success("Erfolgreich ausgecheckt");
@@ -115,10 +124,9 @@ export default function RoomDetailScreen() {
     });
 
     toast.success(`Eingecheckt in ${room.roomName}`, {
-      description: `Bis ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} Uhr`
+      description: `Bis ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Uhr`
     });
-    
-    // 4. Dialog schließen & Reset
+
     setIsDialogOpen(false);
   };
 
@@ -152,6 +160,7 @@ export default function RoomDetailScreen() {
               </div>
             </div>
 
+            {/*TODO*/}
             <Badge variant={room.isLocked ? "destructive" : room.isAvailable ? "default" : "secondary"}>
               {room.isLocked ? "Locked" : room.isAvailable ? "Available" : "Occupied"}
             </Badge>
@@ -180,11 +189,10 @@ export default function RoomDetailScreen() {
           <Button
             onClick={handleToggleCheckin}
             variant={isCheckedInHere ? "default" : "outline"}
-            className={`w-full ${
-              isCheckedInHere 
-                ? "border-red-200 text-red-600 hover:bg-red-50" 
+            className={`w-full ${isCheckedInHere
+                ? "border-red-200 text-red-600 hover:bg-red-50"
                 : "bg-green-600 hover:bg-green-700"
-            }`}
+              }`}
           >
             {isCheckedInHere ? (
               <>
@@ -238,48 +246,48 @@ export default function RoomDetailScreen() {
         )}
 
         {/* Legende */}
-        <RoomDetailLegend/>
+        <RoomDetailLegend />
 
-        {/* Weekly Schedule */}
-        {/*<RoomWeeklySchedule></RoomWeeklySchedule>*/}
+        {/*RoomSchedule*/}
+        <RoomWeeklySchedule lectures={roomLectures} bookings={roomBookings} />
 
         {/* Check In Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Check In: {room?.roomName}</DialogTitle>
-            <DialogDescription>
-              Wähle deine Aufenthaltsdauer.
-            </DialogDescription>
-          </DialogHeader>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Check In: {room?.roomName}</DialogTitle>
+              <DialogDescription>
+                Wähle deine Aufenthaltsdauer.
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            
-            {/* Dauer Auswahl */}
-            <div className="space-y-2">
-              <Label>Wie lange bleibst du?</Label>
-              <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Dauer wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 Minuten</SelectItem>
-                  <SelectItem value="60">1 Stunde</SelectItem>
-                  <SelectItem value="90">1.5 Stunden</SelectItem>
-                  <SelectItem value="120">2 Stunden</SelectItem>
-                  <SelectItem value="240">4 Stunden</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-4 py-4">
+
+              {/* Dauer Auswahl */}
+              <div className="space-y-2">
+                <Label>Wie lange bleibst du?</Label>
+                <Select value={duration} onValueChange={setDuration}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Dauer wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 Minuten</SelectItem>
+                    <SelectItem value="60">1 Stunde</SelectItem>
+                    <SelectItem value="90">1.5 Stunden</SelectItem>
+                    <SelectItem value="120">2 Stunden</SelectItem>
+                    <SelectItem value="240">4 Stunden</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DialogFooter>
+                <Button onClick={handleConfirmCheckIn} className="w-full">
+                  Jetzt Einchecken
+                </Button>
+              </DialogFooter>
             </div>
-
-            <DialogFooter>
-               <Button onClick={handleConfirmCheckIn} className="w-full">
-                 Jetzt Einchecken
-               </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
