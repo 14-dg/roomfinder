@@ -25,12 +25,12 @@ const dayTimes = [
 const initialDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 const typeOptions = [
-  'Lecture',
-  'Practical Course',
-  'Exercise',
-  'Tutorial',
+  'Vorlesung',
+  'Uebung',
+  'Praktikum',
+  'Tutorium',
   'Seminar',
-  'Other'
+  'Anderes'
 ];
 
 interface EventFormProps {
