@@ -26,7 +26,9 @@ import {
   saveTimetableFire,
   addUserEvent as addUserEventService,
   removeUserEvent as removeUserEventService,
-  getUserEventsByUserId as getUserEventsByUserIdService
+  getUserEventsByUserId as getUserEventsByUserIdService,
+  addBooking as addBookingService,
+  deleteBooking as deleteBookingService,
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
@@ -206,7 +208,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
               isBooked: true,
               subject: booking.subject,
               bookedBy: booking.bookedByName,
-              bookedByRole: booking.bookedByRole,
             };
           }
           return slot;
@@ -229,7 +230,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             isBooked: true,
             subject: booking.subject,
             bookedBy: booking.bookedByName,
-            bookedByRole: booking.bookedByRole,
           };
         }
         return slot;
@@ -290,21 +290,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
-  const addBooking = (booking: Omit<Booking, 'id' | 'createdAt'>) => {
-    const newBooking: Booking = {
-      ...booking,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-    const updatedBookings = [...bookings, newBooking];
-    setBookings(updatedBookings);
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+  const addBooking = async (booking: Omit<Booking, 'id' | 'createdAt'>) => {
+    try {
+      const newBooking = await addBookingService(booking);
+      setBookings(prev => [...prev, newBooking]);
+    } catch (error) {
+      toast.error("Booking failed");
+    }
   };
 
-  const removeBooking = (id: string) => {
-    const updatedBookings = bookings.filter(b => b.id !== id);
-    setBookings(updatedBookings);
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+  const removeBooking = async (id: string) => {
+    try {
+      await deleteBookingService(id);
+      setBookings(prev => prev.filter(b => b.id !== id));
+    } catch (error) {
+      toast.error("Failed to cancel booking");
+    }
   };
 
   const addStudentCheckin = async (checkin: Omit<CheckIn, 'id'>) => {

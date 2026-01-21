@@ -75,7 +75,6 @@ export default function BookingScreen() {
       subject: subject,
       bookedBy: user.id,
       bookedByName: user.name,
-      bookedByRole: 'professor',
     });
 
     toast.success(`Room ${room.roomName} booked successfully!`);

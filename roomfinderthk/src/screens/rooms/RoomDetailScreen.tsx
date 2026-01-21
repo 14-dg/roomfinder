@@ -29,6 +29,7 @@ import {
   Compass,
   LogOut,
   DoorOpen,
+  Calendar,
 } from "lucide-react";
 import ScreenHeader from "@/components/ScreenHeader";
 import { useData } from "../../contexts/DataContext";
@@ -37,6 +38,7 @@ import { toast } from "sonner";
 import { getOccupancyColor, getOccupancyIcon, getOccupancyLevel } from "@/utils/occupancy";
 import { RoomDetailLegend } from "./RoomDetailLegend";
 import { RoomWeeklySchedule } from "./RoomWeeklySchedule";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 /* ------------------------------ screen ------------------------------------ */
 
@@ -55,6 +57,7 @@ export default function RoomDetailScreen() {
     updateRoom,
     addStudentCheckin,
     removeStudentCheckin,
+    bookings,
   } = useData();
 
   const {
@@ -68,6 +71,9 @@ export default function RoomDetailScreen() {
 
   const schedule = getRoomSchedule(room.id);
   const currentSlot = getCurrentDayAndTimeSlot();
+
+  // Get room bookings (timetable entries)
+  const roomBookings = bookings.filter(b => b.roomId === roomId);
 
   const myCheckIn = studentCheckins.find(c => c.userId === user?.id);
   const isCheckedInHere = myCheckIn?.roomId === roomId;
@@ -239,6 +245,40 @@ export default function RoomDetailScreen() {
 
         {/* Legende */}
         <RoomDetailLegend/>
+
+        {/* Timetable - Room Bookings */}
+        {roomBookings.length > 0 && (
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold">Room Bookings</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Day</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Booked By</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {roomBookings.map((booking) => (
+                    <TableRow key={booking.id}>
+                      <TableCell className="font-medium">{booking.day}</TableCell>
+                      <TableCell>{booking.timeSlot}</TableCell>
+                      <TableCell>{booking.subject}</TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {booking.bookedByName}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        )}
 
         {/* Weekly Schedule */}
         {/*<RoomWeeklySchedule></RoomWeeklySchedule>*/}
