@@ -3,8 +3,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  getAuth,
 } from "firebase/auth";
+import { initializeApp, deleteApp } from "firebase/app";
 
 import {
   doc,
@@ -23,7 +25,7 @@ import {
 } from "firebase/firestore";
 
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, Timetable, Module } from '@/models';
-import { app, auth, db } from '../firebase-config';
+import { app, auth, db, firebaseConfig } from '../firebase-config';
 import { initialClasses, initialRooms } from '@/mockData/mockData';
 
 import User from "@/models/User";
@@ -62,6 +64,45 @@ export async function registerUser(
     } as User;
   } catch (err) {
     console.error("REGISTER FAILED:", err);
+    throw err;
+  }
+}
+
+async function registerUserWithoutLogin(
+  email: string,
+  password: string,
+  name: string,
+  role: 'student' | 'professor' | 'admin',
+  additionalData: any = {}
+): Promise<User> {
+  const tempAppName = `temp-app-${Date.now()}`;
+  const tempApp = initializeApp(firebaseConfig, tempAppName);
+  const tempAuth = getAuth(tempApp);
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
+    const uid = userCredential.user.uid;
+
+    const userProfile = {
+      email,
+      name,
+      role,
+      favourites: [],
+      timetable: [],
+      createdAt: serverTimestamp(),
+      ...additionalData,
+    };
+
+    await setDoc(doc(db, 'users', uid), userProfile);
+
+    // KORREKTUR HIER:
+    await deleteApp(tempApp); 
+
+    return { id: uid, ...userProfile } as User;
+  } catch (err) {
+    // AUCH IM CATCH-BLOCK KORRIGIEREN:
+    await deleteApp(tempApp);
+    console.error("REGISTER WITHOUT LOGIN FAILED:", err);
     throw err;
   }
 }
@@ -460,7 +501,7 @@ export async function registerProfessor(email: string, password: string, name: s
     lectures: []
   };
   
-  return await registerUser(email, password, name, 'professor', professorFields);
+  return await registerUserWithoutLogin(email, password, name, 'professor', professorFields);
 }
 
 /**
