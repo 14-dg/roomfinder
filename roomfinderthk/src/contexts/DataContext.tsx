@@ -9,7 +9,6 @@ import {
   getAllStudentCheckins,
   getAllUserTimetableEntries,
   getBookings,
-  getRoomDetailScreen,
   getRooms,
   addRoom as addRoomService,
   updateRoom as updateRoomService,
@@ -32,6 +31,7 @@ import {
   deleteBooking as deleteBookingService,
   addLecture as addLectureService,
   removeLecture as removeLectureService,
+  uploadTimetableAsLectures,
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
@@ -86,6 +86,8 @@ interface DataContextType {
   getUserEvents: (userId: string) => (UserTimetableEntry & { event?: Event })[];
   addLecture: (lecture: Omit<Lecture, 'id'>) => Promise<Lecture | null>;
   removeLecture: (id: string) => Promise<void>;
+  getRoomLectures: (roomId: string) => Lecture[];
+  getRoomBookings: (roomId: string) => Booking[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -209,54 +211,69 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Spezialisierter Selektor für Raum-Vorlesungen
+  const getRoomLectures = useCallback((roomId: string): Lecture[] => {
+    return classes.filter(l => l.roomId === roomId);
+  }, [classes]);
+
+  // Spezialisierter Selektor für Raum-Buchungen
+  const getRoomBookings = useCallback((roomId: string): Booking[] => {
+    return bookings.filter(b => b.roomId === roomId);
+  }, [bookings]);
+
   const getRoomSchedule = (roomId: string): DaySchedule[] => {
-    // Check if there's a custom schedule for this room
-    const customSchedule = customSchedules.find(s => s.roomId === roomId);
-    
-    if (customSchedule) {
-      // Apply bookings to custom schedule
-      return customSchedule.schedule.map(daySchedule => ({
-        ...daySchedule,
-        slots: daySchedule.slots.map(slot => {
-          const booking = bookings.find(
-            b => b.roomId === roomId && 
-                 b.day === daySchedule.day && 
-                 b.timeSlot === `${slot.start}-${slot.end}`
+      // 1. Hole alle Vorlesungen (Lectures), die in diesem Raum stattfinden
+      // Nutzt jetzt 'roomId' statt 'room'
+      const roomLectures = classes.filter(c => c.roomId === roomId);
+
+      // 2. Erzeuge für jeden Wochentag einen Schedule
+      return days.map(day => ({
+        day,
+        slots: defaultSchedulePattern.map(slot => {
+          const timeSlotString = `${slot.start}-${slot.end}`;
+
+          // A) Prüfe auf Vorlesung
+          // Nutzt jetzt 'startTime' und 'endTime' Vergleich
+          const lectureMatch = roomLectures.find(
+            l => l.day === day && `${l.startTime}-${l.endTime}` === timeSlotString
           );
-          if (booking) {
+
+          // B) Prüfe auf manuelle Raumbuchung
+          const bookingMatch = bookings.find(
+            b => b.roomId === roomId && 
+                b.day === day && 
+                b.timeSlot === timeSlotString
+          );
+
+          if (lectureMatch) {
             return {
               ...slot,
               isBooked: true,
-              subject: booking.subject,
-              bookedBy: booking.bookedByName,
+              subject: lectureMatch.name,
+              bookedBy: lectureMatch.professor, // Geändert von 'lecturer'
+              isLecture: true 
             };
           }
-          return slot;
-        }),
-      }));
-    }
 
-    // Generate default schedule with bookings
-    return days.map(day => ({
-      day,
-      slots: defaultSchedulePattern.map(slot => {
-        const booking = bookings.find(
-          b => b.roomId === roomId && 
-               b.day === day && 
-               b.timeSlot === `${slot.start}-${slot.end}`
-        );
-        if (booking) {
+          if (bookingMatch) {
+            return {
+              ...slot,
+              isBooked: true,
+              subject: bookingMatch.subject,
+              bookedBy: bookingMatch.bookedByName,
+              isLecture: false
+            };
+          }
+
           return {
             ...slot,
-            isBooked: true,
-            subject: booking.subject,
-            bookedBy: booking.bookedByName,
+            subject: '',
+            bookedBy: '',
+            isBooked: false
           };
-        }
-        return slot;
-      }),
-    }));
-  };
+        }),
+      }));
+    };
 
   const getStudentCheckinsForSlot = (roomId: string, day: string, timeSlot: string): CheckIn[] => {
     return studentCheckins.filter(
@@ -506,12 +523,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await refreshModules();
   }
 
-  const uploadTimetable = (roomId: string, schedule: DaySchedule[]) => {
-    const updatedSchedules = customSchedules.filter(s => s.roomId !== roomId);
-    updatedSchedules.push({ roomId, schedule });
-    setCustomSchedules(updatedSchedules);
-    localStorage.setItem('customSchedules', JSON.stringify(updatedSchedules));
-  };
+  const uploadTimetable = async (roomId: string, schedule: DaySchedule[]) => {
+      try {
+        await uploadTimetableAsLectures(roomId, schedule);
+        
+        const updatedLectures = await getAllLectures();
+        setClasses(updatedLectures);
+        
+        toast.success("Raum-Stundenplan erfolgreich in Vorlesungen übertragen");
+      } catch (error) {
+        console.error("Upload failed:", error);
+        toast.error("Fehler beim Übertragen des Stundenplans");
+      }
+    };
 
   const addClassToTimetable = (classId: string, userId: string) => {
     const newEntry: UserTimetableEntry = {
@@ -663,6 +687,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         getUserEvents,
         addLecture,
         removeLecture,
+        getRoomLectures,
+        getRoomBookings,
       }}
     >
       {children}

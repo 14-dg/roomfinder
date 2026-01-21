@@ -277,69 +277,50 @@ export async function removeFavoriteFromFirestore(
 // TIMETABLE SERVICES
 // ============================================================================
 
-interface RoomSchedule {
-  roomId: string;
-  schedule: DaySchedule[];
-}
-
-/**
- * Get custom timetable for a room
- * TODO: Replace with Firestore query
- * - Use getDoc(doc(db, 'timetables', roomId))
- */
-export async function getRoomDetailScreen(roomId: string): Promise<DaySchedule[] | null> { 
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // const docSnap = await getDoc(doc(db, 'timetables', roomId));
-  // return docSnap.exists() ? docSnap.data().schedule : null;
-  
-  const schedules = localStorage.getItem('customSchedules');
-  if (!schedules) return null;
-  
-  const parsed: RoomSchedule[] = JSON.parse(schedules);
-  const roomSchedule = parsed.find(s => s.roomId === roomId);
-  return roomSchedule ? roomSchedule.schedule : null;
-}
-
-/**
- * Upload/Update timetable for a room
- * TODO: Replace with Firestore write
- * - Use setDoc(doc(db, 'timetables', roomId), { schedule })
- */
-export async function uploadTimetable(roomId: string, schedule: DaySchedule[]): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await setDoc(doc(db, 'timetables', roomId), { schedule, updatedAt: serverTimestamp() });
-  
-  const schedules = localStorage.getItem('customSchedules');
-  const parsed: RoomSchedule[] = schedules ? JSON.parse(schedules) : [];
-  
-  const index = parsed.findIndex(s => s.roomId === roomId);
-  if (index !== -1) {
-    parsed[index] = { roomId, schedule };
-  } else {
-    parsed.push({ roomId, schedule });
+export async function getRoomLectures(roomId: string): Promise<Lecture[]> {
+  try {
+    const q = query(
+      collection(db, 'lectures'),
+      where('roomId', '==', roomId) 
+    );
+    const snapshot = await getDocs(q);
+    console.log(`Geladene Vorlesungen für Raum ${roomId}:`, snapshot.docs.length);
+    return snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    })) as Lecture[];
+  } catch (error) {
+    console.error("Fehler beim Laden der Raum-Vorlesungen:", error);
+    return [];
   }
-  
-  localStorage.setItem('customSchedules', JSON.stringify(parsed));
 }
 
-/**
- * Delete timetable for a room
- * TODO: Replace with Firestore delete
- * - Use deleteDoc(doc(db, 'timetables', roomId))
- */
-export async function deleteTimetable(roomId: string): Promise<void> {
-  // Placeholder: Using localStorage
-  // Firebase implementation would use:
-  // await deleteDoc(doc(db, 'timetables', roomId));
-  
-  const schedules = localStorage.getItem('customSchedules');
-  if (!schedules) return;
-  
-  const parsed: RoomSchedule[] = JSON.parse(schedules);
-  const filtered = parsed.filter(s => s.roomId !== roomId);
-  localStorage.setItem('customSchedules', JSON.stringify(filtered));
+export async function uploadTimetableAsLectures(roomId: string, schedule: DaySchedule[]): Promise<void> {
+  try {
+    for (const dayData of schedule) {
+      for (const slot of dayData.slots) {
+        if (slot.subject && slot.subject.trim() !== "") {
+          
+          const newLecture: Omit<Lecture, 'id'> = {
+            name: slot.subject,
+            type: 'Vorlesung',       
+            professor: 'Nicht zugewiesen', 
+            roomId: roomId,          
+            day: dayData.day,        
+            startTime: slot.start,   
+            endTime: slot.end,       
+            subject: slot.subject,   
+          };
+
+          await addLecture(newLecture);
+        }
+      }
+    }
+    console.log(`Stundenplan für Raum ${roomId} erfolgreich hochgeladen.`);
+  } catch (error) {
+    console.error("Fehler beim Upload:", error);
+    throw error;
+  }
 }
 
 // ============================================================================
