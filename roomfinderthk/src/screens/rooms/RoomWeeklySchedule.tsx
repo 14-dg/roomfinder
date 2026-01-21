@@ -63,6 +63,26 @@ export function RoomWeeklySchedule({ lectures, bookings }: RoomWeeklySchedulePro
     return userId;
   }
 
+  // Bestimme die aktuelle Woche (Montag bis Sonntag)
+  const getCurrentWeekDates = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // Berechne den Montag dieser Woche
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    const monday = new Date(now.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+    
+    // Berechne Sonntag dieser Woche
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    
+    return { monday, sunday };
+  };
+
+  const { monday: weekStart, sunday: weekEnd } = getCurrentWeekDates();
+
   // 2. Daten gruppieren und sortieren
   const scheduleData = useMemo(() => {
     const allEvents = [
@@ -74,18 +94,26 @@ export function RoomWeeklySchedule({ lectures, bookings }: RoomWeeklySchedulePro
         endTime: l.endTime,
         title: l.name,
         professor: l.professor,
-        type: l.type
+        type: l.type,
+        date: null // Lectures haben kein konkretes Datum
       })),
-      // Bookings mappen
-      ...(bookings || []).map(b => ({
-        id: b.id,
-        startTime: formatTime(b.startDate), // Zeit extrahieren
-        endTime: formatTime(b.endDate),     // Zeit extrahieren
-        day: b.day,
-        title: b.description,
-        professor: getUserName(b.bookedBy),  // Suche den Namen der User ID
-        type: "Buchung"
-      }))
+      // Bookings mappen - ABER NUR wenn sie in der aktuellen Woche sind
+      ...(bookings || [])
+        .filter(b => {
+          // Extrahiere das Datum aus startDate (ISO-Format)
+          const bookingDate = new Date(b.startDate);
+          return bookingDate >= weekStart && bookingDate <= weekEnd;
+        })
+        .map(b => ({
+          id: b.id,
+          startTime: formatTime(b.startDate), // Zeit extrahieren
+          endTime: formatTime(b.endDate),     // Zeit extrahieren
+          day: b.day,
+          title: b.description,
+          professor: getUserName(b.bookedBy),  // Suche den Namen der User ID
+          type: "Buchung",
+          date: b.startDate // Speichere das Datum für Validierung
+        }))
     ];
 
     // Nur Lectures mit gültigen Zeiten
