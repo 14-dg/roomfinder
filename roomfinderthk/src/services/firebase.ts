@@ -382,8 +382,17 @@ export async function getAllCustomSchedules(): Promise<RoomSchedule[]> {
 }
 
 export async function getAllLectures(): Promise<Lecture[]> {
-    const savedLectures = localStorage.getItem('classes');
-    return savedLectures ? JSON.parse(savedLectures) : initialClasses;
+    // const savedLectures = localStorage.getItem('classes');
+    // return savedLectures ? JSON.parse(savedLectures) : initialClasses;
+
+    const lecturesCollection = collection(db, 'lectures');
+    const snapshot = await getDocs(lecturesCollection);
+    const lectures = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Lecture[];
+
+    return lectures;
   }
   
   export async function getAllUserTimetableEntries(): Promise<UserTimetableEntry[]> {
@@ -583,9 +592,19 @@ export async function getAllUsersRaw(): Promise<any[]> {
   }
 }
 
-export async function addLecture(lecture: Lecture) {
+// ============================================================================
+// LECTURES
+// ============================================================================
+
+export async function addLecture(lecture: Omit<Lecture, 'id'>) {
   try {
-    await setDoc(doc(db, 'lectures', lecture.id), lecture);
+
+    const newDocRef = doc(collection(db, 'lectures'));
+    const newLecture: Lecture = {
+      ...lecture,
+      id: newDocRef.id
+    };
+    await setDoc(newDocRef, newLecture);
   }
   catch(error) {
     throw error;
