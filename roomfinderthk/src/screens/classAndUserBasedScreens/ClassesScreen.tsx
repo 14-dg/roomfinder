@@ -10,26 +10,41 @@ import { BookOpen, MapPin, User as UserIcon, Clock, Plus, Check } from 'lucide-r
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
-import { Event } from '@/models';
+
+import { Lecture } from '@/models';
 
 export default function ClassesScreen() {
-  const { timetables, lecturers, rooms, addEventToUserTimetable, removeEventFromUserTimetable, userTimetableEntries, timetables: allTimetables } = useData();
+  const { classes, lecturers, rooms, addEventToUserTimetable, removeEventFromUserTimetable, userTimetableEntries } = useData();
   const { user } = useAuth();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLecturer, setSelectedLecturer] = useState<string>('all');
   const [selectedModule, setSelectedModule] = useState<string>('all');
 
-  // Extract all events from timetables with unique key
-  const allEvents = useMemo(() => {
-    return timetables.flatMap((timetable, timetableIdx) => 
-      timetable.events.map((event, eventIdx) => ({
-        ...event,
-        uniqueKey: `${timetableIdx}-${eventIdx}-${event.id}`,
-        timetableName: `${timetable.courseOfStudy}, ${timetable.semester}`
-      }))
-    );
-  }, [timetables]);
+  // Helper to get lecturer name by id
+  const getLecturerName = (userId: string): string => {
+    const lecturer = lecturers?.find(l => l.id === userId);
+    if (lecturer?.name) {
+      return lecturer.name;
+    }
+    return userId;
+  };
+
+  const getRoomName = (id: string): string => {
+    const room = rooms?.find(r => r.id === id);
+    if (room?.roomName) {
+      return room?.roomName;
+    }
+    return id;
+  };
+
+  // Use lectures as the data source
+  const allLectures = useMemo(() => {
+    return classes.map((lecture, idx) => ({
+      ...lecture,
+      uniqueKey: `${idx}-${lecture.id}`
+    }));
+  }, [classes]);
 
   // Check if an event is already in user's timetable - directly from userTimetableEntries
   const isEventInTimetable = (eventId: number | string) => {
@@ -40,55 +55,66 @@ export default function ClassesScreen() {
   // Get unique lecturers for filters
   const lecturerOptions = useMemo(() => {
     const uniqueLecturers = Array.from(new Set(
-      allEvents
-        .filter(e => e.lecturer && e.lecturer.name)
-        .map(e => e.lecturer.name)
+      allLectures
+        .filter(l => l.professor)
+        .map(l => getLecturerName(l.professor))
     ));
     return uniqueLecturers.sort();
-  }, [allEvents]);
+  }, [allLectures, lecturers]);
 
   // Get unique modules for filters
   const modules = useMemo(() => {
     const uniqueModules = Array.from(new Set(
-      allEvents
-        .filter(e => e.module && e.module.name)
-        .map(e => e.module.name)
+      allLectures
+        .filter(l => l.subject)
+        .map(l => l.subject)
     ));
     return uniqueModules.sort();
-  }, [allEvents]);
+  }, [allLectures]);
 
-  // Filter events
-  const filteredEvents = useMemo(() => {
-    return allEvents.filter(event => {
+  // Filter lectures
+  const filteredLectures = useMemo(() => {
+    return allLectures.filter(lecture => {
       // Search filter
-      if (searchQuery && !event.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (searchQuery && !lecture.name.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
 
       // Lecturer filter
-      if (selectedLecturer !== 'all' && event.lecturer?.name !== selectedLecturer) {
+      if (selectedLecturer !== 'all' && getLecturerName(lecture.professor) !== selectedLecturer) {
         return false;
       }
 
       // Module filter
-      if (selectedModule !== 'all' && event.module?.name !== selectedModule) {
+      if (selectedModule !== 'all' && lecture.subject !== selectedModule) {
         return false;
       }
 
       return true;
     });
-  }, [allEvents, searchQuery, selectedLecturer, selectedModule]);
+  }, [allLectures, searchQuery, selectedLecturer, selectedModule, lecturers]);
 
-  const handleToggleEvent = async (event: Event & { uniqueKey?: string }) => {
+  const handleToggleLecture = async (lecture: Lecture & { uniqueKey?: string }) => {
     if (!user) return;
 
     try {
-      if (isEventInTimetable(event.id)) {
-        await removeEventFromUserTimetable(event.uniqueKey || event.id.toString(), user.id);
-        toast.success('Event removed from your timetable');
+      if (isEventInTimetable(lecture.id)) {
+        await removeEventFromUserTimetable(lecture.id.toString(), user.id);
+        toast.success('Lecture removed from your timetable');
       } else {
-        await addEventToUserTimetable(event.uniqueKey || event.id.toString(), user.id, event);
-        toast.success('Event added to your timetable');
+        // Pass only the lecture id and minimal info, so DataContext can match it in ProfileScreen
+        await addEventToUserTimetable(lecture.id.toString(), user.id, {
+          id: lecture.id,
+          name: lecture.name,
+          type: lecture.type,
+          professor: lecture.professor,
+          roomId: lecture.roomId,
+          day: lecture.day,
+          startTime: lecture.startTime,
+          endTime: lecture.endTime,
+          subject: lecture.subject
+        });
+        toast.success('Lecture added to your timetable');
       }
     } catch (error) {
       toast.error('Failed to update timetable');
@@ -176,26 +202,25 @@ export default function ClassesScreen() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'} found
+              {filteredLectures.length} {filteredLectures.length === 1 ? 'lecture' : 'lectures'} found
             </p>
           </div>
 
-          {filteredEvents.length > 0 ? (
-            filteredEvents.map(event => {
-              const inTimetable = isEventInTimetable(event.id);
-              
+          {filteredLectures.length > 0 ? (
+            filteredLectures.map(lecture => {
+              const inTimetable = isEventInTimetable(lecture.id);
               return (
-                <Card key={event.uniqueKey} className={`p-4 ${inTimetable ? 'border-blue-500 bg-blue-50' : ''}`}>
+                <Card key={lecture.uniqueKey} className={`p-4 ${inTimetable ? 'border-blue-500 bg-blue-50' : ''}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-base">{event.name}</h3>
+                        <h3 className="text-base">{lecture.name}</h3>
                         {inTimetable && (
                           <Badge className="bg-blue-600">In Timetable</Badge>
                         )}
                       </div>
                       <Badge variant="outline" className="text-xs">
-                        {event.typeOf}
+                        {lecture.type}
                       </Badge>
                     </div>
                   </div>
@@ -203,24 +228,24 @@ export default function ClassesScreen() {
                   <div className="space-y-2 mb-3">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <UserIcon className="w-4 h-4" />
-                      <span>{event.lecturer?.name || 'Unknown Lecturer'}</span>
+                      <span>{getLecturerName(lecture.professor) || 'Unknown Lecturer'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <BookOpen className="w-4 h-4" />
-                      <span>{event.module?.name || 'Unknown Module'}</span>
+                      <span>{lecture.subject || 'Unknown Module'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="w-4 h-4" />
-                      <span>{event.room?.roomName || 'Unknown Room'}</span>
+                      <span>{getRoomName(lecture.roomId || 'Unknown Room')}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Clock className="w-4 h-4" />
-                      <span>{event.day}, {event.startTime} - {event.endTime}</span>
+                      <span>{lecture.day}, {lecture.startTime} - {lecture.endTime}</span>
                     </div>
                   </div>
 
                   <Button
-                    onClick={() => handleToggleEvent(event)}
+                    onClick={() => handleToggleLecture(lecture)}
                     variant={inTimetable ? 'outline' : 'default'}
                     className="w-full"
                     size="sm"
@@ -243,7 +268,7 @@ export default function ClassesScreen() {
           ) : (
             <div className="text-center py-12">
               <BookOpen className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-              <p className="text-gray-500">No events found matching your criteria</p>
+              <p className="text-gray-500">No lectures found matching your criteria</p>
               <p className="text-sm text-gray-400 mt-2">Try adjusting your filters</p>
             </div>
           )}
