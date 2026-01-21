@@ -386,7 +386,7 @@ const TimetableCell = ({
           <div className="event-info">
             <div className="event-name">{event.name}</div>
             <div className="event-details">
-              {event.lecturer?.name} | {event.room?.roomNumber} | {event.typeOf}
+              {event.lecturer?.name} | {event.room?.roomName} | {event.typeOf}
             </div>
           </div>
         </div>
