@@ -30,6 +30,14 @@ export default function ClassesScreen() {
     return userId;
   };
 
+  const getRoomName = (id: string): string => {
+    const room = rooms?.find(r => r.id === id);
+    if (room?.roomName) {
+      return room?.roomName;
+    }
+    return id;
+  };
+
   // Use lectures as the data source
   const allLectures = useMemo(() => {
     return classes.map((lecture, idx) => ({
@@ -217,7 +225,7 @@ export default function ClassesScreen() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="w-4 h-4" />
-                      <span>{lecture.roomId || 'Unknown Room'}</span>
+                      <span>{getRoomName(lecture.roomId || 'Unknown Room')}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Clock className="w-4 h-4" />
