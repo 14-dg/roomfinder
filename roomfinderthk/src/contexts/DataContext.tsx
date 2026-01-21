@@ -451,7 +451,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addProfessor = async (email: string, name: string) => {
     
-    await registerProfessor(email, "1234", name);
+    await registerProfessor(email, "123456", name);
     
     await refreshLecturers();
   };
