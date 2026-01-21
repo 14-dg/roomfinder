@@ -448,18 +448,42 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await refreshRooms();
   };
 
-
   const addProfessor = async (email: string, name: string) => {
+  try {
+    const tempPassword = "Start12345!"; // In echter App: Passwort-Reset-Link senden
     
-    await registerProfessor(email, "123456", name);
+    // Ruft die neue registerProfessor in firebase.ts auf
+    const newProf = await registerProfessor(email, tempPassword, name);
     
-    await refreshLecturers();
-  };
+    // State lokal aktualisieren
+    setLecturers(prev => [...prev, newProf]);
+    
+    await sendEmailToProfessorForPassword(email, tempPassword);
+    toast.success(`${name} als Professor registriert`);
+  } catch (error) {
+    console.error(error);
+    toast.error("Registrierung fehlgeschlagen");
+  }
+};
 
   const updateOfficeHours = async (id: string, time: string, room: string) => {
-    await updateLecturerProfile(id, { officeHours: time, officeLocation: room });
-    await refreshLecturers();
-  };
+  try {
+    const updates = {
+      officeHours: time,
+      officeLocation: room
+    };
+    
+    await updateLecturerProfile(id, updates);
+    
+    // Local State Sync
+    setLecturers(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
+    
+    toast.success("Sprechzeiten aktualisiert");
+  } catch (error) {
+    console.error(error);
+    toast.error("Update fehlgeschlagen");
+  }
+};
 
   const removeProfessor = async (id: string) => {
     await deleteProfessorAndLecturer(id);

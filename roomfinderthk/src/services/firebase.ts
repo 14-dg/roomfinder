@@ -37,31 +37,29 @@ export async function registerUser(
   email: string,
   password: string,
   name: string,
-  role: 'student' | 'professor' | 'admin'
+  role: 'student' | 'professor' | 'admin',
+  additionalData: any = {} // Ermöglicht das Mitgeben von Prof-Daten
 ): Promise<User> {
   try {
-    const userCredential =
-      await createUserWithEmailAndPassword(auth, email, password);
-
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
 
-    await setDoc(doc(db, 'users', uid), {
+    const userProfile = {
       email,
       name,
       role,
       favourites: [],
       timetable: [],
       createdAt: serverTimestamp(),
-    });
+      ...additionalData, // Hier landen department, officeHours, etc.
+    };
+
+    await setDoc(doc(db, 'users', uid), userProfile);
 
     return {
       id: uid,
-      email,
-      name,
-      role,
-      favourites: [],
-      timetable: [],
-    };
+      ...userProfile,
+    } as User;
   } catch (err) {
     console.error("REGISTER FAILED:", err);
     throw err;
@@ -423,12 +421,6 @@ export async function getUserBookings(userId: string): Promise<Booking[]> {
 // PROFESSOR SERVICES
 // ============================================================================
 /**
- * Holt alle Nutzer mit der Rolle 'professor'
- * TODO: Firebase Query: query(collection(db, 'users'), where('role', '==', 'professor'))
- */
-// --- In firebase.ts HINZUFÜGEN oder ERSETZEN ---
-
-/**
  * Simuliert das Senden einer Email (z.B. via EmailJS oder Cloud Functions)
  */
 export async function sendEmailToProfessorForPassword(email: string, password: string) {
@@ -436,52 +428,47 @@ export async function sendEmailToProfessorForPassword(email: string, password: s
   // Hier würde später dein echter Email-Service-Aufruf stehen
   return new Promise((resolve) => setTimeout(resolve, 800)); 
 }
+/**
+ * Holt alle User, die die Rolle 'professor' haben
+ */
+export async function getLecturers(): Promise<any[]> {
+  const q = query(collection(db, "users"), where("role", "==", "professor"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }));
+}
 
 /**
- * Erstellt User-Account UND Lecturer-Profil
+ * Registriert einen Professor mit den erweiterten Attributen
  */
 export async function registerProfessor(email: string, password: string, name: string) {
-  // 1. Technischer User (für Login)
-  const newUser = await registerUser(email, password, name, 'professor');
-  
-  // 2. Öffentliches Profil (für Timetable/Sprechzeiten)
-  const lecturers = JSON.parse(localStorage.getItem('lecturers') || '[]');
-  const newLecturer = {
-    id: newUser.id, // Verknüpfung über gleiche ID
-    name,
-    email,
+  const professorFields = {
+    department: '',
     officeHours: '',
     officeLocation: '',
+    lectures: []
   };
-  lecturers.push(newLecturer);
-  localStorage.setItem('lecturers', JSON.stringify(lecturers));
   
-  return { newUser, newLecturer };
+  return await registerUser(email, password, name, 'professor', professorFields);
 }
 
-// Holen aller Lecturer
-export async function getLecturers(): Promise<any[]> {
-  const data = localStorage.getItem('lecturers');
-  return data ? JSON.parse(data) : [];
-}
-
-// Update Profil (Sprechzeiten)
+/**
+ * Update für Professor-spezifische Felder
+ */
 export async function updateLecturerProfile(id: string, updates: any) {
-  const lecturers = await getLecturers();
-  const index = lecturers.findIndex(l => l.id === id);
-  if (index !== -1) {
-    lecturers[index] = { ...lecturers[index], ...updates };
-    localStorage.setItem('lecturers', JSON.stringify(lecturers));
-  }
+  const userRef = doc(db, 'users', id);
+  // Wir nutzen updateDoc, um nur die geänderten Felder zu überschreiben
+  await updateDoc(userRef, updates);
 }
 
-// Löschen beider Einträge
+/**
+ * Löscht den User-Account aus Firestore
+ */
 export async function deleteProfessorAndLecturer(id: string) {
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  localStorage.setItem('users', JSON.stringify(users.filter((u: any) => u.id !== id)));
-  
-  const lecturers = await getLecturers();
-  localStorage.setItem('lecturers', JSON.stringify(lecturers.filter(l => l.id !== id)));
+  await deleteDoc(doc(db, 'users', id));
+  // Hinweis: Der Auth-Account muss ggf. separat über Admin-Funktionen gelöscht werden
 }
 
 
@@ -571,4 +558,27 @@ export async function getUserEventsByUserId(userId: string): Promise<UserTimetab
   
   const entries = await getAllUserTimetableEntries();
   return entries.filter(e => e.userId === userId);
+}
+
+
+// ============================================================================
+// FIREBASE HELPER FUNCTIONS TO MANAGE ACCOUNTS AND ENTRIES   
+// ============================================================================
+/**
+ * Holt absolut alle Dokumente aus der Collection 'users'.
+ * Hilfreich für Debugging, um die Datenstruktur im Firestore zu prüfen.
+ */
+export async function getAllUsersRaw(): Promise<any[]> {
+  try {
+    const snapshot = await getDocs(collection(db, "users"));
+    const users = snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+    console.log("DEBUG - Alle User aus Firestore:", users);
+    return users;
+  } catch (error) {
+    console.error("Fehler beim Laden aller User:", error);
+    throw error;
+  }
 }
