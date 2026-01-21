@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule, Timetable, Module } from '@/models';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule, Timetable, Module, Event } from '@/models';
 import {initialClasses, initialRooms, defaultSchedulePattern, days} from "../mockData/mockData";
 import {
   getAllBookings,
@@ -23,7 +23,10 @@ import {
   removeStudentCheckin as removeStudentCheckinService,
   loadTimetables,
   loadModules,
-  saveTimetableFire
+  saveTimetableFire,
+  addUserEvent as addUserEventService,
+  removeUserEvent as removeUserEventService,
+  getUserEventsByUserId as getUserEventsByUserIdService
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
@@ -48,6 +51,7 @@ interface DataContextType {
   userTimetableEntries: UserTimetableEntry[];
   timetables: Timetable[];
   modules: Module[];
+  userEvents: UserEvent[];
   getRoomSchedule: (roomId: string) => DaySchedule[];
   getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => CheckIn[];
   getLoudestActivity: (roomId: string, day: string, timeSlot: string) => string;
@@ -72,6 +76,9 @@ interface DataContextType {
   loadTimetables: () => Timetable[];
   saveModules: (modules: Module[]) => void;
   loadModules: () => Module[];
+  addEventToUserTimetable: (classId: string, userId: string, event: Event) => Promise<void>;
+  removeEventFromUserTimetable: (classId: string, userId: string) => Promise<void>;
+  getUserEvents: (userId: string) => (UserTimetableEntry & { event?: Event })[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -133,6 +140,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const refreshModules = async () => {
     const data = await loadModules();
     setModules(data);
+  }
+
+  const refreshUserTimetableEntries = async () => {
+    const data = await getAllUserTimetableEntries();
+    setUserTimetableEntries(data);
   }
 
   useEffect(() => {
@@ -444,6 +456,62 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return userClasses;
   };
 
+  const addEventToUserTimetable = async (classId: string, userId: string, event: Event) => {
+    try {
+      const newEntry: UserTimetableEntry = {
+        id: Date.now().toString(),
+        classId,
+        userId,
+      };
+      await addUserEventService(newEntry);
+      await refreshUserTimetableEntries();
+    } catch (error) {
+      toast.error('Failed to add event to timetable');
+    }
+  };
+
+  const removeEventFromUserTimetable = async (classId: string, userId: string) => {
+    try {
+      await removeUserEventService(userId, classId);
+      await refreshUserTimetableEntries();
+    } catch (error) {
+      toast.error('Failed to remove event from timetable');
+    }
+  };
+
+  const getUserEvents = useCallback((userId: string): (UserTimetableEntry & { event?: Event })[] => {
+    return userTimetableEntries
+      .filter(e => e.userId === userId)
+      .map(entry => {
+        // classId format: "timetableIdx-eventIdx-eventId"
+        const parts = entry.classId.split('-');
+        let event: Event | undefined;
+
+        if (parts.length === 3) {
+          // uniqueKey format
+          const timetableIdx = parseInt(parts[0]);
+          const eventIdx = parseInt(parts[1]);
+          const eventId = parseInt(parts[2]);
+
+          if (timetables[timetableIdx]) {
+            event = timetables[timetableIdx].events[eventIdx];
+            // Verify the event ID matches to be safe
+            if (event && event.id !== eventId) {
+              event = undefined;
+            }
+          }
+        } else {
+          // Fallback to old format (just eventId)
+          const eventId = parseInt(entry.classId);
+          event = timetables
+            .flatMap(t => t.events)
+            .find(e => e.id === eventId);
+        }
+
+        return { ...entry, event };
+      });
+  }, [userTimetableEntries, timetables]);
+
   return (
     <DataContext.Provider
       value={{
@@ -478,7 +546,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         saveTimetable,
         loadTimetables,
         saveModules,
-        loadModules
+        loadModules,
+        addEventToUserTimetable,
+        removeEventFromUserTimetable,
+        getUserEvents,
       }}
     >
       {children}
