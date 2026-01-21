@@ -223,7 +223,6 @@ export async function addBooking(
   return {
     id: docRef.id,
     ...booking,
-    createdAt: new Date(),
   };
 }
 
