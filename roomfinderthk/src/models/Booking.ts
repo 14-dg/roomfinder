@@ -1,10 +1,9 @@
 export interface Booking {
   id: string;
   roomId: string;
+  startDate: string;
+  endDate: string;
   day: string;
-  timeSlot: string;
-  subject: string;
   bookedBy: string;
-  bookedByName: string;
-  createdAt: Date;
+  description: string;
 }
