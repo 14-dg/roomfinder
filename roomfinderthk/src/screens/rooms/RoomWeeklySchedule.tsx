@@ -50,11 +50,17 @@ const formatTime = (timeStr: string) => {
 
 export function RoomWeeklySchedule({ lectures, bookings }: RoomWeeklyScheduleProps) {
 
-  const {lecturers} = useData();
+  const { lecturers } = useData();
 
-  //dozent name mit id finden
-  const getProfessorName = (id: string) => {
-    return lecturers.find(l => {l.id === id}).name;
+  // Suche User-Namen basierend auf User ID
+  const getUserName = (userId: string): string => {
+    // Zuerst in Lecturers suchen
+    const lecturer = lecturers?.find(l => l.id === userId);
+    if (lecturer?.name) {
+      return lecturer.name;
+    }
+    // Falls nicht gefunden, User ID anzeigen
+    return userId;
   }
 
   // 2. Daten gruppieren und sortieren
@@ -76,8 +82,8 @@ export function RoomWeeklySchedule({ lectures, bookings }: RoomWeeklySchedulePro
         startTime: formatTime(b.startDate), // Zeit extrahieren
         endTime: formatTime(b.endDate),     // Zeit extrahieren
         day: b.day,
-        title: b.description,         // Buchungen haben oft keinen Titel, daher generischer Name
-        professor: getProfessorName(b.bookedBy),
+        title: b.description,
+        professor: getUserName(b.bookedBy),  // Suche den Namen der User ID
         type: "Buchung"
       }))
     ];

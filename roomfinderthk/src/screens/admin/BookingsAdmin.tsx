@@ -7,6 +7,20 @@ import { toast } from 'sonner';
 
 import { useData } from '@/contexts/DataContext';
 
+// Hilfsfunction: Extrahiere Zeit aus ISO-String
+const formatTimeFromISO = (isoString: string): string => {
+  if (!isoString) return '00:00';
+  const date = new Date(isoString);
+  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+};
+
+// Hilfsfunction: Extrahiere Datum aus ISO-String
+const formatDateFromISO = (isoString: string): string => {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  return date.toISOString().split('T')[0];
+};
+
 export default function BookingsAdmin() {
   const { bookings, rooms, clearAllBookings, removeBooking } = useData();
 
@@ -58,9 +72,9 @@ export default function BookingsAdmin() {
             ) : (
               bookings.map((b) => {
                 const room = rooms.find((r) => r.id === b.roomId);
-                const startTime = b.startDate.split('T')[1]?.substring(0, 5) || '';
-                const endTime = b.endDate.split('T')[1]?.substring(0, 5) || '';
-                const bookingDate = b.startDate.split('T')[0];
+                const startTime = formatTimeFromISO(b.startDate);
+                const endTime = formatTimeFromISO(b.endDate);
+                const bookingDate = formatDateFromISO(b.startDate);
 
                 return (
                   <TableRow key={b.id}>
