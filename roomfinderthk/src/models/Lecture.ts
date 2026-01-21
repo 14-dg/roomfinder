@@ -4,7 +4,7 @@ export interface Lecture {
     id: string;
     name: string;
     type: LectureType;
-    subject: string;
+    subject?: string;
     professor: string;
     roomId: string;
     day: string;
