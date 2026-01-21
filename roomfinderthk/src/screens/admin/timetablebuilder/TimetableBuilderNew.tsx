@@ -3,7 +3,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import './timetablebuilderNew.css';
 import { useData } from '@/contexts/DataContext';
-import { Timetable, Event as TimetableEvent, Lecturer, Module, RoomWithStatus, Event} from '@/models';
+import { Timetable, Event as TimetableEvent, Lecturer, Module, RoomWithStatus, Event, Lecture, LectureType} from '@/models';
 
 interface TimetableBuilderProps {
   courseOfStudy: string;
@@ -24,12 +24,12 @@ const dayTimes = [
 const initialDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 const typeOptions = [
-  'Lecture',
-  'Practical Course',
-  'Exercise',
-  'Tutorial',
+  'Vorlesung',
+  'Uebung',
+  'Praktikum',
+  'Tutorium',
   'Seminar',
-  'Other'
+  'Anderes'
 ];
 
 interface EventFormProps {
@@ -48,7 +48,6 @@ interface EventFormProps {
 
 const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEditing, includeSaturday, lecturers, rooms, modules, addModule }: EventFormProps) => {
   const [newModuleName, setNewModuleName] = useState('');
-  const [newModuleId, setNewModuleId] = useState('');
 
   const availableDays = includeSaturday
     ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -102,9 +101,8 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
   };
 
   const handleAddModule = () => {
-    if (newModuleName && newModuleId) {
+    if (newModuleName) {
       const newModule = {
-        id: parseInt(newModuleId),
         name: newModuleName
       };
       addModule(newModule);
@@ -114,7 +112,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         name: newModule.name
       });
       setNewModuleName('');
-      setNewModuleId('');
     }
   };
 
@@ -134,7 +131,7 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         room: selectedRoom
       });
     } else if (name === 'module') {
-      const selectedModule = modules.find(m => m.id.toString() === value) || null;
+      const selectedModule = modules.find(m => m.id?.toString() === value) || modules.find(m => m.name === value) || null;
       setFormData({
         ...formData,
         module: selectedModule,
@@ -265,26 +262,20 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
           <label>Module:</label>
           <select
             name="module"
-            value={formData.module?.id || ''}
+            value={formData.module?.name || ''}
             onChange={handleChange}
             required
           >
             <option value="">Select a Module</option>
             {modules.map(module => (
-              <option key={module.id} value={module.id}>{module.name}</option>
+              <option key={module.id || module.name} value={module.id || module.name}>{module.name}</option>
             ))}
           </select>
-          {!formData.module?.id && (
+          {!formData.module?.name && (
             <div className="new-module-container">
               <input
-                type="number"
-                placeholder="Modul-ID"
-                value={newModuleId}
-                onChange={(e) => setNewModuleId(e.target.value)}
-              />
-              <input
                 type="text"
-                placeholder="Modulname"
+                placeholder="Name"
                 value={newModuleName}
                 onChange={(e) => setNewModuleName(e.target.value)}
               />
@@ -342,13 +333,13 @@ const TimetableCell = ({
 
   const getEventClass = (typeOf: string) => {
     switch(typeOf.toLowerCase()) {
-      case 'lecture':
+      case 'vorlesung':
         return 'event-lecture';
-      case 'practical course':
+      case 'praktikum':
         return 'event-practical-course';
-      case 'exercise':
+      case 'uebung':
         return 'event-exercise';
-      case 'tutorial':
+      case 'tutorium':
         return 'event-tutorial';
       case 'seminar':
         return 'event-seminar';
@@ -394,10 +385,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
   const [includeSaturday, setIncludeSaturday] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const { rooms, lecturers, modules, saveTimetable, loadTimetables, saveModules } = useData();
-
-  // maybe needed for future usage
-  // const timetableKey = `timetable_${courseOfStudy}_${semester}_${year}`;
+  const { rooms, lecturers, modules, saveTimetable, loadTimetables, saveModules, addLecture, removeLecture } = useData();
 
   const initialFormData: Partial<TimetableEvent> = {
     day: '',
@@ -471,7 +459,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setShowForm(true);
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     if (!selectedTimetable) return;
 
     if (
@@ -509,6 +497,25 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
         room: formData.room || null,
         module: formData.module || null
       };
+
+      const newLecture: Lecture = {
+        id: selectedTimetable.events.length > 0
+        ? (Math.max(...selectedTimetable.events.map((e: Event) => e.id || 0))).toString() + 1
+        : "1",
+        name: formData.name,
+        type: formData.typeOf as LectureType,
+        professor: formData.lecturer,
+        roomId: formData.room,
+        day: formData.day,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        startDate: (semester === "Winter") ? "01.10." + year : "01.04." + year,
+        endDate: (semester === "Winter") ? "31.01." + (year + 1) : "31.07." + year,
+      }
+
+      
+      await addLecture(newLecture);
+
       updatedEvents.push(newEvent);
     }
 
@@ -523,7 +530,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setFormData(initialFormData);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedTimetable || !editingEvent) return;
 
     const updatedEvents: Event[] = selectedTimetable.events.filter((e: Event) => e.id !== editingEvent.id);
@@ -536,6 +543,8 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
     setSelectedTimetable(updatedTimetable);
     setShowForm(false);
     setFormData(initialFormData);
+
+    await removeLecture(editingEvent.id.toString());
   };
 
   const handleIncludeSaturdayChange = (checked: boolean) => {

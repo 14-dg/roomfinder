@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ScreenHeader from '@/components/ScreenHeader';
 import { GraduationCap, Loader2 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+
+import { loginUser } from '@/services/firebase';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -22,11 +22,14 @@ export default function LoginScreen() {
     setError('');
     setIsLoading(true);
 
+    console.log('Login submit', email);
+
     try {
-      await login(email, password);
-      // Nach erfolgreichem Login auf Home navigieren
-      navigate('/'); 
+      await loginUser(email, password);
+      console.log('Login successful');
+      navigate('/');
     } catch (err) {
+      console.error(err);
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setIsLoading(false);
@@ -109,18 +112,8 @@ export default function LoginScreen() {
                   className="text-blue-600 hover:underline"
                 >
                   Register here
-                </button>
+              </button>
               </p>
-            </div>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-xs text-gray-500 mb-2">Demo accounts:</p>
-              <div className="space-y-1 text-xs text-gray-600">
-                <p>Student: student@university.edu / student123</p>
-                <p>Professor: professor@university.edu / professor123</p>
-                <p>Admin: admin@university.edu / admin123</p>
-              </div>
             </div>
           </div>
         </div>

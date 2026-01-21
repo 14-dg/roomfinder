@@ -9,7 +9,6 @@ import {
   getAllStudentCheckins,
   getAllUserTimetableEntries,
   getBookings,
-  getRoomDetailScreen,
   getRooms,
   addRoom as addRoomService,
   updateRoom as updateRoomService,
@@ -30,6 +29,9 @@ import {
   getUserEventsByUserId as getUserEventsByUserIdService,
   addBooking as addBookingService,
   deleteBooking as deleteBookingService,
+  addLecture as addLectureService,
+  removeLecture as removeLectureService,
+  uploadTimetableAsLectures,
   } from "@/services/firebase";
 import { start } from 'repl';
 import { toast } from 'sonner';
@@ -82,6 +84,10 @@ interface DataContextType {
   addEventToUserTimetable: (classId: string, userId: string, event: Event) => Promise<void>;
   removeEventFromUserTimetable: (classId: string, userId: string) => Promise<void>;
   getUserEvents: (userId: string) => (UserTimetableEntry & { event?: Event })[];
+  addLecture: (lecture: Omit<Lecture, 'id'>) => Promise<Lecture | null>;
+  removeLecture: (id: string) => Promise<void>;
+  getRoomLectures: (roomId: string) => Lecture[];
+  getRoomBookings: (roomId: string) => Booking[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -205,54 +211,69 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Spezialisierter Selektor für Raum-Vorlesungen
+  const getRoomLectures = useCallback((roomId: string): Lecture[] => {
+    return classes.filter(l => l.roomId === roomId);
+  }, [classes]);
+
+  // Spezialisierter Selektor für Raum-Buchungen
+  const getRoomBookings = useCallback((roomId: string): Booking[] => {
+    return bookings.filter(b => b.roomId === roomId);
+  }, [bookings]);
+
   const getRoomSchedule = (roomId: string): DaySchedule[] => {
-    // Check if there's a custom schedule for this room
-    const customSchedule = customSchedules.find(s => s.roomId === roomId);
-    
-    if (customSchedule) {
-      // Apply bookings to custom schedule
-      return customSchedule.schedule.map(daySchedule => ({
-        ...daySchedule,
-        slots: daySchedule.slots.map(slot => {
-          const booking = bookings.find(
-            b => b.roomId === roomId && 
-                 b.day === daySchedule.day && 
-                 b.timeSlot === `${slot.start}-${slot.end}`
+      // 1. Hole alle Vorlesungen (Lectures), die in diesem Raum stattfinden
+      // Nutzt jetzt 'roomId' statt 'room'
+      const roomLectures = classes.filter(c => c.roomId === roomId);
+
+      // 2. Erzeuge für jeden Wochentag einen Schedule
+      return days.map(day => ({
+        day,
+        slots: defaultSchedulePattern.map(slot => {
+          const timeSlotString = `${slot.start}-${slot.end}`;
+
+          // A) Prüfe auf Vorlesung
+          // Nutzt jetzt 'startTime' und 'endTime' Vergleich
+          const lectureMatch = roomLectures.find(
+            l => l.day === day && `${l.startTime}-${l.endTime}` === timeSlotString
           );
-          if (booking) {
+
+          // B) Prüfe auf manuelle Raumbuchung
+          const bookingMatch = bookings.find(
+            b => b.roomId === roomId && 
+                b.day === day && 
+                b.timeSlot === timeSlotString
+          );
+
+          if (lectureMatch) {
             return {
               ...slot,
               isBooked: true,
-              subject: booking.subject,
-              bookedBy: booking.bookedByName,
+              subject: lectureMatch.name,
+              bookedBy: lectureMatch.professor, // Geändert von 'lecturer'
+              isLecture: true 
             };
           }
-          return slot;
-        }),
-      }));
-    }
 
-    // Generate default schedule with bookings
-    return days.map(day => ({
-      day,
-      slots: defaultSchedulePattern.map(slot => {
-        const booking = bookings.find(
-          b => b.roomId === roomId && 
-               b.day === day && 
-               b.timeSlot === `${slot.start}-${slot.end}`
-        );
-        if (booking) {
+          if (bookingMatch) {
+            return {
+              ...slot,
+              isBooked: true,
+              subject: bookingMatch.subject,
+              bookedBy: bookingMatch.bookedByName,
+              isLecture: false
+            };
+          }
+
           return {
             ...slot,
-            isBooked: true,
-            subject: booking.subject,
-            bookedBy: booking.bookedByName,
+            subject: '',
+            bookedBy: '',
+            isBooked: false
           };
-        }
-        return slot;
-      }),
-    }));
-  };
+        }),
+      }));
+    };
 
   const getStudentCheckinsForSlot = (roomId: string, day: string, timeSlot: string): CheckIn[] => {
     return studentCheckins.filter(
@@ -309,69 +330,109 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addBooking = async (booking: Omit<Booking, 'id' | 'createdAt'>) => {
     try {
-      const newBooking = await addBookingService(booking);
-      setBookings(prev => [...prev, newBooking]);
+      // 1. Firebase Service aufrufen (gibt das neue Booking-Objekt inkl. ID zurück)
+      // Wir importieren addBooking als addBookingService oben (siehe Import-Sektion unten)
+      const savedBooking = await addBookingService(booking);
+
+      // 2. Lokalen State aktualisieren
+      setBookings(prev => [...prev, savedBooking]);
+      
+      toast.success("Raum erfolgreich gebucht");
     } catch (error) {
-      toast.error("Booking failed");
+      console.error("Booking failed:", error);
+      toast.error("Buchung fehlgeschlagen");
     }
   };
 
   const removeBooking = async (id: string) => {
     try {
+      // 1. In Firestore löschen (importiert als deleteBookingService)
       await deleteBookingService(id);
+
+      // 2. Lokalen State aktualisieren
       setBookings(prev => prev.filter(b => b.id !== id));
+      
+      toast.success("Buchung storniert");
     } catch (error) {
-      toast.error("Failed to cancel booking");
+      console.error("Delete booking failed:", error);
+      toast.error("Stornierung fehlgeschlagen");
+    }
+  };
+
+  const clearAllBookings = async () => {
+    try {
+      if (confirm("Möchten Sie wirklich ALLE Buchungen löschen?")) {
+        // 1. Firestore Service aufrufen
+        await clearAllBookingsService();
+        
+        // 2. State leeren
+        setBookings([]);
+        
+        toast.success("Alle Buchungen wurden gelöscht");
+      }
+    } catch (error) {
+      console.error("Clear bookings failed:", error);
+      toast.error("Fehler beim Löschen der Buchungen");
     }
   };
 
   const addStudentCheckin = async (checkin: Omit<CheckIn, 'id'>) => {
-    const newCheckin: CheckIn = {
-      ...checkin,
-      id: Date.now().toString(),
-    };
     try {
+      // 1. In Firestore speichern und ID erhalten
+      const newId = await addStudentCheckinService(checkin);
+      
+      const newCheckin: CheckIn = {
+        ...checkin,
+        id: newId,
+      };
+
+      // 2. Lokalen State aktualisieren für sofortiges UI-Feedback
       setStudentCheckins(prev => [...prev, newCheckin]);
-      await addStudentCheckinService(newCheckin);
 
-      setRooms(prevRooms => prevRooms.map(room => {
-        if (room.id === checkin.roomId) {
-          return { ...room, checkins: (room.checkins || 0) + 1 }; 
-        }
-        return room;
-      }));
-
+      // 3. Raum-Counter in Firestore inkrementieren
       const room = rooms.find(r => r.id === checkin.roomId);
       if (room) {
-         await updateRoomService(room.id, { checkins: (room.checkins || 0) + 1 });
+        const newCount = (room.checkins || 0) + 1;
+        await updateRoomService(room.id, { checkins: newCount });
+        
+        // Lokalen Raum-State ebenfalls syncen
+        setRooms(prevRooms => prevRooms.map(r => 
+          r.id === room.id ? { ...r, checkins: newCount } : r
+        ));
       }
 
+      toast.success("Check-in erfolgreich");
     } catch(error) {
+      console.error(error);
       toast.error("Check-in fehlgeschlagen");
     }
   };
 
   const removeStudentCheckin = async (id: string) => {
     try {
-
       const checkInToRemove = studentCheckins.find(c => c.id === id);
+      if (!checkInToRemove) return;
 
+      // 1. Aus Firestore löschen
+      await removeStudentCheckinService(id);
+
+      // 2. Lokalen State aktualisieren
       setStudentCheckins(prev => prev.filter(c => c.id !== id));
 
-      await removeStudentCheckinService(id);
-      
-      if (checkInToRemove) {
-        setRooms(prevRooms => prevRooms.map(room => {
-          if (room.id === checkInToRemove.roomId) {
-            // Sicherstellen, dass man nicht unter 0 checkins haben kann
-            const newCount = (room.checkins || 0) - 1;
-            return { ...room, checkins: newCount < 0 ? 0 : newCount };
-          }
-          return room;
-        }));
+      // 3. Raum-Counter dekrementieren
+      const room = rooms.find(r => r.id === checkInToRemove.roomId);
+      if (room) {
+        const newCount = Math.max(0, (room.checkins || 0) - 1);
+        await updateRoomService(room.id, { checkins: newCount });
+        
+        setRooms(prevRooms => prevRooms.map(r => 
+          r.id === room.id ? { ...r, checkins: newCount } : r
+        ));
       }
       
+      toast.success("Check-out erfolgreich");
     } catch(error) {
+      console.error(error);
       toast.error("Check-out fehlgeschlagen");
     }
   };
@@ -381,7 +442,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // setRooms(updatedRooms);
     // localStorage.setItem('rooms', JSON.stringify(updatedRooms));
 
-    await addRoomService(room);
+    // Remove id before sending to Firebase (Firestore generates it)
+    const { id, ...roomData } = room;
+    await addRoomService(roomData);
     await refreshRooms();
   };
 
@@ -408,18 +471,42 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await refreshRooms();
   };
 
-
   const addProfessor = async (email: string, name: string) => {
+  try {
+    const tempPassword = "123456"; // In echter App: Passwort-Reset-Link senden
     
-    await registerProfessor(email, name);
+    // Ruft die neue registerProfessor in firebase.ts auf
+    const newProf = await registerProfessor(email, tempPassword, name);
     
-    await refreshLecturers();
-  };
+    // State lokal aktualisieren
+    setLecturers(prev => [...prev, newProf]);
+    
+    await sendEmailToProfessorForPassword(email, tempPassword);
+    toast.success(`${name} als Professor registriert`);
+  } catch (error) {
+    console.error(error);
+    toast.error("Registrierung fehlgeschlagen");
+  }
+};
 
   const updateOfficeHours = async (id: string, time: string, room: string) => {
-    await updateLecturerProfile(id, { officeHours: time, officeLocation: room });
-    await refreshLecturers();
-  };
+  try {
+    const updates = {
+      officeHours: time,
+      officeLocation: room
+    };
+    
+    await updateLecturerProfile(id, updates);
+    
+    // Local State Sync
+    setLecturers(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
+    
+    toast.success("Sprechzeiten aktualisiert");
+  } catch (error) {
+    console.error(error);
+    toast.error("Update fehlgeschlagen");
+  }
+};
 
   const removeProfessor = async (id: string) => {
     await deleteProfessorAndLecturer(id);
@@ -436,17 +523,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await refreshModules();
   }
 
-  const uploadTimetable = (roomId: string, schedule: DaySchedule[]) => {
-    const updatedSchedules = customSchedules.filter(s => s.roomId !== roomId);
-    updatedSchedules.push({ roomId, schedule });
-    setCustomSchedules(updatedSchedules);
-    localStorage.setItem('customSchedules', JSON.stringify(updatedSchedules));
-  };
-
-  const clearAllBookings = () => {
-    setBookings([]);
-    localStorage.setItem('bookings', JSON.stringify([]));
-  };
+  const uploadTimetable = async (roomId: string, schedule: DaySchedule[]) => {
+      try {
+        await uploadTimetableAsLectures(roomId, schedule);
+        
+        const updatedLectures = await getAllLectures();
+        setClasses(updatedLectures);
+        
+        toast.success("Raum-Stundenplan erfolgreich in Vorlesungen übertragen");
+      } catch (error) {
+        console.error("Upload failed:", error);
+        toast.error("Fehler beim Übertragen des Stundenplans");
+      }
+    };
 
   const addClassToTimetable = (classId: string, userId: string) => {
     const newEntry: UserTimetableEntry = {
@@ -497,6 +586,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
       toast.error('Failed to remove event from timetable');
     }
   };
+
+  const addLecture = async (lectureData: Omit<Lecture, 'id'>): Promise<Lecture | null> => {
+    try {
+      const addedLecture = await addLectureService(lectureData);
+      setClasses(prev => [...prev, addedLecture]);
+      return addedLecture;
+    }
+    catch(error) {
+      toast.error('Failed to add Lecture');
+      return null;
+    }
+  }
+
+  const removeLecture = async (id: string) => {
+    try {
+      await removeLectureService(id);
+      setClasses(prev => prev.filter(l => l.id !== id));
+    }
+    catch(error) {
+      toast.error('Failed to remove Lecture');
+    }
+  }
 
   const getUserEvents = useCallback((userId: string): (UserTimetableEntry & { event?: Event })[] => {
     return userTimetableEntries
@@ -574,6 +685,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addEventToUserTimetable,
         removeEventFromUserTimetable,
         getUserEvents,
+        addLecture,
+        removeLecture,
+        getRoomLectures,
+        getRoomBookings,
       }}
     >
       {children}

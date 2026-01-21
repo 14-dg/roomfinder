@@ -7,10 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ScreenHeader from '@/components/ScreenHeader';
 import { GraduationCap, Loader2 } from 'lucide-react';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+
+import { registerUser } from '@/services/firebase';
+
+type UserRole = 'student' | 'professor' | 'admin';
 
 export default function RegisterScreen() {
-  const { register } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -25,6 +27,8 @@ export default function RegisterScreen() {
     e.preventDefault();
     setError('');
 
+    console.log('Register submit', { email, name, role });
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -38,10 +42,11 @@ export default function RegisterScreen() {
     setIsLoading(true);
 
     try {
-      await register(email, password, name, role);
-      // Nach erfolgreicher Registrierung direkt zum Home
-      navigate('/'); 
+      await registerUser(email, password, name, role);
+      console.log('Registration successful');
+      navigate('/');
     } catch (err) {
+      console.error(err);
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setIsLoading(false);
@@ -156,14 +161,14 @@ export default function RegisterScreen() {
             {/* Navigation zu Login */}
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Already have an account?{' '}
+              Already have an account?{' '}
                 <button
                   type="button"
                   onClick={() => navigate('/login')}
                   className="text-blue-600 hover:underline"
                 >
                   Sign in here
-                </button>
+              </button>
               </p>
             </div>
           </div>

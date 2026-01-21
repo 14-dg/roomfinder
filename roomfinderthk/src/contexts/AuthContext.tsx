@@ -1,113 +1,67 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from "react";
+import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/firebase-config";
+import { logoutUser } from "@/services/firebase";
 
-export type UserRole = 'student' | 'professor' | 'admin';
-
-export interface User {
+export type AppUser = {
   id: string;
-  email: string;
   name: string;
-  role: UserRole;
-}
+  email: string;
+  role: 'student' | 'professor' | 'admin';
+};
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
-  logout: () => void;
+  user: AppUser | null;
   isAuthenticated: boolean;
+  authReady: boolean;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user database (in real app, this would be in your backend)
-const mockUsers: Array<User & { password: string }> = [
-  {
-    id: '1',
-    email: 'student@university.edu',
-    password: 'student123',
-    name: 'John Doe',
-    role: 'student'
-  },
-  {
-    id: '2',
-    email: 'professor@university.edu',
-    password: 'professor123',
-    name: 'Dr. Smith',
-    role: 'professor'
-  },
-  {
-    id: '3',
-    email: 'admin@university.edu',
-    password: 'admin123',
-    name: 'Admin User',
-    role: 'admin'
-  }
-];
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    // Check for existing session in localStorage
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
-  const login = async (email: string, password: string) => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const foundUser = mockUsers.find(
-      u => u.email === email && u.password === password
-    );
-
-    if (!foundUser) {
-      throw new Error('Invalid email or password');
-    }
-
-    const { password: _, ...userWithoutPassword } = foundUser;
-    setUser(userWithoutPassword);
-    localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+  const logout = async () => {
+    logoutUser();
   };
 
-  const register = async (email: string, password: string, name: string, role: UserRole) => {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // Firestore-Profil laden
+        const docRef = doc(db, "users", firebaseUser.uid);
+        const docSnap = await getDoc(docRef);
 
-    // Simulate API call delay
-    // await new Promise(resolve => setTimeout(resolve, 500));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setUser({
+            id: firebaseUser.uid,
+            email: firebaseUser.email ?? "",
+            name: data.name,
+            role: data.role,
+          });
+        } else {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setAuthReady(true);
+    });
 
-    // Check if user already exists
-    const existingUser = mockUsers.find(u => u.email === email);
-    if (existingUser) {
-      throw new Error('User with this email already exists');
-    }
-
-    // Create new user
-    const newUser: User & { password: string } = {
-      id: String(mockUsers.length + 1),
-      email,
-      password,
-      name,
-      role
-    };
-
-    mockUsers.push(newUser);
-
-    const { password: _, ...userWithoutPassword } = newUser;
-    setUser(userWithoutPassword);
-    localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
+    return unsubscribe;
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        login,
-        register,
+        isAuthenticated: !!user,
+        authReady,
         logout,
-        isAuthenticated: !!user
       }}
     >
       {children}
@@ -115,10 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+export function useAuth(): AuthContextType {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 }

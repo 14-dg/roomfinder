@@ -52,14 +52,12 @@ export function RoomWeeklySchedule({ lectures, bookings }: RoomWeeklySchedulePro
 
   const { lecturers } = useData();
 
-  // Suche User-Namen basierend auf User ID
-  const getUserName = (userId: string): string => {
-    // Zuerst in Lecturers suchen
+  // Suche Lecturer-Namen basierend auf User ID
+  const getLecturerName = (userId: string): string => {
     const lecturer = lecturers?.find(l => l.id === userId);
     if (lecturer?.name) {
       return lecturer.name;
     }
-    // Falls nicht gefunden, User ID anzeigen
     return userId;
   }
 
@@ -100,19 +98,18 @@ export function RoomWeeklySchedule({ lectures, bookings }: RoomWeeklySchedulePro
       // Bookings mappen - ABER NUR wenn sie in der aktuellen Woche sind
       ...(bookings || [])
         .filter(b => {
-          // Extrahiere das Datum aus startDate (ISO-Format)
           const bookingDate = new Date(b.startDate);
           return bookingDate >= weekStart && bookingDate <= weekEnd;
         })
         .map(b => ({
           id: b.id,
-          startTime: formatTime(b.startDate), // Zeit extrahieren
-          endTime: formatTime(b.endDate),     // Zeit extrahieren
+          startTime: formatTime(b.startDate),
+          endTime: formatTime(b.endDate),
           day: b.day,
           title: b.description,
-          professor: getUserName(b.bookedBy),  // Suche den Namen der User ID
+          professor: getLecturerName(b.bookedBy), // Korrigiert: Lecturer-Name
           type: "Buchung",
-          date: b.startDate // Speichere das Datum für Validierung
+          date: b.startDate
         }))
     ];
 

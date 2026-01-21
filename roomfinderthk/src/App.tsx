@@ -21,10 +21,15 @@ function UnauthenticatedApp() {
 }
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authReady } = useAuth();
+
+  if (!authReady) {
+    return <div className="p-8">Loading...</div>;
+  }
 
   return isAuthenticated ? <AuthenticatedApp /> : <UnauthenticatedApp />;
 }
+
 
 export default function App() {
   return (
