@@ -49,7 +49,6 @@ interface EventFormProps {
 
 const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEditing, includeSaturday, lecturers, rooms, modules, addModule }: EventFormProps) => {
   const [newModuleName, setNewModuleName] = useState('');
-  const [newModuleId, setNewModuleId] = useState('');
 
   const availableDays = includeSaturday
     ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -103,9 +102,8 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
   };
 
   const handleAddModule = () => {
-    if (newModuleName && newModuleId) {
+    if (newModuleName) {
       const newModule = {
-        id: parseInt(newModuleId),
         name: newModuleName
       };
       addModule(newModule);
@@ -115,7 +113,6 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         name: newModule.name
       });
       setNewModuleName('');
-      setNewModuleId('');
     }
   };
 
@@ -135,7 +132,7 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
         room: selectedRoom
       });
     } else if (name === 'module') {
-      const selectedModule = modules.find(m => m.id.toString() === value) || null;
+      const selectedModule = modules.find(m => m.id?.toString() === value) || modules.find(m => m.name === value) || null;
       setFormData({
         ...formData,
         module: selectedModule,
@@ -266,26 +263,20 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
           <label>Module:</label>
           <select
             name="module"
-            value={formData.module?.id || ''}
+            value={formData.module?.name || ''}
             onChange={handleChange}
             required
           >
             <option value="">Select a Module</option>
             {modules.map(module => (
-              <option key={module.id} value={module.id}>{module.name}</option>
+              <option key={module.id || module.name} value={module.id || module.name}>{module.name}</option>
             ))}
           </select>
-          {!formData.module?.id && (
+          {!formData.module?.name && (
             <div className="new-module-container">
               <input
-                type="number"
-                placeholder="Modul-ID"
-                value={newModuleId}
-                onChange={(e) => setNewModuleId(e.target.value)}
-              />
-              <input
                 type="text"
-                placeholder="Modulname"
+                placeholder="Name"
                 value={newModuleName}
                 onChange={(e) => setNewModuleName(e.target.value)}
               />
@@ -343,13 +334,13 @@ const TimetableCell = ({
 
   const getEventClass = (typeOf: string) => {
     switch(typeOf.toLowerCase()) {
-      case 'lecture':
+      case 'vorlesung':
         return 'event-lecture';
-      case 'practical course':
+      case 'praktikum':
         return 'event-practical-course';
-      case 'exercise':
+      case 'uebung':
         return 'event-exercise';
-      case 'tutorial':
+      case 'tutorium':
         return 'event-tutorial';
       case 'seminar':
         return 'event-seminar';

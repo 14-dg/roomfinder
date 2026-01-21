@@ -4,6 +4,6 @@
 //      setting a module for an event in timetable like 'Systementwurfs Praktikum - SYP'
 
 export interface Module {
-    id: number
+    id?: number
     name: string;
 }
