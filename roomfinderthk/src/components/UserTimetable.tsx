@@ -9,16 +9,16 @@ import { toast } from 'sonner@2.0.3';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 export function UserTimetable() {
-  const { rooms, getUserClasses, removeClassFromTimetable } = useData();
+  const { rooms, lecturers, getUserClasses, removeClassFromTimetable } = useData();
   const { user } = useAuth();
 
   if (!user) return null;
 
   const userClasses = getUserClasses(user.id);
 
-  const handleRemoveClass = (classId: string) => {
+  const handleRemoveClass = async (classId: string) => {
     if (confirm('Remove this class from your timetable?')) {
-      removeClassFromTimetable(classId, user.id);
+      await removeClassFromTimetable(classId, user.id);
       toast.success('Class removed from your timetable');
     }
   };
@@ -28,6 +28,15 @@ export function UserTimetable() {
     day,
     classes: userClasses.filter(cls => cls.day === day),
   }));
+
+  // Helper to get lecturer name by id
+  const getLecturerName = (userId: string): string => {
+    const lecturer = lecturers?.find(l => l.id === userId);
+    if (lecturer?.name) {
+      return lecturer.name;
+    }
+    return userId;
+  };
 
   return (
     <div className="space-y-4">
@@ -83,7 +92,7 @@ export function UserTimetable() {
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <UserIcon className="w-3.5 h-3.5" />
-                                <span>{cls.professor}</span>
+                                <span>{getLecturerName(cls.professor)}</span>
                               </div>
                             </div>
                             <Badge variant="outline" className="text-xs mt-2">
