@@ -178,12 +178,14 @@ const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEdit
 };
 
 
-// Die Zelle im Stundenplan - bekommt jetzt direkt die Lecture
+// -------------------------------------------------------------------------
+// Neue TimetableCell mit Multi-Event-Support
+// -------------------------------------------------------------------------
 const TimetableCell = ({
   day,
   timeSlot,
   timeSlots,
-  lectures, // Das sind jetzt echte Lecture-Objekte
+  lectures,
   onClick,
   rooms,
   lecturers
@@ -197,50 +199,51 @@ const TimetableCell = ({
   lecturers: any[];
 }) => {
   
-  // Wir suchen eine Lecture, die an diesem Tag zu dieser Zeit stattfindet
-  const lecture = lectures.find(l => {
-    if (l.day !== day) return false;
-    
-    // Einfache Prüfung: Startzeit stimmt überein
-    // (Für komplexere Überlappungen müsste man Minuten berechnen, aber hier nutzen wir Strings)
-    return l.startTime === timeSlot;
+  // 1. Suche ALLE Lectures, die in diesem Slot starten (nicht nur eine)
+  const slotLectures = lectures.filter(l => {
+    return l.day === day && l.startTime === timeSlot;
   });
 
-  // Prüfen, ob wir uns IN einer laufenden Lecture befinden (aber nicht am Start)
-  // Das ist nötig, damit die Zelle weiß, ob sie von einer Lecture "überdeckt" wird
-  const isCoveredByLecture = lectures.find(l => {
+  // 2. Prüfen, ob dieser Slot von einer laufenden Lecture verdeckt wird 
+  // (Nur für Border-Styling relevant, Rendering passiert absolut)
+  const isCoveredByLecture = lectures.some(l => {
     if (l.day !== day) return false;
     const startIdx = timeSlots.indexOf(l.startTime);
-    const endIdx = timeSlots.indexOf(l.endTime); // endTime muss in timeSlots existieren oder Mapping nötig
+    const endIdx = timeSlots.indexOf(l.endTime); 
     const currentIdx = timeSlots.indexOf(timeSlot);
+    // Wir sind "covered", wenn wir zwischen Start und Ende liegen
     return currentIdx > startIdx && currentIdx < endIdx;
   });
 
-  // Wenn wir in einem laufenden Block sind, rendern wir NICHTS (damit der rowspan wirken kann)
-  // oder wir rendern eine leere Zelle, wenn wir kein rowspan nutzen.
-  // Hier nutzen wir CSS absolute positioning im Builder, also rendern wir einfach leer.
-  // ACHTUNG: Der Builder nutzt rowspan nicht, sondern absolute Divs IN der ersten Zelle.
-  
-  // Helper für Darstellung
+  // Styles
   const getEventClass = (type: string) => {
     switch(type?.toLowerCase()) {
       case 'vorlesung': return 'event-lecture';
       case 'uebung': return 'event-exercise';
       case 'praktikum': return 'event-practical-course';
+      case 'tutorium': return 'event-tutorial';
+      case 'seminar': return 'event-seminar';
       default: return 'event-other';
     }
   };
 
-  // Namen auflösen
-  const roomName = rooms.find(r => r.id === lecture?.roomId)?.roomName || lecture?.roomId;
-  const profName = lecturers.find(l => l.id === lecture?.professor)?.name || lecture?.professor;
+  // Namensauflösung (sicher)
+  const getProfName = (prof: any) => {
+    if (!prof) return "";
+    if (typeof prof === 'object') return prof.name || "Unbekannt";
+    const found = lecturers.find(l => l.id === prof);
+    return found ? found.name : prof;
+  };
 
-  // Dauer berechnen für Höhe
+  const getRoomName = (roomRef: any) => {
+    if (!roomRef) return "";
+    if (typeof roomRef === 'object') return roomRef.roomName || roomRef.name || "Unbekannt";
+    const found = rooms.find(r => r.id === roomRef);
+    return found ? found.roomName : roomRef;
+  };
+
   const getDuration = (l: Lecture) => {
       const startIdx = timeSlots.indexOf(l.startTime);
-      // Wenn Endzeit nicht in der Liste ist (z.B. 10:00), müssen wir sie finden
-      // Einfachheitshalber: Wir nehmen an, endTime matched einen Slot oder wir berechnen Differenz
-      // Hier Fallback:
       const endIdx = timeSlots.indexOf(l.endTime);
       if (startIdx === -1 || endIdx === -1) return 1;
       return endIdx - startIdx;
@@ -248,32 +251,59 @@ const TimetableCell = ({
 
   return (
     <td
-      className={`time-slot ${lecture ? 'occupied' : ''}`}
-      onClick={(e) => onClick(e, lecture)} // Klick auf Zelle
+      className={`time-slot ${slotLectures.length > 0 ? 'occupied' : ''}`}
+      // Klick auf die Zelle selbst erstellt neuen Eintrag (undefined übergeben)
+      onClick={(e) => onClick(e, undefined)}
       style={{
         position: 'relative',
         height: '60px',
+        // Border nur anzeigen, wenn wir nicht mitten in einem Block sind
         border: isCoveredByLecture ? 'none' : '1px solid #ddd',
-        padding: 0
+        padding: 0,
+        verticalAlign: 'top'
       }}
     >
-      {lecture && (
-        <div
-          className={`event-container ${getEventClass(lecture.type)}`}
-          style={{
-            height: `${getDuration(lecture) * 60}px`,
-            position: 'absolute',
-            top: 0, left: 0, right: 0, zIndex: 10
-          }}
-        >
-          <div className="event-info">
-            <div className="event-name">{lecture.name}</div>
-            <div className="event-details">
-              {profName} | {roomName} | {lecture.type}
+      {/* Wir rendern JETZT alle Lectures, die hier starten */}
+      {slotLectures.map((lecture, index) => {
+        
+        // Dynamische Breite berechnen: 
+        // Wenn 2 Lectures da sind, hat jede 50% Breite.
+        const width = 100 / slotLectures.length;
+        const left = width * index;
+
+        return (
+          <div
+            key={lecture.id || index}
+            className={`event-container ${getEventClass(lecture.type)}`}
+            // Klick auf das Event stoppen, damit nicht "Neu erstellen" ausgelöst wird
+            onClick={(e) => {
+              e.stopPropagation(); 
+              onClick(e, lecture);
+            }}
+            style={{
+              height: `${getDuration(lecture) * 60 - 2}px`, // -2px für kleinen Gap
+              position: 'absolute',
+              top: 0, 
+              // Nebeneinander anordnen
+              left: `${left}%`, 
+              width: `${width}%`,
+              zIndex: 10 + index, // Damit sie sich sauber überlagern falls nötig
+              borderLeft: index > 0 ? '1px solid white' : 'none', // Trennlinie
+              overflow: 'hidden'
+            }}
+            title={`${lecture.name} (${getProfName(lecture.professor)})`}
+          >
+            <div className="event-info p-1">
+              <div className="event-name text-xs font-bold truncate leading-tight">
+                {lecture.name}
+              </div>
+              <div className="event-details text-[10px] truncate opacity-90">
+                {getRoomName(lecture.roomId)}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })}
     </td>
   );
 };
