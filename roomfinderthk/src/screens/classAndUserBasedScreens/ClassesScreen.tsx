@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import ScreenHeader from '@/components/ScreenHeader';
 import { BookOpen, MapPin, User as UserIcon, Clock, Plus, Check } from 'lucide-react';
-import { useData } from '../contexts/DataContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { Event } from '@/models';
 
