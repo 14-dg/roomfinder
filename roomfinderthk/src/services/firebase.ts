@@ -3,8 +3,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  getAuth,
 } from "firebase/auth";
+import { initializeApp, deleteApp } from "firebase/app";
 
 import {
   doc,
@@ -23,7 +25,7 @@ import {
 } from "firebase/firestore";
 
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, Timetable, Module } from '@/models';
-import { app, auth, db } from '../firebase-config';
+import { app, auth, db, firebaseConfig } from '../firebase-config';
 import { initialClasses, initialRooms } from '@/mockData/mockData';
 
 import User from "@/models/User";
@@ -62,6 +64,43 @@ export async function registerUser(
     } as User;
   } catch (err) {
     console.error("REGISTER FAILED:", err);
+    throw err;
+  }
+}
+
+async function registerUserWithoutLogin(
+  email: string,
+  password: string,
+  name: string,
+  role: 'student' | 'professor' | 'admin',
+  additionalData: any = {}
+): Promise<User> {
+  const tempAppName = `temp-app-${Date.now()}`;
+  const tempApp = initializeApp(firebaseConfig, tempAppName);
+  const tempAuth = getAuth(tempApp);
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
+    const uid = userCredential.user.uid;
+
+    const userProfile = {
+      email,
+      name,
+      role,
+      favourites: [],
+      timetable: [],
+      createdAt: serverTimestamp(),
+      ...additionalData,
+    };
+
+    await setDoc(doc(db, 'users', uid), userProfile);
+
+    await deleteApp(tempApp); 
+
+    return { id: uid, ...userProfile } as User;
+  } catch (err) {
+    await deleteApp(tempApp);
+    console.error("REGISTER WITHOUT LOGIN FAILED:", err);
     throw err;
   }
 }
@@ -126,20 +165,7 @@ export async function addRoom(room: Omit<RoomWithStatus, "id">): Promise<RoomWit
 }
 
 export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus>): Promise<void> {
-// <<<<<<< HEAD
   await updateDoc(doc(db, "rooms", roomId), updates);
-// =======
-//   // Placeholder: Using localStorage
-//   // Firebase implementation would use:
-//   // await updateDoc(doc(db, 'rooms', roomId), updates);
-  
-//   const rooms = await getAllRooms();
-//   const index = rooms.findIndex(r => r.id === roomId);
-//   if (index !== -1) {
-//     rooms[index] = { ...rooms[index], ...updates };
-//     localStorage.setItem('rooms', JSON.stringify(rooms));
-//   }
-// >>>>>>> master
 }
 
 export async function deleteRoom(roomId: string): Promise<void> {
@@ -182,7 +208,6 @@ export async function addBooking(
   return {
     id: docRef.id,
     ...booking,
-    createdAt: new Date(),
   };
 }
 
@@ -382,8 +407,17 @@ export async function getAllCustomSchedules(): Promise<RoomSchedule[]> {
 }
 
 export async function getAllLectures(): Promise<Lecture[]> {
-    const savedLectures = localStorage.getItem('classes');
-    return savedLectures ? JSON.parse(savedLectures) : initialClasses;
+    // const savedLectures = localStorage.getItem('classes');
+    // return savedLectures ? JSON.parse(savedLectures) : initialClasses;
+
+    const lecturesCollection = collection(db, 'lectures');
+    const snapshot = await getDocs(lecturesCollection);
+    const lectures = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Lecture[];
+
+    return lectures;
   }
   
   export async function getAllUserTimetableEntries(): Promise<UserTimetableEntry[]> {
@@ -451,7 +485,7 @@ export async function registerProfessor(email: string, password: string, name: s
     lectures: []
   };
   
-  return await registerUser(email, password, name, 'professor', professorFields);
+  return await registerUserWithoutLogin(email, password, name, 'professor', professorFields);
 }
 
 /**
@@ -583,9 +617,19 @@ export async function getAllUsersRaw(): Promise<any[]> {
   }
 }
 
-export async function addLecture(lecture: Lecture) {
+// ============================================================================
+// LECTURES
+// ============================================================================
+
+export async function addLecture(lecture: Omit<Lecture, 'id'>) {
   try {
-    await setDoc(doc(db, 'lectures', lecture.id), lecture);
+
+    const newDocRef = doc(collection(db, 'lectures'));
+    const newLecture: Lecture = {
+      ...lecture,
+      id: newDocRef.id
+    };
+    await setDoc(newDocRef, newLecture);
   }
   catch(error) {
     throw error;

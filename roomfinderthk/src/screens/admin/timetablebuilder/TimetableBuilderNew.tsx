@@ -4,7 +4,6 @@ import { Label } from '@/components/ui/label';
 import './timetablebuilderNew.css';
 import { useData } from '@/contexts/DataContext';
 import { Timetable, Event as TimetableEvent, Lecturer, Module, RoomWithStatus, Event, Lecture, LectureType} from '@/models';
-import { addLecture, removeLecture } from '@/services/firebase';
 
 interface TimetableBuilderProps {
   courseOfStudy: string;
@@ -386,7 +385,7 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
   const [includeSaturday, setIncludeSaturday] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const { rooms, lecturers, modules, saveTimetable, loadTimetables, saveModules } = useData();
+  const { rooms, lecturers, modules, saveTimetable, loadTimetables, saveModules, addLecture, removeLecture } = useData();
 
   const initialFormData: Partial<TimetableEvent> = {
     day: '',
@@ -510,8 +509,8 @@ const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, seme
         day: formData.day,
         startTime: formData.startTime,
         endTime: formData.endTime,
-        startDate: (semester === "Wintersemester") ? "01.10." + year : "01.04." + year,
-        endDate: (semester === "Wintersemester") ? "31.01." + (year + 1) : "31.07." + year,
+        startDate: (semester === "Winter") ? "01.10." + year : "01.04." + year,
+        endDate: (semester === "Winter") ? "31.01." + (year + 1) : "31.07." + year,
       }
 
       

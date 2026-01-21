@@ -115,16 +115,6 @@ export default function LoginScreen() {
               </button>
               </p>
             </div>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-xs text-gray-500 mb-2">Demo accounts:</p>
-              <div className="space-y-1 text-xs text-gray-600">
-                <p>Student: student@university.edu / student123</p>
-                <p>Professor: professor@university.edu / professor123</p>
-                <p>Admin: admin@university.edu / admin123</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

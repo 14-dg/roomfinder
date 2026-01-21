@@ -456,7 +456,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addProfessor = async (email: string, name: string) => {
   try {
-    const tempPassword = "Start12345!"; // In echter App: Passwort-Reset-Link senden
+    const tempPassword = "123456"; // In echter App: Passwort-Reset-Link senden
     
     // Ruft die neue registerProfessor in firebase.ts auf
     const newProf = await registerProfessor(email, tempPassword, name);
