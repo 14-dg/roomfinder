@@ -6,7 +6,7 @@ import { Lecturer, Room, Module } from ;
 //      - adding and loading an event in the timetable like 'Freitag, 13:15 Uhr, SYP Vorlesung (MS4)'
 
 export interface Event {
-    id: number;
+    id?: number;
     day: string;
     startTime: string;
     endTime: string;

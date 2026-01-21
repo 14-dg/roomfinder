@@ -1,7 +1,7 @@
 export type LectureType = 'Vorlesung' | 'Uebung' | 'Praktikum' | 'Tutorium' | 'Seminar' | 'Other' | 'Anderes';
 
 export interface Lecture {
-    id: string;
+    id?: string;
     name: string;
     type: LectureType;
     subject?: string;
