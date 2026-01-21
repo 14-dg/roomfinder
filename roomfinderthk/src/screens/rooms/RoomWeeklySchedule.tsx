@@ -28,7 +28,7 @@ const DAY_LABELS: Record<string, string> = {
 const getTypeStyles = (type: string) => {
   switch (type) {
     case 'Vorlesung': return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'Übung': return 'bg-green-100 text-green-800 border-green-200';
+    case 'Uebung': return 'bg-green-100 text-green-800 border-green-200';
     case 'Praktikum': return 'bg-purple-100 text-purple-800 border-purple-200';
     case 'Tutorium': return 'bg-orange-100 text-yellow-600 border-orange-200';
     case 'Buchung': return 'bg-orange-100 text-yellow-600 border-orange-200';
