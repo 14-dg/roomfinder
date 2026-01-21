@@ -621,7 +621,7 @@ export async function getAllUsersRaw(): Promise<any[]> {
 // LECTURES
 // ============================================================================
 
-export async function addLecture(lecture: Omit<Lecture, 'id'>) {
+export async function addLecture(lecture: Omit<Lecture, 'id'>): Promise<Lecture> {
   try {
 
     const newDocRef = doc(collection(db, 'lectures'));
@@ -630,6 +630,8 @@ export async function addLecture(lecture: Omit<Lecture, 'id'>) {
       id: newDocRef.id
     };
     await setDoc(newDocRef, newLecture);
+
+    return newLecture;
   }
   catch(error) {
     throw error;

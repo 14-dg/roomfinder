@@ -84,7 +84,7 @@ interface DataContextType {
   addEventToUserTimetable: (classId: string, userId: string, event: Event) => Promise<void>;
   removeEventFromUserTimetable: (classId: string, userId: string) => Promise<void>;
   getUserEvents: (userId: string) => (UserTimetableEntry & { event?: Event })[];
-  addLecture: (lecture: Lecture) => Promise<void>;
+  addLecture: (lecture: Omit<Lecture, 'id'>) => Promise<Lecture | null>;
   removeLecture: (id: string) => Promise<void>;
 }
 
@@ -563,15 +563,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addLecture = async (lecture:Lecture) => {
+  const addLecture = async (lectureData: Omit<Lecture, 'id'>): Promise<Lecture | null> => {
     try {
-      await addLectureService(lecture);
-      setClasses(prev => [...prev, lecture]);
+      const addedLecture = await addLectureService(lectureData);
+      setClasses(prev => [...prev, addedLecture]);
+      return addedLecture;
     }
     catch(error) {
       toast.error('Failed to add Lecture');
+      return null;
     }
-    
   }
 
   const removeLecture = async (id: string) => {
