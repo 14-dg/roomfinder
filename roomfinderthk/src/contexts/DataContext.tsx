@@ -84,6 +84,8 @@ interface DataContextType {
   addEventToUserTimetable: (classId: string, userId: string, event: Event) => Promise<void>;
   removeEventFromUserTimetable: (classId: string, userId: string) => Promise<void>;
   getUserEvents: (userId: string) => (UserTimetableEntry & { event?: Event })[];
+  addLecture: (lecture: Lecture) => Promise<void>;
+  removeLecture: (id: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -656,6 +658,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addEventToUserTimetable,
         removeEventFromUserTimetable,
         getUserEvents,
+        addLecture,
+        removeLecture,
       }}
     >
       {children}
