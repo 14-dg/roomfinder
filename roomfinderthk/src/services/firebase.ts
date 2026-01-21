@@ -584,9 +584,19 @@ export async function getAllUsersRaw(): Promise<any[]> {
 }
 
 export async function addLecture(lecture: Lecture) {
-  
+  try {
+    await setDoc(doc(db, 'lectures', lecture.id), lecture);
+  }
+  catch(error) {
+    throw error;
+  }
 }
 
 export async function removeLecture(id: string) {
-
+  try {
+    await deleteDoc(doc(db, 'lectures', id));
+  }
+  catch(error) {
+    throw error;
+  }
 }
