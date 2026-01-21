@@ -4,7 +4,7 @@ export interface Booking {
   day: string;
   timeSlot: string;
   subject: string;
+  bookedBy: string;
   bookedByName: string;
-  bookedByRole: string;
   createdAt: Date;
 }

@@ -7,13 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import ScreenHeader from "@/components/ScreenHeader";
 
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 import { RoomWithStatus } from "@/models";
 
@@ -66,6 +64,7 @@ export default function RoomsScreen() {
   return (
     <>
       <ScreenHeader title="Rooms" subtitle="Find and filter through all rooms"/>
+      
       {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -77,87 +76,69 @@ export default function RoomsScreen() {
         />
       </div>
 
-      {/* Filters */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="outline" className="w-full h-12 mb-4 relative">
-            <SlidersHorizontal className="w-5 h-5 mr-2" />
-            Filters
-            {activeFiltersCount > 0 && (
-              <Badge className="ml-2 h-5 px-2">{activeFiltersCount}</Badge>
-            )}
-          </Button>
-        </SheetTrigger>
-
-        <SheetContent side="bottom" className="h-[85vh]">
-          <SheetHeader>
-            <SheetTitle>Filter Rooms</SheetTitle>
-          </SheetHeader>
-
-          <div className="py-6 space-y-6">
-            <div>
-              <Label className="mb-3 block">Floor</Label>
-              <Select value={selectedFloor} onValueChange={setSelectedFloor}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All floors</SelectItem>
-                  {[1, 2, 3, 4, 5].map(f => (
-                    <SelectItem key={f} value={String(f)}>
-                      Floor {f}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="mb-3 block">Room Size</Label>
-              <Select value={selectedSize} onValueChange={setSelectedSize}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All sizes</SelectItem>
-                  <SelectItem value="small">Small (≤20)</SelectItem>
-                  <SelectItem value="medium">Medium (21–40)</SelectItem>
-                  <SelectItem value="large">Large (40+)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <Label>Has Beamer</Label>
-                <Switch checked={beamerOnly} onCheckedChange={setBeamerOnly} />
-              </div>
-              <div className="flex justify-between">
-                <Label>Available Only</Label>
-                <Switch checked={availableOnly} onCheckedChange={setAvailableOnly} />
-              </div>
-            </div>
-
-            <Separator />
-
-            <Button
-              variant="outline"
-              className="w-full h-12"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedFloor("all");
-                setSelectedSize("all");
-                setBeamerOnly(false);
-                setAvailableOnly(true);
-              }}
-            >
-              Clear All Filters
-            </Button>
+      {/* Filters - Inline */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="mb-2 block text-sm">Floor</Label>
+            <Select value={selectedFloor} onValueChange={setSelectedFloor}>
+              <SelectTrigger className="h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All floors</SelectItem>
+                {[1, 2, 3, 4, 5].map(f => (
+                  <SelectItem key={f} value={String(f)}>
+                    Floor {f}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </SheetContent>
-      </Sheet>
+
+          <div>
+            <Label className="mb-2 block text-sm">Room Size</Label>
+            <Select value={selectedSize} onValueChange={setSelectedSize}>
+              <SelectTrigger className="h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All sizes</SelectItem>
+                <SelectItem value="small">Small (≤20)</SelectItem>
+                <SelectItem value="medium">Medium (21–40)</SelectItem>
+                <SelectItem value="large">Large (40+)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Has Beamer</Label>
+            <Switch checked={beamerOnly} onCheckedChange={setBeamerOnly} />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Available Only</Label>
+            <Switch checked={availableOnly} onCheckedChange={setAvailableOnly} />
+          </div>
+        </div>
+
+        <Button
+          variant="outline"
+          className="w-full h-9 text-sm"
+          onClick={() => {
+            setSearchQuery("");
+            setSelectedFloor("all");
+            setSelectedSize("all");
+            setBeamerOnly(false);
+            setAvailableOnly(true);
+          }}
+        >
+          Clear All Filters
+        </Button>
+      </div>
 
       {/* Results */}
       <p className="text-sm text-gray-600 mb-4">

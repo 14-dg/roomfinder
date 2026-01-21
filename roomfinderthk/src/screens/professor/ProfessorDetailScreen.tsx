@@ -2,11 +2,14 @@ import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import ScreenHeader from "@/components/ScreenHeader";
-import { Event } from "@/models"; 
-import { Mail, Clock, User, MapPin, ArrowLeft } from "lucide-react";
+import { Event, Timetable } from "@/models"; 
+import { Mail, Clock, User, MapPin, ArrowLeft, GraduationCap } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 
-// Helper to group events and filter out empty days
+/**
+ * Helper to group events by day and sort them by start time.
+ * Filters out days that have no events.
+ */
 function groupEventsByDay(events: Event[]) {
   const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   
@@ -17,7 +20,6 @@ function groupEventsByDay(events: Event[]) {
     return acc;
   }, {} as Record<string, Event[]>);
 
-  // Only return days that actually have events
   return daysOrder
     .filter(day => grouped[day] && grouped[day].length > 0)
     .map(day => ({
@@ -29,23 +31,44 @@ function groupEventsByDay(events: Event[]) {
 export default function ProfessorDetailScreen() {
   const { professorId } = useParams<{ professorId: string }>();
   const navigate = useNavigate();
-  const { lecturers } = useData();
+  const { lecturers, timetables } = useData();
 
+  // Find the professor profile data
   const professor = useMemo(
     () => lecturers.find((p) => p.id === professorId),
     [lecturers, professorId]
   );
 
-  const scheduleByDay = useMemo(
-    () => (professor?.events ? groupEventsByDay(professor.events) : []),
-    [professor]
-  );
+  /**
+   * Filter logic:
+   * Iterates through all available timetables and extracts events 
+   * where the lecturer ID matches this professor's ID.
+   */
+  const scheduleByDay = useMemo(() => {
+    if (!professor || !timetables) return [];
+
+    const professorEvents: Event[] = timetables.flatMap((timetable: Timetable) => 
+      timetable.events
+        .filter(event => event.lecturer?.id === professor.id)
+        .map(event => ({
+          ...event,
+          // Attaching course info for better UI context
+          courseOfStudy: timetable.courseOfStudy,
+          semester: timetable.semester
+        }))
+    );
+
+    return groupEventsByDay(professorEvents);
+  }, [professor, timetables]);
 
   if (!professor) {
     return (
       <div className="text-center mt-20">
         <p className="text-gray-500">Professor not found</p>
-        <button onClick={() => navigate("/professors")} className="text-blue-600 underline mt-2">
+        <button 
+          onClick={() => navigate("/professors")} 
+          className="text-blue-600 underline mt-2"
+        >
           Back to list
         </button>
       </div>
@@ -84,9 +107,8 @@ export default function ProfessorDetailScreen() {
             </div>
           </div>
           
-          {/* Email, Office Hours und Office Location */}
+          {/* Contact Details */}
           <div className="flex flex-col gap-3 pt-4 border-t border-slate-100 text-sm">
-            {/* Email */}
             <div className="flex items-center gap-3 text-slate-600">
               <Mail className="w-4 h-4 text-slate-400" />
               <a href={`mailto:${professor.email}`} className="hover:text-blue-600 underline-offset-4 hover:underline">
@@ -94,16 +116,9 @@ export default function ProfessorDetailScreen() {
               </a>
             </div>
 
-            
             <div className="flex items-center gap-3 text-slate-600">
               <Clock className="w-4 h-4 text-slate-400" />
-              <span>Office Hours: {professor.officeHours || "Not set"}</span>
-            </div>
-
-            
-            <div className="flex items-center gap-3 text-slate-600">
-              <MapPin className="w-4 h-4 text-slate-400" />
-              <span>Office: {professor.officeLocation || "No room assigned"}</span>
+              <span>Office Hours: {professor.officeHours || "Not scheduled"}</span>
             </div>
           </div>
         </Card>
@@ -129,14 +144,19 @@ export default function ProfessorDetailScreen() {
                           <p className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">
                             {event.name}
                           </p>
-                          <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
+                          <div className="flex flex-wrap items-center gap-4 mt-1 text-xs text-slate-500">
                             <span className="flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5 text-slate-400" />
                               {event.startTime} - {event.endTime}
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                              Room {event.room}
+                              Room {event.room?.roomName || event.room?.roomNumber || "TBD"}
+                            </span>
+                            {/* Course / Semester Context */}
+                            <span className="flex items-center gap-1 text-blue-600 font-medium">
+                              <GraduationCap className="w-3.5 h-3.5" />
+                              {(event as any).courseOfStudy}, Sem. {(event as any).semester}
                             </span>
                           </div>
                         </div>
@@ -148,7 +168,7 @@ export default function ProfessorDetailScreen() {
             </div>
           ) : (
             <Card className="p-10 text-center border-dashed border-slate-300 bg-slate-50/50">
-              <p className="text-sm text-slate-500 italic">No scheduled events found for this lecturer.</p>
+              <p className="text-sm text-slate-500 italic">No scheduled events found for this professor.</p>
             </Card>
           )}
         </div>

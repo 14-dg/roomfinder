@@ -2,16 +2,16 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 import RoomsScreen from "@/screens/rooms/RoomsScreen";
-import FavoritesScreen from "@/screens/FavoritesScreen";
-import ProfessorScreen from "@/screens/ProfessorScreen";
-import ProfileScreen from "@/screens/ProfileScreen";
-import AdminScreen from "@/screens/AdminScreen";
-import BookingScreen from "@/screens/BookingScreen";
-import ClassesScreen from "@/screens/ClassesScreen";
-import LoginScreen from "@/screens/LoginScreen";
-import RegisterScreen from "@/screens/RegisterScreen";
+import FavoritesScreen from "@/screens/classAndUserBasedScreens/FavoritesScreen";
+import ProfessorScreen from "@/screens/professor/ProfessorScreen";
+import ProfileScreen from "@/screens/classAndUserBasedScreens/ProfileScreen";
+import AdminScreen from "@/screens/admin/AdminScreen";
+import BookingScreen from "@/screens/professor/BookingScreen";
+import ClassesScreen from "@/screens/classAndUserBasedScreens/ClassesScreen";
+import LoginScreen from "@/screens/loginAndRegister/LoginScreen";
+import RegisterScreen from "@/screens/loginAndRegister/RegisterScreen";
 import RoomDetailScreen from "@/screens/rooms/RoomDetailScreen";
-import ProfessorDetailScreen from "@/screens/ProfessorDetailScreen";
+import ProfessorDetailScreen from "@/screens/professor/ProfessorDetailScreen";
 
 export default function AppRoutes() {
   const { isAuthenticated } = useAuth();
