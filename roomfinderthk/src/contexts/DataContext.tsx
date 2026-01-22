@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, DaySchedule, RoomSchedule, Timetable, Module, Event } from '@/models';
-import {initialClasses, initialRooms, defaultSchedulePattern, days} from "../mockData/mockData";
+import { defaultSchedulePattern, days} from "../mockData/mockData";
 import {
   getAllBookings,
   getAllCustomSchedules,
@@ -33,7 +33,6 @@ import {
   removeLecture as removeLectureService,
   uploadTimetableAsLectures,
   } from "@/services/firebase";
-import { start } from 'repl';
 import { toast } from 'sonner';
 import { checkRoomAvailability } from '@/utils/availability';
 
