@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-
 import {
   Select,
   SelectContent,
@@ -11,27 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 import TimetableBuilder from './timetablebuilder/TimetableBuilderNew';
-
-import { useData } from '@/contexts/DataContext';
-import { scheduler } from 'timers/promises';
-
-const schedule = {
-  days: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'],
-  times: ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
-  events: [
-    { id: 1, name: 'Mathe', startTime: '08:00', endTime: '10:00', day: 'Montag' },
-    { id: 2, name: 'Englisch', startTime: '10:00', endTime: '12:00', day: 'Montag' },
-    { id: 3, name: 'Biologie', startTime: '13:00', endTime: '15:00', day: 'Dienstag' },
-    { id: 4, name: 'Chemie', startTime: '15:00', endTime: '17:00', day: 'Dienstag' },
-    { id: 5, name: 'Sport', startTime: '09:00', endTime: '11:00', day: 'Mittwoch' },
-    { id: 6, name: 'Kunst', startTime: '11:00', endTime: '13:00', day: 'Mittwoch' },
-    { id: 7, name: 'Geschichte', startTime: '08:00', endTime: '10:00', day: 'Donnerstag' },
-    { id: 8, name: 'Physik', startTime: '10:00', endTime: '12:00', day: 'Donnerstag' },
-    { id: 9, name : 'test', startTime: '08:00', endTime: '12:00', day: 'Montag' },
-  ],
-};
 
 export default function TimetablesAdmin() {
   const [courseOfStudy, setCourseOfStudy] = useState('');
