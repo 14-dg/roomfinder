@@ -4,12 +4,12 @@ import { Button } from './ui/button';
 import { Calendar, Clock, MapPin, User as UserIcon, Trash2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 export function UserTimetable() {
-  const { rooms, lecturers, getUserClasses, removeClassFromTimetable } = useData();
+  const { rooms, lecturers, getUserClasses, removeEventFromUserTimetable } = useData();
   const { user } = useAuth();
 
   if (!user) return null;
@@ -18,7 +18,7 @@ export function UserTimetable() {
 
   const handleRemoveClass = async (classId: string) => {
     if (confirm('Remove this class from your timetable?')) {
-      await removeClassFromTimetable(classId, user.id);
+      await removeEventFromUserTimetable(classId, user.id);
       toast.success('Class removed from your timetable');
     }
   };
@@ -71,7 +71,7 @@ export function UserTimetable() {
                 </h4>
                 <div className="space-y-2">
                   {classes
-                    .sort((a, b) => a.timeSlot.localeCompare(b.timeSlot))
+                    .sort((a, b) => a.startTime.localeCompare(b.startTime))
                     .map(cls => {
                       const room = rooms.find(r => r.id === cls.roomId);
                       return (
@@ -84,7 +84,7 @@ export function UserTimetable() {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Clock className="w-3.5 h-3.5" />
-                                <span>{cls.timeSlot}</span>
+                                <span>{cls.startTime}</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <MapPin className="w-3.5 h-3.5" />
