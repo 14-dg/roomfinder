@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/components/ui/utils";
 import { Description } from "@radix-ui/react-dialog";
 import { useData } from "@/contexts/DataContext";
+import { getLecturerName } from "@/utils/getLecturerName";
 
 interface RoomWeeklyScheduleProps {
   lectures: Lecture[];
@@ -49,17 +50,6 @@ const formatTime = (timeStr: string) => {
 };
 
 export function RoomWeeklySchedule({ lectures, bookings }: RoomWeeklyScheduleProps) {
-
-  const { lecturers } = useData();
-
-  // Suche Lecturer-Namen basierend auf User ID
-  const getLecturerName = (userId: string): string => {
-    const lecturer = lecturers?.find(l => l.id === userId);
-    if (lecturer?.name) {
-      return lecturer.name;
-    }
-    return userId;
-  }
 
   // Bestimme die aktuelle Woche (Montag bis Sonntag)
   const getCurrentWeekDates = () => {
@@ -107,7 +97,7 @@ export function RoomWeeklySchedule({ lectures, bookings }: RoomWeeklySchedulePro
           endTime: formatTime(b.endDate),
           day: b.day,
           title: b.description,
-          professor: getLecturerName(b.bookedBy), // Korrigiert: Lecturer-Name
+          professor: b.bookedBy, // Korrigiert: Lecturer-Name
           type: "Buchung",
           date: b.startDate
         }))
