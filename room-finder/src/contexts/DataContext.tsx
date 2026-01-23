@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Room, Lecture, Event } from "@/models";
 import { isSessionActiveNow } from '@/utils/isSessionActiveNow';
-import { mockLectures, mockRooms } from '@/data/mockData';
+import { mockEvents, mockLectures, mockRooms } from '@/data/mockData';
 
 interface DataContextType {
     rooms: Room[];
@@ -19,46 +19,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const calculateCurrentStatus = (currentRooms: Room[], currentLectures: Lecture[]) => {
-    const now = new Date();
-    
-    const updatedRooms = currentRooms.map((room) => {
-
-      const roomLectures = currentLectures.filter((lecture) => lecture.roomId === room.id);
-      
-      const activeLecture = roomLectures.find((lecture) => 
-        lecture.schedule.some(session => isSessionActiveNow(session, now))
-      );
-
-      if (activeLecture) {
-        return {
-          ...room,
-          isOccupiedByLecture: true,
-          currentLectureName: activeLecture.name,
-        };
-      } else {
-        return {
-          ...room,
-          isOccupiedByLecture: false,
-          currentLectureName: undefined,
-        };
-      }
-    });
-
-    setRooms(updatedRooms);
-  };
 
   // Initiales Laden
   useEffect(() => {
     const loadData = async () => {
+      
       setIsLoading(true);
 
-      // Simuliere Netzwerk-Verzögerung
-      await new Promise(r => setTimeout(r, 200));
-
       setLectures(mockLectures);
-      
-      calculateCurrentStatus(mockRooms, mockLectures);
+
+      setEvents(mockEvents);
       
       setIsLoading(false);
     };
@@ -67,8 +37,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     //Aktualisiere den Status jede Minute
     const interval = setInterval(() => {
-        calculateCurrentStatus(mockRooms, mockLectures);
-    }, 60000); 
+        
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -79,7 +49,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       lectures,
       events,
       isLoading,
-      refreshStatus: () => calculateCurrentStatus(mockRooms, mockLectures) 
+      refreshStatus: () => calculateCurrentStatus(mockRooms, mockLectures,mockEvents) 
     }}>
       {children}
     </DataContext.Provider>

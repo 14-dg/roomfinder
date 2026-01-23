@@ -7,7 +7,7 @@ export interface EventSession {
 
 export interface Event {
   id: string;
-  bezeichnung: string;
+  designation: string;
   professor: string;
   roomId: string;
 

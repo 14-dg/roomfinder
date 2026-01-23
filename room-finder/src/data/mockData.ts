@@ -8,7 +8,7 @@ export const mockRooms: Room[] = [
     building: "Hauptgebäude", 
     roomType: "Seminarraum", 
     checkIns: 12,
-    isOccupiedByLecture: false 
+    isOccupied: false 
   },
   { 
     id: "102", 
@@ -17,8 +17,8 @@ export const mockRooms: Room[] = [
     building: "Hauptgebäude", 
     roomType: "PC-Pool", 
     checkIns: 25,
-    isOccupiedByLecture: true,
-    currentLectureName: "Programmierung 1"
+    isOccupied: true,
+    occupiedBy: "Programmierung 1"
   },
   { 
     id: "103", 
@@ -27,7 +27,7 @@ export const mockRooms: Room[] = [
     building: "Hauptgebäude", 
     roomType: "Labor", 
     checkIns: 3,
-    isOccupiedByLecture: false 
+    isOccupied: false 
   },
   { 
     id: "104", 
@@ -36,7 +36,7 @@ export const mockRooms: Room[] = [
     building: "Hauptgebäude", 
     roomType: "Hörsaal", 
     checkIns: 85,
-    isOccupiedByLecture: false 
+    isOccupied: false 
   },
   
   // Ingenieurwissenschaftliches Zentrum (IWZ)
@@ -47,7 +47,7 @@ export const mockRooms: Room[] = [
     building: "IWZ", 
     roomType: "Seminarraum", 
     checkIns: 0,
-    isOccupiedByLecture: false 
+    isOccupied: false 
   },
   { 
     id: "202", 
@@ -56,7 +56,7 @@ export const mockRooms: Room[] = [
     building: "IWZ", 
     roomType: "Hörsaal", 
     checkIns: 120,
-    isOccupiedByLecture: false 
+    isOccupied: false 
   },
   
   // Bibliothek / Mensa Gebäude
@@ -180,6 +180,40 @@ export const mockLectures: Lecture[] = [
         endTime: "17:00",
         startDate: "2025-04-01",
         endDate: "2025-07-31"
+      }
+    ]
+  }
+];
+
+// Ergänzung für src/data/mockData.ts
+import type { Event } from '@/models';
+
+export const mockEvents: Event[] = [
+  {
+    id: "e1",
+    designation: "Gastvortrag: KI in der modernen Softwareentwicklung",
+    professor: "Dipl.-Inf. Markus Schmidt (Extern)",
+    roomId: "104", // Findet im Hörsaal H1 statt
+    schedule: [
+      {
+        date: "2026-01-14", // Heute (Mittwoch)
+        dayOfWeek: 3,       // Mittwoch
+        startTime: "17:00",
+        endTime: "18:30"
+      }
+    ]
+  },
+  {
+    id: "e2",
+    designation: "Nachprüfung Grundlagen der Informatik",
+    professor: "Prof. Dr. Wörzberger",
+    roomId: "101", // Findet im Raum A1.01 statt
+    schedule: [
+      {
+        date: "2026-01-16", // Kommender Freitag
+        dayOfWeek: 5,       // Freitag
+        startTime: "09:00",
+        endTime: "12:00"
       }
     ]
   }

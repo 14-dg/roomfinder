@@ -7,6 +7,5 @@ export interface Room {
     roomType: RoomCategory;
     checkIns: number;
     label: string;
-    isOccupiedByLecture: boolean;
-    currentLectureName?: string;
+    isOccupied: boolean;
 }
