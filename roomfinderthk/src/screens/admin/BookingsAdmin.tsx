@@ -6,6 +6,7 @@ import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useData } from '@/contexts/DataContext';
+import { getLecturerName } from '@/utils/getLecturerName';
 
 // Hilfsfunction: Extrahiere Zeit aus ISO-String
 const formatTimeFromISO = (isoString: string): string => {
@@ -82,7 +83,7 @@ export default function BookingsAdmin() {
                     <TableCell>{bookingDate}</TableCell>
                     <TableCell>{startTime} - {endTime}</TableCell>
                     <TableCell>{b.description}</TableCell>
-                    <TableCell>{b.bookedBy}</TableCell>
+                    <TableCell>{getLecturerName(b.bookedBy)}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"

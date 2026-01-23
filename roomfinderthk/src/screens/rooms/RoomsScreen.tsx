@@ -123,7 +123,7 @@ export default function RoomsScreen() {
             setSelectedFloor("all");
             setSelectedSize("all");
             setBeamerOnly(false);
-            setAvailableOnly(true);
+            setAvailableOnly(false);
           }}
         >
           Clear All Filters
