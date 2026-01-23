@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Room, Lecture, Event } from "@/models";
-import { isSessionActiveNow } from '@/utils/isSessionActiveNow';
 import { mockEvents, mockLectures, mockRooms } from '@/data/mockData';
 
 interface DataContextType {
@@ -8,7 +7,6 @@ interface DataContextType {
     lectures: Lecture[];
     events: Event[];
     isLoading: boolean;
-    refreshStatus: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -29,31 +27,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setLectures(mockLectures);
 
       setEvents(mockEvents);
+
+      setRooms(mockRooms);
+
+      
       
       setIsLoading(false);
     };
 
     loadData();
-
-    //Aktualisiere den Status jede Minute
-    const interval = setInterval(() => {
-        
-    }, 60000);
-
-    return () => clearInterval(interval);
   }, []);
 
-  return (
-    <DataContext.Provider value={{ 
-      rooms,
-      lectures,
-      events,
-      isLoading,
-      refreshStatus: () => calculateCurrentStatus(mockRooms, mockLectures,mockEvents) 
-    }}>
-      {children}
-    </DataContext.Provider>
-  );
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
