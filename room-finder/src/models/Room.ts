@@ -1,11 +1,8 @@
-export type RoomCategory = 'Seminarraum' | 'PC-Pool' | 'Hörsaal' | 'Labor' | 'Offener Bereich';
-
 export interface Room {
-    id: string;
-    floor: number;
-    building: string;
-    roomType: RoomCategory;
-    checkIns: number;
-    label: string;
-    isOccupied: boolean;
+id: string;                     //Die ID des Raums
+label: string                   //Der "Name" des Raums
+floor: number;                  //Die Etage, auf der sich der Raum befindet
+type: string;             		//Einer der in RoomCategory definierten Typen von Raeumen
+seats: number;                  //Die Anzahl der Sitzplätze des Raums
+created_at: string              //Wann das Objekt in der Datenbank erstellt wurde
 }

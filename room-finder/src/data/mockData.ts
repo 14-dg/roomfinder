@@ -18,7 +18,6 @@ export const mockRooms: Room[] = [
     roomType: "PC-Pool", 
     checkIns: 25,
     isOccupied: true,
-    occupiedBy: "Programmierung 1"
   },
   { 
     id: "103", 
@@ -67,7 +66,7 @@ export const mockRooms: Room[] = [
     building: "Bibliothek", 
     roomType: "Offener Bereich", 
     checkIns: 45,
-    isOccupiedByLecture: false 
+    isOccupied: false 
   },
   { 
     id: "302", 
@@ -76,7 +75,7 @@ export const mockRooms: Room[] = [
     building: "Bibliothek", 
     roomType: "Seminarraum", 
     checkIns: 8,
-    isOccupiedByLecture: false 
+    isOccupied: false 
   },
 ];
 
