@@ -1,30 +1,27 @@
 import './App.css'
 import { AuthProvider } from '@/contexts/AuthContext';
 import { DataProvider } from '@/contexts/DataContext';
-import { RoomListScreen } from '@/screens/room/RoomListScreen'; // Die erstellen wir gleich!
+import { useEffect } from 'react';
+import { supabase } from './lib/supabase';
 
 function App() {
-  return (
-    // 1. Schicht: Auth (Wer bin ich?)
-    <AuthProvider>
-      {/* 2. Schicht: Daten (Was sehe ich?) */}
-      <DataProvider>
-        
-        {/* 3. Schicht: Layout / GUI */}
-        <div className="min-h-screen bg-gray-100 p-4">
-          <header className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">TH Köln RoomFinder</h1>
-          </header>
-          
-          <main>
-            {/* Hier laden wir deine View */}
-            <RoomListScreen />
-          </main>
-        
-        </div>
+  useEffect( () => {
 
-      </DataProvider>
-    </AuthProvider>
+    const testconnection = async () => {
+      const { data, error } = await supabase.from('rooms').select('*');
+      if (error) {
+        console.error("Fehler:", error);
+      } else {
+        console.log("Daten aus der DB:", data);
+      }
+    }
+    testconnection();
+  }, [])
+
+  return (
+    <div>
+      hallo
+    </div>
   );
 }
 
