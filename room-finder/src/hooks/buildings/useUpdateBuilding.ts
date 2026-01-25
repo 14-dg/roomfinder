@@ -15,9 +15,8 @@ export const useUpdateBuilding = () => {
             return updateBuilding(id, updates);
         },
         
-        onSuccess: (savedBuilding) => {
-            //manuelles update, ohne neue Datenbank Anfrage
-            queryClient.setQueryData(buildingKeys.details(savedBuilding.id), savedBuilding);
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: buildingKeys.details(variables.id) });
             queryClient.invalidateQueries({ queryKey: buildingKeys.list() });
         },
 

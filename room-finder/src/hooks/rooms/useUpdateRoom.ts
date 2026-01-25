@@ -15,9 +15,8 @@ export const useUpdateRoom = () => {
             return updateRoom(id, updates);
         },
         
-        onSuccess: (savedRoom) => {
-            //manuelles update, ohne neue Datenbank Anfrage
-            queryClient.setQueryData(roomKeys.details(savedRoom.id), savedRoom);
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: roomKeys.details(variables.id) });
             queryClient.invalidateQueries({ queryKey: roomKeys.list() });
         },
 
