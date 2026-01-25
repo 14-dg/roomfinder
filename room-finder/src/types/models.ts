@@ -50,7 +50,9 @@ export type UpdateRoom = Update<"rooms">;
  */
 export type RoomWithDetails = Room & {
     room_type: RoomType | null;
-    building: Building | null;
+    building: Building | null & {
+        campus: Campus | null;
+    };
 }
 
 //Equipment
