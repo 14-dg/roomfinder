@@ -6,7 +6,7 @@ export const roomKeys = {
 
     all: ["rooms"] as const,
 
-    lists: () => [...roomKeys.all, "list"] as const,
+    list: () => [...roomKeys.all, "list"] as const,
 
     details: (id: number) => [...roomKeys.all, "details", id] as const,
 }

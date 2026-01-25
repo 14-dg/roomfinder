@@ -11,11 +11,11 @@ export const useCreateRoom = () => {
         mutationFn: createRoom,
         
         onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: roomKeys.lists()});
+            queryClient.invalidateQueries({queryKey: roomKeys.list()});
         },
 
         onError: (error) => {
-            console.error(error);
+            console.error("Löschen fehlgeschlagen: ", error);
         },
     });
 }
