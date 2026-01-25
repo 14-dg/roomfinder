@@ -23,5 +23,5 @@ export const campusKeys = {
 export const roomTypeKeys = {
     all: ["room_types"] as const,
     list: () => [...roomTypeKeys.all, "list"] as const,
-    details: (id: number) => [...roomTypeKeys.all, "details", id] as const,
+    details: (id: string) => [...roomTypeKeys.all, "details", id] as const,
 }
