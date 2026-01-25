@@ -33,6 +33,13 @@ export type Building = Row<"buildings">;
 export type NewBuilding = Insert<"buildings">;
 export type UpdateBuilding = Update<"buildings">;
 
+/**
+ * Stellt eine Gebaeude mit all seinen Attributen dar und beinhaltet auch die Attribute des ueber campus_id referenzierten Campus
+ */
+export type BuildingWithDetails = Building & {
+    campus: Campus | null;
+}
+
 //RoomTypes
 
 export type RoomType = Row<"room_types">;
@@ -46,13 +53,11 @@ export type NewRoom = Insert<"rooms">;
 export type UpdateRoom = Update<"rooms">;
 
 /**
- * Stellt einen Raum mit all seinen Attributen dar und beinhaltet auch die Objekte die durch building_id und room_type_id referenziert werden.
+ * Stellt einen Raum mit all seinen Attributen dar und beinhaltet auch transitiv die Attribute der ueber building_id und room_type_id referenzierten room_types, campuses und buildings.
  */
 export type RoomWithDetails = Room & {
     room_type: RoomType | null;
-    building: Building | null & {
-        campus: Campus | null;
-    };
+    building: BuildingWithDetails | null;
 }
 
 //Equipment
