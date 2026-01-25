@@ -36,19 +36,13 @@ export default function BookingScreen() {
   const [startTime, setStartTime] = useState('08:00');
   const [endTime, setEndTime] = useState('08:50');
   const [description, setDescription] = useState('');
-  const [filterFloor, setFilterFloor] = useState<string>('all');
-  const [filterBeamer, setFilterBeamer] = useState(false);
+  // Beamer-Filter entfernt
   const [showMyBookings, setShowMyBookings] = useState(false);
 
   // Get professor's bookings
   const myBookings = bookings.filter(b => b.bookedBy === user?.id);
 
-  // Filter rooms
-  const filteredRooms = rooms.filter(room => {
-    if (filterFloor !== 'all' && room.floor !== parseInt(filterFloor)) return false;
-    if (filterBeamer && !room.hasBeamer) return false;
-    return true;
-  });
+    const filteredRooms = rooms; // Beamer-Filter entfernt
 
   // Validiere dass End-Zeit nach Start-Zeit liegt
   const isValidTimeRange = () => {
@@ -186,39 +180,7 @@ export default function BookingScreen() {
         ) : (
           /* Booking Form */
           <>
-            {/* Filters */}
-            <Card className="p-4">
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <Label htmlFor="filterFloor" className="text-sm">Filter by Floor</Label>
-                  <Select value={filterFloor} onValueChange={setFilterFloor}>
-                    <SelectTrigger id="filterFloor" className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Floors</SelectItem>
-                      <SelectItem value="1">Floor 1</SelectItem>
-                      <SelectItem value="2">Floor 2</SelectItem>
-                      <SelectItem value="3">Floor 3</SelectItem>
-                      <SelectItem value="4">Floor 4</SelectItem>
-                      <SelectItem value="5">Floor 5</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-2 pb-2">
-                  <input
-                    type="checkbox"
-                    id="filterBeamer"
-                    checked={filterBeamer}
-                    onChange={(e) => setFilterBeamer(e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  <Label htmlFor="filterBeamer" className="text-sm cursor-pointer">
-                    Beamer required
-                  </Label>
-                </div>
-              </div>
-            </Card>
+            {/* Beamer-Filter entfernt */}
 
             {/* Booking Form */}
             <Card className="p-6">
