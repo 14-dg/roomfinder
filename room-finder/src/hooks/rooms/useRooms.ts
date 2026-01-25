@@ -8,6 +8,6 @@ export const useRooms = () => {
         queryKey: roomKeys.list(),
         queryFn: getAllRoomsWithDetails,
         //die gecashten Raum Daten sind nach 10 minuten stale/veraltet, das heißt sie werden neu geladen.
-        staleTime: 1000 * 60 * 10
+        staleTime: 1000 * 60 * 10,
     })
 }
