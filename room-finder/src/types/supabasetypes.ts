@@ -258,6 +258,7 @@ export type Database = {
           checkins: number
           floor: number
           id: number
+          is_locked: boolean
           name: string
           room_type_id: string
           seats: number
@@ -267,6 +268,7 @@ export type Database = {
           checkins?: number
           floor: number
           id?: number
+          is_locked?: boolean
           name: string
           room_type_id: string
           seats?: number
@@ -276,6 +278,7 @@ export type Database = {
           checkins?: number
           floor?: number
           id?: number
+          is_locked?: boolean
           name?: string
           room_type_id?: string
           seats?: number
