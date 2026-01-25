@@ -3,7 +3,7 @@ import { getAllRoomsWithDetails } from "@/services/roomService";
 import type { RoomWithDetails } from "@/types/models";
 import { useQuery } from "@tanstack/react-query"
 
-export const useGetAllRoomsWithDetails = () => {
+export const useRooms = () => {
     return useQuery<RoomWithDetails[], Error>({
         queryKey: roomKeys.lists(),
         queryFn: getAllRoomsWithDetails,
