@@ -74,7 +74,6 @@ export default function BookingScreen() {
     const dayName = dayNames[dateObj.getDay()];
 
     addBooking({
-      id: Date.now().toString(),
       roomId: selectedRoom,
       startDate: startDateISO,
       endDate: endDateISO,
