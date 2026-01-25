@@ -120,6 +120,7 @@ export default function RoomsAdmin() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Deutz">Deutz</SelectItem>
+                <SelectItem value="Gummersbach">Gummersbach</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -136,6 +137,7 @@ export default function RoomsAdmin() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Main Building">Main Building</SelectItem>
+                <SelectItem value="Other">Neben Gebäude</SelectItem>
               </SelectContent>
             </Select>
           </div>
