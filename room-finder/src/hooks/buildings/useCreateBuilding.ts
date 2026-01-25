@@ -14,7 +14,7 @@ export const useCreateBuilding = () => {
         },
 
         onError: (error) => {
-            console.error("Löschen fehlgeschlagen: ", error);
+            console.error("Erstellen fehlgeschlagen: ", error);
         },
     });
 }
