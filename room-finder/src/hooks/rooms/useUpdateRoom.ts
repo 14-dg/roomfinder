@@ -3,19 +3,26 @@ import { updateRoom } from "@/services/roomService";
 import type { UpdateRoom } from "@/types/models";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const useUpdateRoom = (id: number, updates: UpdateRoom) => {
+type RoomUpdatePayload = UpdateRoom & { id: number };
+
+export const useUpdateRoom = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationKey: ['updateRoom'],
-        mutationFn: () => updateRoom(id, updates),
+        mutationFn: (payload: RoomUpdatePayload) => {
+            const {id, ...updates} = payload;
+            return updateRoom(id, updates);
+        },
         
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: roomKeys.details(id)});
+        onSuccess: (savedRoom) => {
+            //manuelles update, ohne neue Datenbank Anfrage
+            queryClient.setQueryData(roomKeys.details(savedRoom.id), savedRoom);
+            queryClient.invalidateQueries({ queryKey: roomKeys.list() });
         },
 
         onError: (error) => {
-            console.error(error);
+            console.error("Update des Raums fehlgeschlagen ", error);
         },
     });
 }
