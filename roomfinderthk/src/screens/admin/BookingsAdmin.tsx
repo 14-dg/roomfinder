@@ -23,7 +23,7 @@ const formatDateFromISO = (isoString: string): string => {
 };
 
 export default function BookingsAdmin() {
-  const { bookings, rooms, clearAllBookings, removeBooking } = useData();
+  const { bookings, rooms, removeBooking } = useData();
 
   return (
     <div className="space-y-6">
@@ -36,19 +36,7 @@ export default function BookingsAdmin() {
             </p>
           </div>
 
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              if (confirm('Clear all bookings?')) {
-                clearAllBookings();
-                toast.success('All bookings cleared');
-              }
-            }}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Clear All
-          </Button>
+          {/* Clear All Bookings Button entfernt */}
         </div>
 
         <Table>
