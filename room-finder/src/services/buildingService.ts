@@ -40,7 +40,7 @@ export async function updateBuilding(id: number, updates: UpdateBuilding): Promi
 
     if(!data) throw new Error(`Building update failed: Building with ID ${id} not found or no data returned`);
 
-    return data as Building;
+    return data;
 }
 
 export async function deleteBuilding(id: number): Promise<void> {

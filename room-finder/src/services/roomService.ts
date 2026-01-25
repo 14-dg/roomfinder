@@ -40,7 +40,7 @@ export async function updateRoom(id: number, updates: UpdateRoom): Promise<Room>
 
     if(!data) throw new Error(`Room update failed: Room with ID ${id} not found or no data returned`);
 
-    return data as Room;
+    return data;
 }
 
 export async function deleteRoom(id: number): Promise<void> {
