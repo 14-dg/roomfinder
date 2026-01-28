@@ -1,6 +1,28 @@
 import { supabase } from "@/lib/supabase";
 import type { LectureTimeslot, NewLectureTimeslot, UpdateLectureTimeslot } from "@/types/models";
 
+export async function getLectureTimeslotsForLectureId(lectureId: number): Promise<LectureTimeslot[]> {
+    const {data, error} = await supabase
+    .from("lecture_timeslots")
+    .select("*")
+    .eq("id", lectureId);
+
+    if(error) throw error;
+
+    return data || [];
+}
+
+export async function getLectureTimeslotIdsForLectureId(lectureId: number): Promise<number[]> {
+    const {data, error} = await supabase
+    .from("lecture_timeslots")
+    .select("id")
+    .eq("lecture_id", lectureId);
+
+    if(error) throw error;
+
+    return (data || []).map(item => item.id);
+}
+
 export async function getAllLectureTimeslots(): Promise<LectureTimeslot[]> {
     const {data, error} = await supabase
     .from("lecture_timeslots")
