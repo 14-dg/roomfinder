@@ -1,17 +1,29 @@
 import { supabase } from "@/lib/supabase";
 import type { LectureTimeslot, NewLectureTimeslot, UpdateLectureTimeslot } from "@/types/models";
 
+
+/**
+ * 
+ * @param lectureId 
+ * @returns LectureTimeslots einer Lecture als LectureTimeslot[]
+ */
 export async function getLectureTimeslotsForLectureId(lectureId: number): Promise<LectureTimeslot[]> {
     const {data, error} = await supabase
     .from("lecture_timeslots")
     .select("*")
-    .eq("id", lectureId);
+    .eq("lecture_id", lectureId);
 
     if(error) throw error;
 
     return data || [];
 }
 
+
+/**
+ * 
+ * @param lectureId 
+ * @returns Id's der LectureTimeslots einer Lecture als number[]
+ */
 export async function getLectureTimeslotIdsForLectureId(lectureId: number): Promise<number[]> {
     const {data, error} = await supabase
     .from("lecture_timeslots")
@@ -72,7 +84,7 @@ export async function deleteLectureTimeslot(id: number): Promise<void> {
     if(error) throw error;
 }
 
-export async function deleteLectureTimeslotForLecture(lectureId: number): Promise<void> {
+export async function deleteLectureTimeslotForLectureId(lectureId: number): Promise<void> {
     const {error} = await supabase
     .from("lecture_timeslots")
     .delete()
