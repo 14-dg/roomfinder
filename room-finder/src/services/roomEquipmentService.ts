@@ -17,17 +17,18 @@ export async function getAllRoomEquipment(): Promise<RoomEquipment[]> {
  * 
  */
 export async function getEquipmentIdsForRoom(roomId: number): Promise<string[]> {
-    const {data, error} = await supabase
-    .from("room_equipment")
-    .select("equipment_id")
-    .eq("room_id", roomId);
-
-    if(error) throw error;
-    return data.map(item => item.equipment_id);
+    const { data, error } = await supabase
+        .from('room_equipment')
+        .select('equipment_id')
+        .eq('room_id', roomId);
+    
+    if (error) throw error;
+    
+    return (data || []).map(item => item.equipment_id);
 }
 
 export async function syncRoomEquipment(roomId: number, equipmentIds: string[]): Promise<void> {
-    //altes equipment loeschen
+    //altes equipment des raums entfernen
     const { error: deleteError } = await supabase
         .from('room_equipment')
         .delete()
@@ -35,10 +36,10 @@ export async function syncRoomEquipment(roomId: number, equipmentIds: string[]):
     
     if (deleteError) throw deleteError;
 
-    //wenn die Liste leer ist, dann keine neuen Einträge machen
+    //wenn die neue Liste leer ist, dann beenden
     if (equipmentIds.length === 0) return;
 
-    //die neuen Verknuepfungen bauen
+    //neue Liste einfuegen
     const rowsToInsert = equipmentIds.map(eqId => ({
         room_id: roomId,
         equipment_id: eqId
