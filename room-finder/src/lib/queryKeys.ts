@@ -35,23 +35,23 @@ export const equipmentKeys = {
 export const roomEquipmentKeys = {
     all: ["room_equipment"] as const,
     list: () => [...roomEquipmentKeys.all, "list"] as const,
-    details: (id: string) => [...roomEquipmentKeys.all, "details", id] as const,
+    details: (id: number) => [...roomEquipmentKeys.all, "details", id] as const,
 }
 
 export const lecturerKeys = {
     all: ["lecturers"] as const,
     list: () => [...lecturerKeys.all, "list"] as const,
-    details: (id: string) => [...lecturerKeys.all, "details", id] as const,
+    details: (id: number) => [...lecturerKeys.all, "details", id] as const,
 }
 
 export const lectureKeys = {
     all: ["lectures"] as const,
     list: () => [...lectureKeys.all, "list"] as const,
-    details: (id: string) => [...lectureKeys.all, "details", id] as const,
+    details: (id: number) => [...lectureKeys.all, "details", id] as const,
 }
 
 export const bookingKeys = {
         all: ["lectures"] as const,
     list: () => [...bookingKeys.all, "list"] as const,
-    details: (id: string) => [...bookingKeys.all, "details", id] as const,
+    details: (id: number) => [...bookingKeys.all, "details", id] as const,
 }
