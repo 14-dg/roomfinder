@@ -50,6 +50,11 @@ export const lectureKeys = {
     details: (id: number) => [...lectureKeys.all, "details", id] as const,
 }
 
+export const lectureTimeslotKeys = {
+    all: ['lectureTimeslots'] as const,
+    byLecture: (lectureId: number) => [...lectureTimeslotKeys.all, 'byLecture', lectureId] as const,
+};
+
 export const bookingKeys = {
         all: ["lectures"] as const,
     list: () => [...bookingKeys.all, "list"] as const,
