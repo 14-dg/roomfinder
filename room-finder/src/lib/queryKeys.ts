@@ -51,8 +51,9 @@ export const lectureKeys = {
 }
 
 export const lectureTimeslotKeys = {
-    all: ['lectureTimeslots'] as const,
-    byLecture: (lectureId: number) => [...lectureTimeslotKeys.all, 'byLecture', lectureId] as const,
+    all: ["lectureTimeslots"] as const,
+    byLecture: (lectureId: number) => [...lectureTimeslotKeys.all, "byLecture", lectureId] as const,
+    idsByLecture: (lectureId: number) => ["lectureTimeslotIds", "byLecture", lectureId] as const,
 };
 
 export const bookingKeys = {

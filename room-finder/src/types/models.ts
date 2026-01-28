@@ -90,6 +90,14 @@ export type LectureTimeslot = Row<"lecture_timeslots">;
 export type NewLectureTimeslot = Insert<"lecture_timeslots">;
 export type UpdateLectureTimeslot = Update<"lecture_timeslots">;
 
+/**
+ * LectureTimeslot mit dazugehörigem Raum und Lecture
+ */
+export type LectureTimeslotDTO = LectureTimeslot & {
+    room: Room | null,
+    lecture: Lecture | null,
+}
+
 //Lectures
 
 export type Lecture = Row<"lectures">;

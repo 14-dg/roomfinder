@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { LectureTimeslot, NewLectureTimeslot, UpdateLectureTimeslot } from "@/types/models";
+import type { LectureTimeslot, LectureTimeslotDTO, NewLectureTimeslot, UpdateLectureTimeslot } from "@/types/models";
 
 
 /**
@@ -7,17 +7,16 @@ import type { LectureTimeslot, NewLectureTimeslot, UpdateLectureTimeslot } from 
  * @param lectureId 
  * @returns LectureTimeslots einer Lecture als LectureTimeslot[]
  */
-export async function getLectureTimeslotsForLectureId(lectureId: number): Promise<LectureTimeslot[]> {
+export async function getLectureTimeslotsForLectureId(lectureId: number): Promise<LectureTimeslotDTO[]> {
     const {data, error} = await supabase
     .from("lecture_timeslots")
-    .select("*")
+    .select("*, room: rooms(*), lecture: lectures(*)")
     .eq("lecture_id", lectureId);
 
     if(error) throw error;
 
     return data || [];
 }
-
 
 /**
  * 
@@ -35,15 +34,15 @@ export async function getLectureTimeslotIdsForLectureId(lectureId: number): Prom
     return (data || []).map(item => item.id);
 }
 
-export async function getAllLectureTimeslots(): Promise<LectureTimeslot[]> {
+export async function getAllLectureTimeslots(): Promise<LectureTimeslotDTO[]> {
     const {data, error} = await supabase
     .from("lecture_timeslots")
-    .select("*");
+    .select("*, room: rooms(*), lecture: lectures(*)");
 
     if(error) throw error;
 
-    //Absicherung, data ist auf jeden fall vom Typ LectureTimeslot[]. Falls die Query null zurückgibt, wird [] verwendet.
-    return (data as LectureTimeslot[] || []);
+    //Absicherung, data ist auf jeden fall vom Typ LectureTimeslotDTO[]. Falls die Query null zurückgibt, wird [] verwendet.
+    return (data as LectureTimeslotDTO[] || []);
 }
 
 export async function createLectureTimeslot(newLectureTimeslot: NewLectureTimeslot): Promise<LectureTimeslot> {
