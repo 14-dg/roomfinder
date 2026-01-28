@@ -1,4 +1,4 @@
-export * from "./useLectureTimeslot";
+export * from "./useLectureTimeslots";
 export * from "./useCreateLectureTimeslot";
 export * from "./useUpdateLectureTimeslot";
 export * from "./useDeleteLectureTimeslot";
