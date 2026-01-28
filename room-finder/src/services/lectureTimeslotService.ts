@@ -15,23 +15,7 @@ export async function getLectureTimeslotsForLectureId(lectureId: number): Promis
 
     if(error) throw error;
 
-    return data || [];
-}
-
-/**
- * 
- * @param lectureId 
- * @returns Id's der LectureTimeslots einer Lecture als number[]
- */
-export async function getLectureTimeslotIdsForLectureId(lectureId: number): Promise<number[]> {
-    const {data, error} = await supabase
-    .from("lecture_timeslots")
-    .select("id")
-    .eq("lecture_id", lectureId);
-
-    if(error) throw error;
-
-    return (data || []).map(item => item.id);
+    return (data as unknown as LectureTimeslotDTO[]) || [];
 }
 
 export async function getAllLectureTimeslots(): Promise<LectureTimeslotDTO[]> {
