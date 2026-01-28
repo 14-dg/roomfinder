@@ -1,0 +1,51 @@
+import { supabase } from "@/lib/supabase";
+import type { LectureTimeslot, NewLectureTimeslot, UpdateLectureTimeslot } from "@/types/models";
+
+export async function getAllLectureTimeslots(): Promise<LectureTimeslot[]> {
+    const {data, error} = await supabase
+    .from("lecture_timeslots")
+    .select("*");
+
+    if(error) throw error;
+
+    //Absicherung, data ist auf jeden fall vom Typ LectureTimeslot[]. Falls die Query null zurückgibt, wird [] verwendet.
+    return (data as LectureTimeslot[] || []);
+}
+
+export async function createLectureTimeslot(newLectureTimeslot: NewLectureTimeslot): Promise<LectureTimeslot> {
+    const {data, error} = await supabase
+    .from("lecture_timeslots")
+    .insert(newLectureTimeslot)
+    .select()
+    .single();
+
+    if(error) throw error;
+
+    if(!data) throw new Error("LectureTimeslot creation failed: No data returned");
+
+    return data;
+}
+
+export async function updateLectureTimeslot(id: number, updates: UpdateLectureTimeslot): Promise<LectureTimeslot> {
+    const {data, error} = await supabase
+    .from("lecture_timeslots")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+    if(error) throw error;
+
+    if(!data) throw new Error(`LectureTimeslot update failed: LectureTimeslot with ID ${id} not found or no data returned`);
+
+    return data;
+}
+
+export async function deleteLectureTimeslot(id: number): Promise<void> {
+    const {error} = await supabase
+    .from("lecture_timeslots")
+    .delete()
+    .eq("id", id);
+    
+    if(error) throw error;
+}
