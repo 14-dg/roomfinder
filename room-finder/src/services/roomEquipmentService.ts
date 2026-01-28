@@ -41,7 +41,7 @@ export async function updateRoomEquipment(id: string, updates: UpdateRoomEquipme
     return data;
 }
 
-export async function deleteRoomEquipment(id: string): Promise<void> {
+export async function deleteRoomEquipment(id: number): Promise<void> {
     const {error} = await supabase
     .from("room_equipment")
     .delete()

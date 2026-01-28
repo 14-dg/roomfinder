@@ -25,3 +25,15 @@ export const roomTypeKeys = {
     list: () => [...roomTypeKeys.all, "list"] as const,
     details: (id: string) => [...roomTypeKeys.all, "details", id] as const,
 }
+
+export const equipmentKeys = {
+    all: ["equipment"] as const,
+    list: () => [...equipmentKeys.all, "list"] as const,
+    details: (id: string) => [...equipmentKeys.all, "details", id] as const,
+}
+
+export const RoomEquipmentKeys = {
+    all: ["room_equipment"] as const,
+    list: () => [...RoomEquipmentKeys.all, "list"] as const,
+    details: (id: string) => [...RoomEquipmentKeys.all, "details", id] as const,
+}
