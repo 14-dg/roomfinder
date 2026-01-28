@@ -71,3 +71,12 @@ export async function deleteLectureTimeslot(id: number): Promise<void> {
     
     if(error) throw error;
 }
+
+export async function deleteLectureTimeslotForLecture(lectureId: number): Promise<void> {
+    const {error} = await supabase
+    .from("lecture_timeslots")
+    .delete()
+    .eq("lecture_id", lectureId);
+    
+    if(error) throw error;
+}
