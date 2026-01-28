@@ -12,6 +12,45 @@ export async function getAllRoomEquipment(): Promise<RoomEquipment[]> {
     return (data as RoomEquipment[] || []);
 }
 
+/**
+ * 
+ * 
+ */
+export async function getEquipmentIdsForRoom(roomId: number): Promise<string[]> {
+    const {data, error} = await supabase
+    .from("room_equipment")
+    .select("equipment_id")
+    .eq("room_id", roomId);
+
+    if(error) throw error;
+    return data.map(item => item.equipment_id);
+}
+
+export async function syncRoomEquipment(roomId: number, equipmentIds: string[]): Promise<void> {
+    //altes equipment loeschen
+    const { error: deleteError } = await supabase
+        .from('room_equipment')
+        .delete()
+        .eq('room_id', roomId);
+    
+    if (deleteError) throw deleteError;
+
+    //wenn die Liste leer ist, dann keine neuen Einträge machen
+    if (equipmentIds.length === 0) return;
+
+    //die neuen Verknuepfungen bauen
+    const rowsToInsert = equipmentIds.map(eqId => ({
+        room_id: roomId,
+        equipment_id: eqId
+    }));
+
+    const { error: insertError } = await supabase
+        .from('room_equipment')
+        .insert(rowsToInsert);
+
+    if (insertError) throw insertError;
+}
+
 export async function createRoomEquipment(newRoomEquipment: NewRoomEquipment): Promise<RoomEquipment> {
     const {data, error} = await supabase
     .from("room_equipment")
