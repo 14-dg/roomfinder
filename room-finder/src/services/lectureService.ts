@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { Lecture, NewLecture, UpdateLecture } from "@/types/models";
 
-export async function getAllLecture(): Promise<Lecture[]> {
+export async function getAllLectures(): Promise<Lecture[]> {
     const {data, error} = await supabase
     .from("lectures")
     .select("*");
