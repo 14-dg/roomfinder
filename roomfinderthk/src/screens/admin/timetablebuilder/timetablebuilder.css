@@ -337,3 +337,32 @@
 }
 
 .btn-primary:hover { background: var(--primary-hover); }
+
+
+
+/* Drag and Drop Styles */
+.lecture-card {
+  cursor: grab;
+}
+
+.lecture-card:active {
+  cursor: grabbing;
+}
+
+/* Visuelles Feedback für die Ziel-Zelle */
+.timetable-cell.drag-over {
+  background-color: rgba(37, 99, 235, 0.1) !important;
+  border: 2px dashed var(--primary) !important;
+  z-index: 5;
+}
+
+/* Verhindert Flackern während des Draggens */
+.lecture-card[draggable="true"] {
+  user-select: none;
+  -webkit-user-drag: element;
+}
+
+/* Optional: Karte beim Ziehen leicht transparent machen */
+.lecture-card.dragging {
+  opacity: 0.5;
+}

@@ -1,15 +1,11 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useData } from '@/contexts/DataContext';
-import { RoomWithStatus, Lecture, LectureType, Lecturer } from '@/models';
+import { Lecture, LectureType } from '@/models';
 
-// Import des externen Stylesheets
 import './timetablebuilder.css';
 
-/**
- * Hilfsklasse für die Zeitberechnungen (Sekretariats-Logik: Blöcke statt Minuten)
- */
 const TimeUtils = {
   slots: ['08:00', '08:50', '09:45', '10:35', '11:30', '12:20', '13:15', '14:05', '15:00', '15:50', '16:45', '17:35', '18:30', '19:20', '20:15'],
   
@@ -32,14 +28,35 @@ const TimeUtils = {
   }
 };
 
-/**
- * Sub-Komponente für eine Tabellenzelle
- */
-const TimetableCell: React.FC<any> = ({ day, slot, lectures, rooms, lecturers, onCellClick }) => {
+const TimetableCell: React.FC<any> = ({ day, slot, lectures, rooms, lecturers, onCellClick, onDropLecture }) => {
   const currentLectures = lectures.filter((l: any) => l.day === day && l.startTime === slot);
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove('drag-over');
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const lectureId = e.dataTransfer.getData("lectureId");
+    if (lectureId) {
+      onDropLecture(lectureId, day, slot);
+    }
+  };
+
   return (
-    <td className="timetable-cell" onClick={() => onCellClick(null, day, slot)}>
+    <td 
+      className="timetable-cell" 
+      onClick={() => onCellClick(null, day, slot)}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="cell-content-wrapper">
         {currentLectures.map((lec: any) => {
           const duration = TimeUtils.calculateDuration(lec.startTime, lec.endTime);
@@ -49,6 +66,11 @@ const TimetableCell: React.FC<any> = ({ day, slot, lectures, rooms, lecturers, o
           return (
             <div
               key={lec.id}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData("lectureId", lec.id);
+                e.dataTransfer.effectAllowed = "move";
+              }}
               onClick={(e) => { e.stopPropagation(); onCellClick(lec); }}
               className={`lecture-card type-${lec.type.toLowerCase()}`}
               style={{ height: `calc(${duration * 100}% + ${(duration - 1) * 2}px)` }}
@@ -72,19 +94,17 @@ const TimetableCell: React.FC<any> = ({ day, slot, lectures, rooms, lecturers, o
 export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year }) => {
   const { classes, rooms, lecturers, addLecture, removeLecture } = useData();
   
-  // UI States
   const [showSat, setShowSat] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeLecture, setActiveLecture] = useState<Lecture | null>(null);
 
-  // Formular State
   const [form, setForm] = useState({
     name: '', day: 'Monday', start: '08:00', duration: 1, type: 'Vorlesung' as LectureType, room: '', prof: ''
   });
 
   const days = showSat ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const timeSlots = TimeUtils.slots.slice(0, -1); // Letzten Slot nicht als Startzeit anbieten
+  const timeSlots = TimeUtils.slots.slice(0, -1);
 
   const handleOpenEditor = (lec?: any, day?: string, slot?: string) => {
     if (lec) {
@@ -102,6 +122,25 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
     }
     setModalOpen(true);
   };
+
+  const handleDropLecture = useCallback(async (lectureId: string, newDay: string, newStart: string) => {
+    const lec = classes.find((l: any) => l.id === lectureId);
+    if (!lec) return;
+
+    const duration = TimeUtils.calculateDuration(lec.startTime, lec.endTime);
+    
+    try {
+      await removeLecture(lec.id!);
+      await addLecture({
+        ...lec,
+        day: newDay,
+        startTime: newStart,
+        endTime: TimeUtils.calculateEndTime(newStart, duration)
+      });
+    } catch (e) {
+      console.error("Fehler beim Verschieben:", e);
+    }
+  }, [classes, addLecture, removeLecture]);
 
   const handleSave = async () => {
     if (!form.name || !form.room || !form.prof) {
@@ -135,7 +174,6 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
 
   return (
     <div className="builder-screen">
-      {/* HEADER BEREICH */}
       <header className="builder-header">
         <div className="header-main">
           <div className="course-icon">{courseOfStudy.charAt(0)}</div>
@@ -156,7 +194,6 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
         </div>
       </header>
 
-      {/* KALENDER TABELLE */}
       <main className="calendar-container">
         <div className="table-card">
           <table className="timetable-grid">
@@ -183,6 +220,7 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
                       rooms={rooms}
                       lecturers={lecturers}
                       onCellClick={handleOpenEditor}
+                      onDropLecture={handleDropLecture}
                     />
                   ))}
                 </tr>
@@ -192,10 +230,9 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
         </div>
       </main>
 
-      {/* EINGABE-DIALOG (MODAL) */}
       {modalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{activeLecture ? 'Eintrag bearbeiten' : 'Termin planen'}</h2>
               <button className="close-btn" onClick={() => setModalOpen(false)}>×</button>
@@ -222,7 +259,7 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
                   </select>
                 </div>
                 <div className="input-group">
-                  <label>Dauer (Blöcke à 45 Min)</label>
+                  <label>Dauer (Blöcke)</label>
                   <div className="block-picker">
                     {[1, 2, 3, 4].map(n => (
                       <button 
