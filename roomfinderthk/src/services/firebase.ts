@@ -169,7 +169,29 @@ export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus
 }
 
 export async function deleteRoom(roomId: string): Promise<void> {
-  await deleteDoc(doc(db, "rooms", roomId));
+  try {
+    // Queries für alle verknüpften Dokumente
+    const lectureQ = query(collection(db, "lectures"), where("roomId", "==", roomId));
+    const bookingQ = query(collection(db, "bookings"), where("roomId", "==", roomId));
+    const checkinQ = query(collection(db, "checkins"), where("roomId", "==", roomId));
+
+    const [lectures, bookings, checkins] = await Promise.all([
+      getDocs(lectureQ), getDocs(bookingQ), getDocs(checkinQ)
+    ]);
+
+    const deletePromises = [
+      deleteDoc(doc(db, "rooms", roomId)),
+      ...lectures.docs.map(d => deleteDoc(d.ref)),
+      ...bookings.docs.map(d => deleteDoc(d.ref)),
+      ...checkins.docs.map(d => deleteDoc(d.ref))
+    ];
+
+    await Promise.all(deletePromises);
+    console.log(`Raum ${roomId} und alle Abhängigkeiten wurden bereinigt.`);
+  } catch (error) {
+    console.error("Fehler beim Löschen des Raums:", error);
+    throw error;
+  }
 }
 
 // ============================================================================
@@ -197,18 +219,18 @@ export async function getRoomBookings(roomId: string): Promise<Booking[]> {
   }));
 }
 
-export async function addBooking(
-  booking: Omit<Booking, "id" | "createdAt">
-): Promise<Booking> {
+export async function addBooking(booking: Omit<Booking, "id" | "createdAt">): Promise<Booking> {
+  // Check: Existiert der Raum für die Buchung?
+  const roomSnap = await getDoc(doc(db, "rooms", booking.roomId));
+  if (!roomSnap.exists()) {
+    throw new Error("Buchung unmöglich: Raum existiert nicht mehr.");
+  }
+
   const docRef = await addDoc(collection(db, "bookings"), {
     ...booking,
     createdAt: serverTimestamp(),
   });
-
-  return {
-    id: docRef.id,
-    ...booking,
-  };
+  return { id: docRef.id, ...booking };
 }
 
 export async function deleteBooking(bookingId: string): Promise<void> {
@@ -481,9 +503,22 @@ export async function updateLecturerProfile(id: string, updates: any) {
 /**
  * Löscht den User-Account aus Firestore
  */
-export async function deleteProfessorAndLecturer(id: string) {
-  await deleteDoc(doc(db, 'users', id));
-  // Hinweis: Der Auth-Account muss ggf. separat über Admin-Funktionen gelöscht werden
+export async function deleteProfessorAndLecturer(profId: string) {
+  try {
+    // 1. Finde alle Vorlesungen, die dieser Professor hält
+    const q = query(collection(db, "lectures"), where("professor", "==", profId));
+    const lectureSnaps = await getDocs(q);
+
+    // 2. Lösche den User und alle seine Vorlesungen parallel
+    const deletePromises = lectureSnaps.docs.map(d => deleteDoc(d.ref));
+    deletePromises.push(deleteDoc(doc(db, 'users', profId)));
+
+    await Promise.all(deletePromises);
+    console.log(`Professor ${profId} und alle zugehörigen Vorlesungen gelöscht.`);
+  } catch (error) {
+    console.error("Fehler beim kaskadierenden Löschen des Professors:", error);
+    throw error;
+  }
 }
 
 
@@ -603,20 +638,25 @@ export async function getAllUsersRaw(): Promise<any[]> {
 // ============================================================================
 
 export async function addLecture(lecture: Omit<Lecture, 'id'>): Promise<Lecture> {
-  try {
-
-    const newDocRef = doc(collection(db, 'lectures'));
-    const newLecture: Lecture = {
-      ...lecture,
-      id: newDocRef.id
-    };
-    await setDoc(newDocRef, newLecture);
-
-    return newLecture;
+  // Check: Existiert der Raum?
+  const roomSnap = await getDoc(doc(db, "rooms", lecture.roomId));
+  if (!roomSnap.exists()) {
+    throw new Error(`Validierung fehlgeschlagen: Raum ${lecture.roomId} existiert nicht.`);
   }
-  catch(error) {
-    throw error;
+
+  // Check: Existiert der Professor? (Falls eine ID übergeben wurde)
+  // Hinweis: Wenn 'Nicht zugewiesen' drin steht, überspringen wir den Check
+  if (lecture.professor && lecture.professor !== 'Nicht zugewiesen') {
+    const profSnap = await getDoc(doc(db, "users", lecture.professor));
+    if (!profSnap.exists() || profSnap.data()?.role !== 'professor') {
+      throw new Error(`Validierung fehlgeschlagen: Professor ${lecture.professor} existiert nicht.`);
+    }
   }
+
+  const newDocRef = doc(collection(db, 'lectures'));
+  const newLecture: Lecture = { ...lecture, id: newDocRef.id };
+  await setDoc(newDocRef, newLecture);
+  return newLecture;
 }
 
 export async function removeLecture(id: string) {
