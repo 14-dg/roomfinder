@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import TimetableBuilder from './timetablebuilder/TimetableBuilderNew';
+import TimetableBuilder from './timetablebuilder/TimetableBuilder';
 
 export default function TimetablesAdmin() {
   const [courseOfStudy, setCourseOfStudy] = useState('');
