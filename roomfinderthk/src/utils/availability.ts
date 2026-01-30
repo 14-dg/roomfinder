@@ -16,51 +16,41 @@ export function checkRoomAvailability(
   lectures: Lecture[], 
   bookings: Booking[]
 ): boolean {
+  if (!roomId) return true; // Ohne Raum-ID keine Belegung prüfbar
+  
   const now = new Date();
   
-  // -------------------------------------------------------
-  // 1. PRÜFUNG: Bookings (ISO-Format)
-  // -------------------------------------------------------
+  // 1. PRÜFUNG: Bookings (Sicherer Umgang mit Datumswerten)
   const activeBooking = bookings.find(b => {
-    // Nur Buchungen für diesen Raum prüfen
-    if (b.roomId !== roomId) return false;
+    if (b.roomId !== roomId || !b.startDate || !b.endDate) return false;
     
-    // ISO-Strings direkt in Datumsobjekte umwandeln
     const start = new Date(b.startDate);
     const end = new Date(b.endDate);
     
-    // Prüfen: Ist JETZT zwischen Start und Ende?
+    // Validierung: Falls Datum ungültig ist (Invalid Date)
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
+    
     return now >= start && now <= end;
   });
 
-  // Wenn eine Buchung aktiv ist -> Raum NICHT verfügbar
   if (activeBooking) return false; 
 
-
-  // -------------------------------------------------------
-  // 2. PRÜFUNG: Lectures (Wochenplan HH:MM)
-  // -------------------------------------------------------
-  const currentDayName = DAY_MAP[now.getDay()]; // z.B. "Wednesday"
+  // 2. PRÜFUNG: Lectures
+  const currentDayName = DAY_MAP[now.getDay()];
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   const activeLecture = lectures.find(l => {
-    // Raum und Tag müssen stimmen
-    if (l.roomId !== roomId || l.day !== currentDayName) return false;
+    // WICHTIG: Prüfen, ob Raum, Tag und Zeiten überhaupt existieren
+    if (!l || l.roomId !== roomId || l.day !== currentDayName) return false;
     
-    // Zeitfenster prüfen
     const start = getMinutes(l.startTime);
     const end = getMinutes(l.endTime);
     
+    // Falls startTime oder endTime im falschen Format sind
     if (start === -1 || end === -1) return false;
 
     return currentMinutes >= start && currentMinutes < end;
   });
 
-  // Wenn eine Vorlesung läuft -> Raum NICHT verfügbar
-  if (activeLecture) return false; 
-
-  // -------------------------------------------------------
-  // FAZIT: Weder Buchung noch Vorlesung -> Raum IST verfügbar
-  // -------------------------------------------------------
-  return true;
+  return !activeLecture; 
 }
