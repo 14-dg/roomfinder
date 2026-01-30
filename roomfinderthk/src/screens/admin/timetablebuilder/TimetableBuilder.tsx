@@ -173,7 +173,7 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
   };
 
   return (
-    <div className="builder-screen">
+    <div className="builder-screen" id="timetable-to-export">
       <header className="builder-header">
         <div className="header-main">
           <div className="course-icon">{courseOfStudy.charAt(0)}</div>

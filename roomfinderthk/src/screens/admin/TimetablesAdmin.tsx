@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -16,8 +18,42 @@ export default function TimetablesAdmin() {
   const [courseOfStudy, setCourseOfStudy] = useState('');
   const [semester, setSemester] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
+  const [isExporting, setIsExporting] = useState(false); // Neuer Lade-State
 
   const coursesOfStudy = ['Technische Informatik', 'Elektrotechnik', 'Medientechnologie'];
+
+
+  const handleExportPDF = async () => {
+    const element = document.getElementById('timetable-to-export');
+    if (!element) return;
+
+    setIsExporting(true);
+    try {
+      // Screenshot vom Element erstellen
+      const canvas = await html2canvas(element, {
+        scale: 2, // Höhere Qualität
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#f8fafc' // Gleicher Hintergrund wie im CSS
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      
+      // PDF im Querformat (Landscape) erstellen
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`Stundenplan_${courseOfStudy}_${semester}_${year}.pdf`);
+    } catch (error) {
+      console.error("PDF Export fehlgeschlagen:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const isFormComplete = courseOfStudy !== '' && semester !== '' && year > 1999;
 
@@ -84,21 +120,23 @@ export default function TimetablesAdmin() {
         </div>
       </Card>
 
-      {isFormComplete &&
-        <Card className="p-6">
-          <TimetableBuilder courseOfStudy={courseOfStudy} semester={semester} year={year} />
-        </Card>
-      }
+      {isFormComplete && (
+        <>
+          <Card className="p-6">
+            <TimetableBuilder courseOfStudy={courseOfStudy} semester={semester} year={year} />
+          </Card>
 
-      <Card className="p-6">
-        {/* PDF-Export Button */}
-          <Button
-            className="w-full"
-          >
-            PDF-Export
-          </Button>
-      </Card>
-
+          <Card className="p-6">
+            <Button
+              className="w-full"
+              onClick={handleExportPDF}
+              disabled={isExporting}
+            >
+              {isExporting ? 'Generiere PDF...' : 'PDF-Export herunterladen'}
+            </Button>
+          </Card>
+        </>
+      )}
     </div>
   );
-};
+}
