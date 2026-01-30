@@ -1,192 +1,339 @@
-.timetable-builder {
-  padding: 20px;
-  font-family: Arial, sans-serif;
+/* Globale Variablen für einheitliche Farben */
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --border-color: #e2e8f0;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
 }
 
-.timetable-container {
-  margin-top: 20px;
-  position: relative;
+.builder-screen {
+  background-color: var(--bg-main);
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text-main);
 }
 
-.timetable {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+/* Header Styling */
+.builder-header {
+  max-width: 1400px;
+  margin: 0 auto 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+  padding: 1.5rem 2rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.timetable th, .timetable td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-.timetable th {
-  background-color: #f2f2f2;
-  font-weight: bold;
+.course-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  background: linear-gradient(135deg, var(--primary), #3b82f6);
+  color: white;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
-.day-column {
-  width: 1%;
-}
-
-.time-column {
-  width: 1%;
-}
-
-.time-slot {
-  width: 15%;
-  height: 100px;
-  cursor: pointer;
-  position: relative;
-}
-
-.time-slot.available {
-  background-color: #f9f9f9;
-}
-
-.time-slot.available:hover {
-  background-color: #b1ff99;
-}
-
-.time-slot.occupied {
-  background-color: #e3f2fd;
-}
-
-.event-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  z-index: 1;
-  padding: 5px;
-}
-
-.event-container:hover {
-  border: 4px solid #faff99;
-}
-
-.event-lecture {
-  background-color: #ffe6b4;
-}
-
-.event-practical-course {
-  background-color: #bfffc4;
-}
-
-.event-exercise {
-  background-color: #c6f0ff;
-}
-
-.event-tutorial {
-  background-color: #aaaaaa
-}
-
-.event-seminar {
-  background-color: #f3e5f5;
-}
-
-.event-other {
-  background-color: #808080;
-}
-
-.event-info {
-  text-align: left;
+.course-info h1 {
+  font-size: 1.25rem;
+  font-weight: 800;
   margin: 0;
 }
 
-.event-name {
-  font-weight: bold;
-  font-size: 0.9em;
+.course-info p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
-.event-details {
-  font-size: 0.8em;
-  color: #000000;
-}
-
-.form-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.3);
+.header-controls {
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 1000;
+  gap: 2rem;
 }
 
-.event-form-popup {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  z-index: 1001;
-  max-width: 90%;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: inline-block;
-  width: 120px;
-  margin-right: 10px;
-  font-weight: bold;
-}
-
-.form-group input, .form-group select {
-  padding: 8px;
-  width: 200px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
-
-.form-buttons {
-  margin-top: 20px;
+.control-group {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
-.form-buttons button {
-  padding: 8px 16px;
-  cursor: pointer;
-  border: none;
-  border-radius: 3px;
+/* Tabellen Styling */
+.calendar-container {
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.form-buttons button[type="submit"] {
-  background-color: #4CAF50;
-  color: white;
+.table-card {
+  background: var(--bg-card);
+  border-radius: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+  overflow: hidden;
 }
 
-.form-buttons button[type="button"] {
-  background-color: #f44336;
-  color: white;
+.timetable-grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-.delete-button {
-  background-color: #f44336;
-  color: white;
+.day-col-header {
+  padding: 1.25rem;
+  background: #fcfcfd;
+  border-bottom: 2px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
 }
 
-.new-module-container {
-  margin-top: 10px;
-  display: flex;
-  gap: 5px;
-}
-
-.new-module-container input {
+.time-col-header {
   width: 80px;
-  padding: 5px;
+  background: #fcfcfd;
+  border-bottom: 2px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
 }
 
-.day-separator {
-  height: 10px;
-  background-color: #f0f0f0;
+.time-label {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid var(--border-color);
+  background: #f8fafc;
 }
+
+/* Zellen und Karten */
+.timetable-cell {
+  height: 90px;
+  position: relative;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.timetable-cell:hover {
+  background-color: #f0f7ff;
+}
+
+.cell-content-wrapper {
+  position: absolute;
+  inset: 2px;
+  display: flex;
+  gap: 2px;
+  z-index: 10;
+}
+
+.lecture-card {
+  flex: 1;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  overflow: hidden;
+  border-left: 4px solid #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.lecture-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 20;
+}
+
+.card-title {
+  display: block;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* Kategoriefarben */
+.type-vorlesung { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+.type-uebung { background: #fffbeb; border-color: #f59e0b; color: #92400e; }
+.type-praktikum { background: #f0fdf4; border-color: #22c55e; color: #166534; }
+.type-seminar { background: #faf5ff; border-color: #a855f7; color: #6b21a8; }
+
+.cell-hover-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.timetable-cell:hover .cell-hover-hint {
+  opacity: 1;
+}
+
+/* Modal Styling */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 2rem;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 { font-size: 1.25rem; font-weight: 800; margin: 0; }
+
+.close-btn {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  padding-left: 0.25rem;
+}
+
+.input-group input, .input-group select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #f1f5f9;
+  border: 2px solid transparent;
+  border-radius: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.input-group input:focus {
+  background: white;
+  border-color: var(--primary);
+  outline: none;
+}
+
+.input-row {
+  display: grid;
+  grid-template-cols: 1fr 1fr;
+  gap: 1rem;
+}
+
+.block-picker, .type-picker {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.block-picker button, .type-picker button {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  background: white;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.block-picker button.active, .type-picker button.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-primary, .btn-save {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-save { flex: 1; padding: 1rem; }
+
+.btn-delete {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary:hover { background: var(--primary-hover); }

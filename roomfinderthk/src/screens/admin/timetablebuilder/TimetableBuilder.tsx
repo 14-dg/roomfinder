@@ -1,497 +1,282 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import './timetablebuilderNew.css';
 import { useData } from '@/contexts/DataContext';
-import { RoomWithStatus, Lecturer, Module, Lecture, LectureType } from '@/models';
+import { RoomWithStatus, Lecture, LectureType, Lecturer } from '@/models';
 
-interface TimetableBuilderProps {
-  courseOfStudy: string;
-  semester: string;
-  year: number;
-}
+// Import des externen Stylesheets
+import './timetablebuilder.css';
 
-// Zeit-Slots für das Raster
-const timeSlots = [
-  '08:00', '08:50', '09:45', '10:35', '11:30', '12:20', '13:15', '14:05',
-  '15:00', '15:50', '16:45', '17:35', '18:30', '19:20'
-];
+/**
+ * Hilfsklasse für die Zeitberechnungen (Sekretariats-Logik: Blöcke statt Minuten)
+ */
+const TimeUtils = {
+  slots: ['08:00', '08:50', '09:45', '10:35', '11:30', '12:20', '13:15', '14:05', '15:00', '15:50', '16:45', '17:35', '18:30', '19:20', '20:15'],
+  
+  calculateEndTime: (start: string, blocks: number): string => {
+    const startIndex = TimeUtils.slots.indexOf(start);
+    if (startIndex === -1) return TimeUtils.slots[1];
+    const endIndex = Math.min(startIndex + blocks, TimeUtils.slots.length - 1);
+    return TimeUtils.slots[endIndex];
+  },
 
-// Für Dropdowns (Startzeiten)
-const dayTimes = [
-  '08:00', '08:50', '09:45', '10:35', '11:30', '12:20', '13:15', '14:05',
-  '15:00', '15:50', '16:45', '17:35', '18:30', '19:20', '20:15'
-];
+  calculateDuration: (start: string, end: string): number => {
+    const sIdx = TimeUtils.slots.indexOf(start);
+    const eIdx = TimeUtils.slots.indexOf(end);
+    return sIdx === -1 || eIdx === -1 ? 1 : Math.max(1, eIdx - sIdx);
+  },
 
-const initialDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-
-// Temporäres Interface für das Formular (nur UI, keine DB!)
-interface UIEventFormData {
-  id?: string;
-  day: string;
-  startTime: string;
-  endTime: string;
-  name: string;
-  typeOf: string;
-  duration: number;
-  lecturerId: string;
-  roomId: string;
-}
-
-interface EventFormProps {
-  formData: UIEventFormData;
-  setFormData: React.Dispatch<React.SetStateAction<UIEventFormData>>;
-  onSubmit: () => void;
-  onCancel: () => void;
-  onDelete?: () => void;
-  isEditing: boolean;
-  includeSaturday: boolean;
-  lecturers: any[];
-  rooms: RoomWithStatus[];
-  modules: Module[];
-}
-
-const EventForm = ({ formData, setFormData, onSubmit, onCancel, onDelete, isEditing, includeSaturday, lecturers, rooms }: EventFormProps) => {
-  const availableDays = includeSaturday
-    ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-
-  const getAvailableEndTimes = () => {
-    if (!formData.startTime) return [];
-    const startIndex = dayTimes.indexOf(formData.startTime);
-    return dayTimes.slice(startIndex + 1);
-  };
-
-  const getAvailableDurations = () => {
-    if (!formData.startTime) return [];
-    const startIndex = dayTimes.indexOf(formData.startTime);
-    const maxDuration = timeSlots.length - startIndex;
-    return Array.from({ length: maxDuration }, (_, i) => i + 1);
-  };
-
-  const calculateEndTime = (duration: number) => {
-    if (!formData.startTime) return '';
-    const startIndex = dayTimes.indexOf(formData.startTime);
-    const endIndex = startIndex + duration;
-    return endIndex < dayTimes.length ? dayTimes[endIndex] : dayTimes[dayTimes.length - 1];
-  };
-
-  const calculateDuration = (endTime: string) => {
-    if (!formData.startTime) return 1;
-    const startIndex = dayTimes.indexOf(formData.startTime);
-    const endIndex = dayTimes.indexOf(endTime);
-    return endIndex >= startIndex ? (endIndex - startIndex) : 1;
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const duration = parseInt(e.target.value);
-    const endTime = calculateEndTime(duration);
-    setFormData(prev => ({ ...prev, duration, endTime }));
-  };
-
-  const handleEndTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const endTime = e.target.value;
-    const duration = calculateDuration(endTime);
-    setFormData(prev => ({ ...prev, endTime, duration }));
-  };
-
-  return (
-    <div className="event-form-popup">
-      <h4>{isEditing ? 'Veranstaltung bearbeiten' : 'Neue Veranstaltung'}</h4>
-      <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
-        
-        <div className="form-group">
-          <label>Tag:</label>
-          <select name="day" value={formData.day} onChange={handleChange} required>
-            <option value="">Bitte wählen</option>
-            {availableDays.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Startzeit:</label>
-          <select name="startTime" value={formData.startTime} onChange={handleChange} required>
-             {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Dauer (Blöcke):</label>
-          <select name="duration" value={formData.duration} onChange={handleDurationChange} required>
-             {getAvailableDurations().map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Endzeit:</label>
-          <select name="endTime" value={formData.endTime} onChange={handleEndTimeChange} required>
-             {getAvailableEndTimes().map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Typ:</label>
-          <select name="typeOf" value={formData.typeOf} onChange={handleChange} required>
-            <option value="">Bitte wählen</option>
-            {['Vorlesung', 'Uebung', 'Praktikum', 'Tutorium', 'Seminar'].map(t => (
-                <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Dozent:</label>
-          <select name="lecturerId" value={formData.lecturerId} onChange={handleChange} required>
-            <option value="">Bitte wählen</option>
-            {lecturers.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Raum:</label>
-          <select name="roomId" value={formData.roomId} onChange={handleChange} required>
-            <option value="">Bitte wählen</option>
-            {rooms.map(r => <option key={r.id} value={r.id}>{r.roomName}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Name der Veranstaltung:</label>
-          <input type="text" name="name" value={formData.name} onChange={handleChange} required />
-        </div>
-
-        <div className="form-buttons">
-          <button type="submit">{isEditing ? 'Speichern' : 'Hinzufügen'}</button>
-          <button type="button" onClick={onCancel}>Abbrechen</button>
-          {isEditing && onDelete && (
-            <button type="button" className="delete-button" onClick={onDelete}>Löschen</button>
-          )}
-        </div>
-      </form>
-    </div>
-  );
+  getGermanDay: (day: string) => {
+    const days: any = { Monday: 'Montag', Tuesday: 'Dienstag', Wednesday: 'Mittwoch', Thursday: 'Donnerstag', Friday: 'Freitag', Saturday: 'Samstag' };
+    return days[day] || day;
+  }
 };
 
-
-// -------------------------------------------------------------------------
-// Neue TimetableCell mit Multi-Event-Support
-// -------------------------------------------------------------------------
-const TimetableCell = ({
-  day,
-  timeSlot,
-  timeSlots,
-  lectures,
-  onClick,
-  rooms,
-  lecturers
-}: {
-  day: string;
-  timeSlot: string;
-  timeSlots: string[];
-  lectures: Lecture[];
-  onClick: (e: React.MouseEvent, lecture?: Lecture) => void;
-  rooms: RoomWithStatus[];
-  lecturers: any[];
-}) => {
-  
-  // 1. Suche ALLE Lectures, die in diesem Slot starten (nicht nur eine)
-  const slotLectures = lectures.filter(l => {
-    return l.day === day && l.startTime === timeSlot;
-  });
-
-  // 2. Prüfen, ob dieser Slot von einer laufenden Lecture verdeckt wird 
-  // (Nur für Border-Styling relevant, Rendering passiert absolut)
-  const isCoveredByLecture = lectures.some(l => {
-    if (l.day !== day) return false;
-    const startIdx = timeSlots.indexOf(l.startTime);
-    const endIdx = timeSlots.indexOf(l.endTime); 
-    const currentIdx = timeSlots.indexOf(timeSlot);
-    // Wir sind "covered", wenn wir zwischen Start und Ende liegen
-    return currentIdx > startIdx && currentIdx < endIdx;
-  });
-
-  // Styles
-  const getEventClass = (type: string) => {
-    switch(type?.toLowerCase()) {
-      case 'vorlesung': return 'event-lecture';
-      case 'uebung': return 'event-exercise';
-      case 'praktikum': return 'event-practical-course';
-      case 'tutorium': return 'event-tutorial';
-      case 'seminar': return 'event-seminar';
-      default: return 'event-other';
-    }
-  };
-
-  // Namensauflösung (sicher)
-  const getProfName = (prof: any) => {
-    if (!prof) return "";
-    if (typeof prof === 'object') return prof.name || "Unbekannt";
-    const found = lecturers.find(l => l.id === prof);
-    return found ? found.name : prof;
-  };
-
-  const getRoomName = (roomRef: any) => {
-    if (!roomRef) return "";
-    if (typeof roomRef === 'object') return roomRef.roomName || roomRef.name || "Unbekannt";
-    const found = rooms.find(r => r.id === roomRef);
-    return found ? found.roomName : roomRef;
-  };
-
-  const getDuration = (l: Lecture) => {
-      const startIdx = timeSlots.indexOf(l.startTime);
-      const endIdx = timeSlots.indexOf(l.endTime);
-      if (startIdx === -1 || endIdx === -1) return 1;
-      return endIdx - startIdx;
-  };
+/**
+ * Sub-Komponente für eine Tabellenzelle
+ */
+const TimetableCell: React.FC<any> = ({ day, slot, lectures, rooms, lecturers, onCellClick }) => {
+  const currentLectures = lectures.filter((l: any) => l.day === day && l.startTime === slot);
 
   return (
-    <td
-      className={`time-slot ${slotLectures.length > 0 ? 'occupied' : ''}`}
-      // Klick auf die Zelle selbst erstellt neuen Eintrag (undefined übergeben)
-      onClick={(e) => onClick(e, undefined)}
-      style={{
-        position: 'relative',
-        height: '60px',
-        // Border nur anzeigen, wenn wir nicht mitten in einem Block sind
-        border: isCoveredByLecture ? 'none' : '1px solid #ddd',
-        padding: 0,
-        verticalAlign: 'top'
-      }}
-    >
-      {/* Wir rendern JETZT alle Lectures, die hier starten */}
-      {slotLectures.map((lecture, index) => {
-        
-        // Dynamische Breite berechnen: 
-        // Wenn 2 Lectures da sind, hat jede 50% Breite.
-        const width = 100 / slotLectures.length;
-        const left = width * index;
+    <td className="timetable-cell" onClick={() => onCellClick(null, day, slot)}>
+      <div className="cell-content-wrapper">
+        {currentLectures.map((lec: any) => {
+          const duration = TimeUtils.calculateDuration(lec.startTime, lec.endTime);
+          const room = rooms.find((r: any) => r.id === lec.roomId)?.roomName || 'N.N.';
+          const prof = lecturers.find((p: any) => p.id === lec.professor)?.name || 'Dozent N.N.';
 
-        return (
-          <div
-            key={lecture.id || index}
-            className={`event-container ${getEventClass(lecture.type)}`}
-            // Klick auf das Event stoppen, damit nicht "Neu erstellen" ausgelöst wird
-            onClick={(e) => {
-              e.stopPropagation(); 
-              onClick(e, lecture);
-            }}
-            style={{
-              height: `${getDuration(lecture) * 60 - 2}px`, // -2px für kleinen Gap
-              position: 'absolute',
-              top: 0, 
-              // Nebeneinander anordnen
-              left: `${left}%`, 
-              width: `${width}%`,
-              zIndex: 10 + index, // Damit sie sich sauber überlagern falls nötig
-              borderLeft: index > 0 ? '1px solid white' : 'none', // Trennlinie
-              overflow: 'hidden'
-            }}
-            title={`${lecture.name} (${getProfName(lecture.professor)})`}
-          >
-            <div className="event-info p-1">
-              <div className="event-name text-xs font-bold truncate leading-tight">
-                {lecture.name}
-              </div>
-              <div className="event-details text-[10px] truncate opacity-90">
-                {getRoomName(lecture.roomId)}
+          return (
+            <div
+              key={lec.id}
+              onClick={(e) => { e.stopPropagation(); onCellClick(lec); }}
+              className={`lecture-card type-${lec.type.toLowerCase()}`}
+              style={{ height: `calc(${duration * 100}% + ${(duration - 1) * 2}px)` }}
+            >
+              <div className="card-inner">
+                <span className="card-title">{lec.name}</span>
+                <div className="card-meta">
+                  <span className="meta-item">📍 {room}</span>
+                  {duration > 1 && <span className="meta-item">👤 {prof}</span>}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+      <div className="cell-hover-hint">Hinzufügen +</div>
     </td>
   );
 };
 
+export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year }) => {
+  const { classes, rooms, lecturers, addLecture, removeLecture } = useData();
+  
+  // UI States
+  const [showSat, setShowSat] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeLecture, setActiveLecture] = useState<Lecture | null>(null);
 
-const TimetableBuilder: React.FC<TimetableBuilderProps> = ({ courseOfStudy, semester, year }) => {
-  const [includeSaturday, setIncludeSaturday] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingLecture, setEditingLecture] = useState<Lecture | null>(null);
+  // Formular State
+  const [form, setForm] = useState({
+    name: '', day: 'Monday', start: '08:00', duration: 1, type: 'Vorlesung' as LectureType, room: '', prof: ''
+  });
 
-  // WICHTIG: Wir holen NUR noch classes (Lectures). Keine Timetables/Events mehr.
-  const { classes, rooms, lecturers, modules, addLecture, removeLecture } = useData();
+  const days = showSat ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const timeSlots = TimeUtils.slots.slice(0, -1); // Letzten Slot nicht als Startzeit anbieten
 
-  const initialFormData: UIEventFormData = {
-    day: '',
-    startTime: '08:00',
-    endTime: '08:50',
-    name: '',
-    typeOf: '',
-    duration: 1,
-    lecturerId: '',
-    roomId: ''
-  };
-
-  const [formData, setFormData] = useState<UIEventFormData>(initialFormData);
-
-  // Filter: Wir zeigen nur Lectures an, die zum gewählten Semester/Jahr passen
-  // ACHTUNG: Da 'courseOfStudy' im Lecture Model fehlt, filtern wir hier nur nach Datum.
-  // Du müsstest das Lecture Model erweitern oder 'subject' dafür nutzen.
-  const currentSemesterLectures = useMemo(() => {
-    return classes.filter(lecture => {
-      if (!lecture.startDate) return true; // Fallback wenn kein Datum
-
-      // Datumsparser (DD.MM.YYYY)
-      const parseDate = (str: string) => {
-        const [d, m, y] = str.split('.');
-        return new Date(`${y}-${m}-${d}`);
-      };
-
-      try {
-          const start = parseDate(lecture.startDate);
-          // Check ob das Jahr passt (grobe Prüfung)
-          return start.getFullYear() === year;
-      } catch (e) {
-          return true; 
-      }
-    });
-  }, [classes, year, semester]); // courseOfStudy müsste hier auch rein, wenn im Model vorhanden
-
-
-  const handleCellClick = (e: React.MouseEvent, lecture?: Lecture) => {
-    if (lecture) {
-      // Editieren
-      setEditingLecture(lecture);
-      
-      // Zeit Slots berechnen für Dauer
-      const startIdx = dayTimes.indexOf(lecture.startTime);
-      const endIdx = dayTimes.indexOf(lecture.endTime);
-      const duration = (startIdx > -1 && endIdx > -1) ? endIdx - startIdx : 1;
-
-      setFormData({
-        id: lecture.id,
-        day: lecture.day,
-        startTime: lecture.startTime,
-        endTime: lecture.endTime,
-        name: lecture.name,
-        typeOf: lecture.type,
-        duration: duration,
-        lecturerId: lecture.professor, // Ist jetzt eine ID
-        roomId: lecture.roomId // Ist eine ID
+  const handleOpenEditor = (lec?: any, day?: string, slot?: string) => {
+    if (lec) {
+      setActiveLecture(lec);
+      setForm({
+        name: lec.name, day: lec.day, start: lec.startTime,
+        duration: TimeUtils.calculateDuration(lec.startTime, lec.endTime),
+        type: lec.type, room: lec.roomId, prof: lec.professor
       });
     } else {
-      // Neu erstellen (Daten aus Klickposition könnte man hier übernehmen, wenn man wollte)
-      setEditingLecture(null);
-      setFormData(initialFormData);
+      setActiveLecture(null);
+      setForm({
+        name: '', day: day || 'Monday', start: slot || '08:00', duration: 1, type: 'Vorlesung', room: '', prof: ''
+      });
     }
-    setShowForm(true);
+    setModalOpen(true);
   };
 
-  const handleFormSubmit = async () => {
-    // Validierung
-    if (!formData.day || !formData.startTime || !formData.name || !formData.lecturerId || !formData.roomId) {
-      alert('Bitte alle Felder ausfüllen');
+  const handleSave = async () => {
+    if (!form.name || !form.room || !form.prof) {
+      alert("Bitte füllen Sie Titel, Raum und Dozent aus.");
       return;
     }
 
-    // Wenn wir editieren: Altes löschen (einfachste Art des Updates bei Immutable Data)
-    // oder Update-Funktion nutzen, falls vorhanden.
-    if (editingLecture && editingLecture.id) {
-       await removeLecture(editingLecture.id);
-    }
-
-    // Neue Lecture erstellen
-    const newLecture: any = { // 'any' oder Omit<Lecture, 'id'>, damit TS nicht meckert
-      name: formData.name,
-      type: formData.typeOf as LectureType,
-      professor: formData.lecturerId, // ID speichern
-      roomId: formData.roomId,        // ID speichern
-      day: formData.day,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      // Semesterdaten setzen für Filterung
-      startDate: (semester === "Winter") ? `01.10.${year}` : `01.04.${year}`,
-      endDate: (semester === "Winter") ? `31.01.${year + 1}` : `31.07.${year}`,
-      subject: courseOfStudy // Wir "missbrauchen" Subject für den Studiengang, damit wir filtern können
-    };
-
-    await addLecture(newLecture);
-
-    setShowForm(false);
-    setFormData(initialFormData);
-  };
-
-  const handleDelete = async () => {
-    if (editingLecture && editingLecture.id) {
-      await removeLecture(editingLecture.id);
-      setShowForm(false);
-      setFormData(initialFormData);
+    setIsSaving(true);
+    try {
+      if (activeLecture) await removeLecture(activeLecture.id!);
+      
+      await addLecture({
+        name: form.name,
+        type: form.type,
+        professor: form.prof,
+        roomId: form.room,
+        day: form.day,
+        startTime: form.start,
+        endTime: TimeUtils.calculateEndTime(form.start, form.duration),
+        subject: courseOfStudy,
+        startDate: semester === 'Winter' ? `01.10.${year}` : `01.04.${year}`,
+        endDate: semester === 'Winter' ? `31.03.${year + 1}` : `30.09.${year}`
+      });
+      setModalOpen(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
-    <div className="timetable-builder">
-      <h3>Stundenplan: {courseOfStudy}, {semester} Semester, {year}</h3>
+    <div className="builder-screen">
+      {/* HEADER BEREICH */}
+      <header className="builder-header">
+        <div className="header-main">
+          <div className="course-icon">{courseOfStudy.charAt(0)}</div>
+          <div className="course-info">
+            <h1>{courseOfStudy}</h1>
+            <p>{semester}semester {year} / {year + 1}</p>
+          </div>
+        </div>
 
-      <div className="flex items-center gap-2 mb-4">
-        <Switch
-          id='include-saturday'
-          checked={includeSaturday}
-          onCheckedChange={setIncludeSaturday}
-        />
-        <Label htmlFor="include-saturday">Samstag anzeigen</Label>
-      </div>
+        <div className="header-controls">
+          <div className="control-group">
+            <Switch id="sat" checked={showSat} onCheckedChange={setShowSat} />
+            <Label htmlFor="sat">Samstag</Label>
+          </div>
+          <button className="btn-primary" onClick={() => handleOpenEditor()}>
+            + Neuer Eintrag
+          </button>
+        </div>
+      </header>
 
-      <div className="timetable-container">
-        <table className="timetable">
-          <thead>
-            <tr>
-              <th className='day-column'>Tag</th>
-              <th className='time-column'>Zeit</th>
-              {/* Spaltenüberschrift leer lassen oder entfernen */}
-              <th>Veranstaltungen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(includeSaturday ? [...initialDays, 'Saturday'] : initialDays).map((day: string) => (
-              <React.Fragment key={day}>
-                {timeSlots.map((timeSlot) => (
-                  <tr key={`${day}-${timeSlot}`}>
-                    <td className='day-column'>{day}</td>
-                    <td className='time-column'>{timeSlot}</td>
-                    
-                    {/* Zelle für den Inhalt */}
-                    <TimetableCell
-                        day={day}
-                        timeSlot={timeSlot}
-                        timeSlots={dayTimes} // Nutze dayTimes für Index-Suche (enthält alle Zeiten)
-                        lectures={currentSemesterLectures}
-                        onClick={handleCellClick}
-                        rooms={rooms}
-                        lecturers={lecturers}
-                      />
-                  </tr>
+      {/* KALENDER TABELLE */}
+      <main className="calendar-container">
+        <div className="table-card">
+          <table className="timetable-grid">
+            <thead>
+              <tr>
+                <th className="time-col-header">Zeit</th>
+                {days.map(d => (
+                  <th key={d} className="day-col-header">
+                    {TimeUtils.getGermanDay(d)}
+                  </th>
                 ))}
-                <tr className="day-separator">
-                   {/* Colspan anpassen */}
-                  <td colSpan={3}></td>
+              </tr>
+            </thead>
+            <tbody>
+              {timeSlots.map(slot => (
+                <tr key={slot}>
+                  <td className="time-label">{slot}</td>
+                  {days.map(day => (
+                    <TimetableCell
+                      key={`${day}-${slot}`}
+                      day={day}
+                      slot={slot}
+                      lectures={classes.filter((l: any) => l.subject === courseOfStudy)}
+                      rooms={rooms}
+                      lecturers={lecturers}
+                      onCellClick={handleOpenEditor}
+                    />
+                  ))}
                 </tr>
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </main>
 
-      {showForm && (
-        <div className="form-overlay">
-          <EventForm
-            formData={formData}
-            setFormData={setFormData}
-            onSubmit={handleFormSubmit}
-            onCancel={() => { setShowForm(false); setFormData(initialFormData); }}
-            onDelete={handleDelete}
-            isEditing={!!editingLecture}
-            includeSaturday={includeSaturday}
-            lecturers={lecturers}
-            rooms={rooms}
-            modules={modules}
-          />
+      {/* EINGABE-DIALOG (MODAL) */}
+      {modalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>{activeLecture ? 'Eintrag bearbeiten' : 'Termin planen'}</h2>
+              <button className="close-btn" onClick={() => setModalOpen(false)}>×</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="input-group full">
+                <label>Veranstaltungstitel</label>
+                <input 
+                  type="text" 
+                  value={form.name} 
+                  onChange={e => setForm({...form, name: e.target.value})}
+                  placeholder="z.B. Einführung in die BWL"
+                />
+              </div>
+
+              <div className="input-row">
+                <div className="input-group">
+                  <label>Tag</label>
+                  <select value={form.day} onChange={e => setForm({...form, day: e.target.value})}>
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(d => (
+                      <option key={d} value={d}>{TimeUtils.getGermanDay(d)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label>Dauer (Blöcke à 45 Min)</label>
+                  <div className="block-picker">
+                    {[1, 2, 3, 4].map(n => (
+                      <button 
+                        key={n}
+                        className={form.duration === n ? 'active' : ''}
+                        onClick={() => setForm({...form, duration: n})}
+                      >{n}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label>Typ</label>
+                <div className="type-picker">
+                  {['Vorlesung', 'Uebung', 'Praktikum', 'Seminar'].map(t => (
+                    <button 
+                      key={t}
+                      className={form.type === t ? 'active' : ''}
+                      onClick={() => setForm({...form, type: t as any})}
+                    >{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="input-row">
+                <div className="input-group">
+                  <label>Dozent/in</label>
+                  <select value={form.prof} onChange={e => setForm({...form, prof: e.target.value})}>
+                    <option value="">-- Wählen --</option>
+                    {lecturers.map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label>Raum</label>
+                  <select value={form.room} onChange={e => setForm({...form, room: e.target.value})}>
+                    <option value="">-- Wählen --</option>
+                    {rooms.map((r: any) => <option key={r.id} value={r.id}>{r.roomName}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              {activeLecture && (
+                <button className="btn-delete" onClick={async () => { if(confirm('Löschen?')) { await removeLecture(activeLecture.id!); setModalOpen(false); }}}>
+                  Löschen
+                </button>
+              )}
+              <button className="btn-save" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Speichert...' : 'Termin speichern'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
