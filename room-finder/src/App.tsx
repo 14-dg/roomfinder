@@ -4,7 +4,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { RoomListScreen } from './screens/room/RoomListScreen';
 import { AdminScreen } from './screens/admin/AdminScreen';
-import { RoomDetailScreen } from './screens/room/RoomDetailsScreen';
 import { FavouritesScreen } from './screens/favourites/FavouritesScreen';
 import { LecturerScreen } from './screens/lecturer/LecturerScreen';
 

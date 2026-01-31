@@ -13,7 +13,7 @@ export const navBarLinks: NavBarLink[] = [
         icon: Building2,
     },
     {
-        path: "/favourites",
+        path: "/favorites",
         name: "Favoriten",
         icon: Heart,
     },
