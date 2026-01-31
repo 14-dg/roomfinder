@@ -1,9 +1,7 @@
-import { AdminCampusScreen } from "./campus/AdminCampusScreen";
-
 export function AdminScreen() {
     return (
         <div>
-            <AdminCampusScreen />
+            adminscreen test
         </div>
     );
 }

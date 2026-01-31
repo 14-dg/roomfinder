@@ -1,3 +1,7 @@
 export function RoomListScreen() {
-    return ();
+    return (
+        <div>
+            Raum Liste
+        </div>
+    );
 }
