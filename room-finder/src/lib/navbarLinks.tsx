@@ -1,4 +1,4 @@
-import { Building2, ShieldCheck, Heart, type LucideIcon } from "lucide-react";
+import { Building2, ShieldCheck, Heart, BookOpenText, CircleUserRound, type LucideIcon } from "lucide-react";
 
 export type NavBarLink = {
     path: string;
@@ -8,17 +8,27 @@ export type NavBarLink = {
 
 export const navBarLinks: NavBarLink[] = [
     {
-        path: "/rooms",
+        path: "rooms",
         name: "Räume",
         icon: Building2,
     },
     {
-        path: "/favorites",
+        path: "favorites",
         name: "Favoriten",
         icon: Heart,
     },
     {
-        path: "/admin",
+        path: "lecturers",
+        name: "Dozenten",
+        icon: BookOpenText,
+    },
+    {
+        path: "profile",
+        name: "Profil",
+        icon: CircleUserRound,
+    },
+    {
+        path: "admin",
         name: "Admin",
         icon: ShieldCheck,
     }

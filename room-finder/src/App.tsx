@@ -6,6 +6,7 @@ import { RoomListScreen } from './screens/room/RoomListScreen';
 import { AdminScreen } from './screens/admin/AdminScreen';
 import { FavouritesScreen } from './screens/favourites/FavouritesScreen';
 import { LecturerScreen } from './screens/lecturer/LecturerScreen';
+import { ProfileScreen } from './screens/profile/ProfileScreen';
 
 function App() {
 
@@ -26,12 +27,12 @@ function App() {
 							<Route index element={<FavouritesScreen />} />
 						</Route>
 
-						<Route path="professor">
+						<Route path="lecturers">
 							<Route index element={<LecturerScreen />} />
 						</Route>
 
 						<Route path="profile">
-
+							<Route index element={<ProfileScreen />}/>
 						</Route>
 
 						<Route path="admin">
