@@ -1,6 +1,6 @@
 import { useCampuses, useCreateCampus, useDeleteCampus, useUpdateCampus } from "@/hooks/campuses";
 import type { Campus } from "@/types/models";
-import { AdminListElement } from "@/ui/components/AdminListElement";
+import { AdminListElement } from "@/components/AdminListElement";
 
 export function AdminCampusListScreen() {
 
