@@ -7,6 +7,7 @@ import { AdminScreen } from './screens/admin/AdminScreen';
 import { FavouritesScreen } from './screens/favourites/FavouritesScreen';
 import { LecturerScreen } from './screens/lecturer/LecturerScreen';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
+import { BookingScreen } from './screens/bookings/BookingScreen';
 
 function App() {
 
@@ -29,6 +30,10 @@ function App() {
 
 						<Route path="lecturers">
 							<Route index element={<LecturerScreen />} />
+						</Route>
+
+						<Route path="bookings">
+							<Route index element={<BookingScreen />} />
 						</Route>
 
 						<Route path="profile">
