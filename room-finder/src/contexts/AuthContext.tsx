@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { useUserProfile } from "@/hooks/auth/useUserProfile";
+import { useUserProfile } from "@/hooks/profiles/useUserProfile";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AppRole, Profile } from "@/types/models";
 import { profileKeys } from "@/lib/queryKeys";
