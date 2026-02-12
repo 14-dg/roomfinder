@@ -110,4 +110,4 @@ export type Profile = Row<"profiles">;
 export type NewProfile = Insert<"profiles">;
 export type UpdateProfile = Update<"profiles">;
 
-export type AppRole = Profile['role'] | 'guest';
+export type AppRole = Profile["role"] | "guest";
