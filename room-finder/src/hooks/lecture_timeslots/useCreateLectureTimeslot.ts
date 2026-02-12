@@ -1,4 +1,4 @@
-import { lectureTimeslotKeys } from "@/lib/queryKeys";
+import { lecture_timeslotKeys } from "@/lib/queryKeys";
 import { createLectureTimeslot } from "@/services/lectureTimeslotService";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -13,7 +13,7 @@ export const useCreateLectureTimeslot = () => {
  
             //invalidieren der Timeslots dieser einen Vorlesung
             queryClient.invalidateQueries({ 
-                queryKey: lectureTimeslotKeys.byLecture(variables.lecture_id) 
+                queryKey: lecture_timeslotKeys.byLecture(variables.lecture_id) 
             });
         },
 

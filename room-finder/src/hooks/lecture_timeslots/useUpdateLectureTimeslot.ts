@@ -1,4 +1,4 @@
-import { lectureTimeslotKeys } from "@/lib/queryKeys";
+import { lecture_timeslotKeys } from "@/lib/queryKeys";
 import { updateLectureTimeslot } from "@/services/lectureTimeslotService";
 import type { UpdateLectureTimeslot } from "@/types/models";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ export const useUpdateLectureTimeslot = () => {
         
         onSuccess: (_data, variables) => {
 
-            queryClient.invalidateQueries({ queryKey: lectureTimeslotKeys.all });
+            queryClient.invalidateQueries({ queryKey: lecture_timeslotKeys.all });
         },
 
         onError: (error) => console.error("Lecture Zeitslot Update fehlgeschlagen: ", error),
