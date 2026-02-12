@@ -28,27 +28,3 @@ export function BottomNavigationBar() {
         </nav>
     );
 }
-
-// {/* Räume */ }
-// <NavLink
-//     to="/rooms"
-//     className={({ isActive }) => `
-//                             flex flex-col items-center justify-center w-full h-full space-y-1
-//                             ${isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-900"}`
-//     }
-// >
-//     <Building2 size={24} strokeWidth={2} />
-//     <span className="text-xs font-medium">Räume</span>
-// </NavLink>
-
-// {/* Admin */ }
-// <NavLink
-//     to="/admin"
-//     className={({ isActive }) => `
-//               flex flex-col items-center justify-center w-full h-full space-y-1
-//               ${isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-900"}
-//             `}
-// >
-//     <ShieldCheck size={24} strokeWidth={2} />
-//     <span className="text-xs font-medium">Admin</span>
-// </NavLink>
