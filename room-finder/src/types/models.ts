@@ -103,3 +103,11 @@ export type LectureTimeslotDTO = LectureTimeslot & {
 export type Lecture = Row<"lectures">;
 export type NewLecture = Insert<"lectures">;
 export type UpdateLecture = Update<"lectures">;
+
+//AppRole
+
+export type Profile = Row<"profiles">;
+export type NewProfile = Insert<"profiles">;
+export type UpdateProfile = Update<"profiles">;
+
+export type AppRole = Profile['role'] | 'guest';

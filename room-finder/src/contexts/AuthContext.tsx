@@ -1,41 +1,71 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { AppStateUser } from '@/models';
-import { signInWithFirebase } from '@/services/auth.service';
+import React, { createContext, useEffect, useState } from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import { useUserProfile } from "@/hooks/auth/useUserProfile";
+import { useQueryClient } from "@tanstack/react-query";
+import type { AppRole, Profile } from "@/types/models";
+import { profileKeys } from "@/lib/queryKeys";
 
-interface AuthContextType {
-  user: AppStateUser;
-  login: (email: string, pass: string) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AppStateUser>(null);
-
-  const login = async (email: string, pass: string) => {
-    try {
-      // 1. Rufe den Service auf (Backend-Anfrage)
-      const userData = await signInWithFirebase(email, pass);
-      // 2. Speichere das Ergebnis im globalen State
-      setUser(userData as any); 
-    } catch (error) {
-      console.error("Login fehlgeschlagen", error);
-    }
-  };
-
-  const logout = () => setUser(null);
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+type AuthContextType = {
+	user: User | null;
+	session: Session | null;
+	profile: Profile | null;
+	role: AppRole;
+	isLoading: boolean;
+	isAuthenticated: boolean;
+	signOut: () => Promise<void>;
+};
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth muss innerhalb eines AuthProviders verwendet werden");
-  return context;
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+	const queryClient = useQueryClient();
+	const [session, setSession] = useState<Session | null>(null);
+	const [isSessionLoading, setIsSessionLoading] = useState(true);
+
+	// Der Hook liefert jetzt automatisch den korrekten 'Profile' Typ zurück
+	const { data: profile, isLoading: isProfileLoading } = useUserProfile(session?.user.id);
+
+	useEffect(() => {
+		supabase.auth.getSession().then(({ data: { session } }) => {
+			setSession(session);
+			setIsSessionLoading(false);
+		});
+
+		const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+			setSession(session);
+			setIsSessionLoading(false);
+			if (!session) {
+				queryClient.removeQueries({ queryKey: profileKeys.all });
+			}
+		});
+
+		return () => subscription.unsubscribe();
+	}, [queryClient]);
+
+	const signOut = async () => {
+		await supabase.auth.signOut();
+	};
+
+	const isLoading = isSessionLoading || (!!session && isProfileLoading);
+
+	// Wenn kein Profil da ist (oder Fehler) wird 'guest' verwendet
+	const role: AppRole = profile?.role ?? "guest";
+
+	return (
+		<AuthContext.Provider
+			value={{
+				user: session?.user ?? null,
+				session,
+				profile: profile ?? null,
+				role,
+				isLoading,
+				isAuthenticated: !!session,
+				signOut,
+			}}
+		>
+			{children}
+		</AuthContext.Provider>
+	);
 };

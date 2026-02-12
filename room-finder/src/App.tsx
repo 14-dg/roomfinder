@@ -8,44 +8,47 @@ import { FavouritesScreen } from './screens/favourites/FavouritesScreen';
 import { LecturerScreen } from './screens/lecturer/LecturerScreen';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
 import { BookingScreen } from './screens/bookings/BookingScreen';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
 
 	const queryClient = new QueryClient();
 	return (
 		<QueryClientProvider client={queryClient}>
-			<BrowserRouter>
-				<Routes>
-					<Route path="/" element={<Layout />}>
-						<Route index element={<Navigate to="/rooms" replace />} />
-					
-						<Route path="rooms">
-							<Route index element={<RoomListScreen />} />
-							{/* <Route path="/:roomId" element={<RoomDetailScreen/>} /> */}
-						</Route>
+			<AuthProvider>
+				<BrowserRouter>
+					<Routes>
+						<Route path="/" element={<Layout />}>
+							<Route index element={<Navigate to="/rooms" replace />} />
 
-						<Route path="favorites">
-							<Route index element={<FavouritesScreen />} />
-						</Route>
+							<Route path="rooms">
+								<Route index element={<RoomListScreen />} />
+								{/* <Route path="/:roomId" element={<RoomDetailScreen/>} /> */}
+							</Route>
 
-						<Route path="lecturers">
-							<Route index element={<LecturerScreen />} />
-						</Route>
+							<Route path="favorites">
+								<Route index element={<FavouritesScreen />} />
+							</Route>
 
-						<Route path="bookings">
-							<Route index element={<BookingScreen />} />
-						</Route>
+							<Route path="lecturers">
+								<Route index element={<LecturerScreen />} />
+							</Route>
 
-						<Route path="profile">
-							<Route index element={<ProfileScreen />}/>
-						</Route>
+							<Route path="bookings">
+								<Route index element={<BookingScreen />} />
+							</Route>
 
-						<Route path="admin">
-							<Route index element={<AdminScreen />} />
+							<Route path="profile">
+								<Route index element={<ProfileScreen />} />
+							</Route>
+
+							<Route path="admin">
+								<Route index element={<AdminScreen />} />
+							</Route>
 						</Route>
-					</Route>
-				</Routes>
-			</BrowserRouter>
+					</Routes>
+				</BrowserRouter>
+			</AuthProvider>
 		</QueryClientProvider>
 	);
 }
