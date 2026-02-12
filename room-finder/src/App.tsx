@@ -10,7 +10,7 @@ import { ProfileScreen } from "./screens/profile/ProfileScreen";
 import { BookingScreen } from "./screens/bookings/BookingScreen";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { LoginScreen } from "./screens/login/LoginScreen";
+import { AuthScreen } from "./screens/login/AuthScreen";
 
 const queryClient = new QueryClient();
 
@@ -21,12 +21,13 @@ function App() {
 			<AuthProvider>
 				<BrowserRouter>
 					<Routes>
-						
-						<Route path="/login" element={<LoginScreen />} />
 
 						<Route path="/" element={<Layout />}>
 
+							{/*Standardmäßig Rooms screen anzeigen*/}
 							<Route index element={<Navigate to="/rooms" replace />} />
+
+							<Route path="/login" element={<AuthScreen />} />
 
 							<Route element={<ProtectedRoute allowedRoles={["guest", "student", "lecturer", "admin"]} />}>
 								<Route path="rooms" element={<RoomListScreen />} />
