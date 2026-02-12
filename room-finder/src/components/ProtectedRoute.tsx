@@ -1,34 +1,44 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-
-type AppRole = 'admin' | 'lecturer' | 'student' | 'guest';
+import { useEffect } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
+import type { AppRole } from "@/types/models";
 
 type Props = {
-  allowedRoles?: AppRole[];
+	allowedRoles: AppRole[];
+};
+
+const GoBack = () => {
+	const navigate = useNavigate();
+
+	useEffect(() => {
+
+		if (window.history.length > 1) {
+			navigate(-1);
+		} else {
+			navigate("/", { replace: true });
+		}
+	}, [navigate]);
+
+	return null;
 };
 
 export const ProtectedRoute = ({ allowedRoles }: Props) => {
-  const { role, isLoading, session } = useAuth();
+	const { role, isLoading } = useAuth();
 
-  if (isLoading) {
-    return <div className="p-10">Lade Benutzerrechte...</div>;
-  }
+	//lade anzeige
+	if (isLoading) {
+		return <div className="h-screen w-full flex items-center justify-center">Laden...</div>;
+	}
 
-  // 1. Ist der User überhaupt eingeloggt?
-  // Wenn nein -> Ab zum Login
-  if (!session && !allowedRoles?.includes('guest')) {
-    return <Navigate to="/login" replace />;
-  }
+	/*
+	unzureichende berechtigungen
+	man bleibt wo man ist, oder geht auf "/",
+	falls es ein neuer tab ist in dem direkt di url zur seite aufgerufen hat
+	*/
+	if (!allowedRoles.includes(role)) {
+		return <GoBack />;
+	}
 
-  // 2. Hat der User die richtige Rolle?
-  // Wenn allowedRoles leer ist, lassen wir jeden rein, der eingeloggt ist.
-  // Wenn Rollen definiert sind, prüfen wir sie.
-  if (allowedRoles && !allowedRoles.includes(role)) {
-    // User ist eingeloggt, hat aber keine Rechte -> "Forbidden" oder Home
-    return <div className="p-8 text-red-600">Zugriff verweigert. Du bist ein {role}.</div>;
-    // Alternativ: return <Navigate to="/" replace />;
-  }
-
-  // Alles gut -> Zeige den Inhalt
-  return <Outlet />;
+	// Zeige inhalt an
+	return <Outlet />;
 };
