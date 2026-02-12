@@ -1,13 +1,22 @@
 import { NavLink } from "react-router-dom";
 import { navBarLinks } from "@/lib/navbarLinks";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 export function BottomNavigationBar() {
 
+    const { role: userRole} = useAuth();
+
+    const visibleNavBarLinks = navBarLinks.filter((link) => {
+        link.allowedRoles.includes(userRole);
+    });
+
+    if(visibleNavBarLinks.length === 0) return null;
+    
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-16 z-50 shadow-[0_-1px_10px_rgba(0,0,0,0.05)]">
             <div className="flex justify-around items-center h-full max-w-lg mx-auto">
 
-                {navBarLinks.map((link) => {
+                {visibleNavBarLinks.map((link) => {
                     const IconComponent = link.icon;
 
                     return (
