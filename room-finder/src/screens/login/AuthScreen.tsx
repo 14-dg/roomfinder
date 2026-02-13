@@ -24,8 +24,6 @@ export const AuthScreen = () => {
     // Wenn er direkt auf /login gegangen ist, ist das Ziel "/"
     const from = location.state?.from?.pathname || "/";
 
-
-
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
