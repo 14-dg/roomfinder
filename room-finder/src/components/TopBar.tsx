@@ -39,9 +39,9 @@ export function TopBar() {
             </div>
 
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <h1 className="text-lg font-bold text-gray-900 truncate px-12">
+                <h2 className="text-lg font-bold text-gray-900 truncate px-12">
                     {currentTitle}
-                </h1>
+                </h2>
             </div>
 
         </header>
