@@ -23,7 +23,7 @@ export function ProfileScreen() {
     );
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center animate-in fade-in duration-500">
+        <div className="flex flex-col items-center justify-center px-6 text-center animate-in fade-in duration-500">
             <div className="bg-blue-50 p-6 rounded-full mb-6">
                 <LogIn size={48} className="text-blue-600" />
             </div>
@@ -34,7 +34,7 @@ export function ProfileScreen() {
                 {"Melde dich an, um deinen persönlichen Stundenplan zu verwenden und Räume als Favoriten zu speichern."}
             </p>
             <button
-                className="w-full max-w-sm bg-orange-600 text-white py-3.5 rounded-xl font-semibold shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all"
+                className="w-full max-w-sm bg-gradient-to-br from-orange-600 to-orange-500 text-white py-3.5 rounded-xl font-semibold shadow-lg shadow-blue-200 hover:from-orange-500 hover:to-orange-400 active:scale-95 transition-all"
                 onClick={handleToLogin}
             >
                 {"zum Login"}

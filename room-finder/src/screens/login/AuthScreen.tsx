@@ -14,7 +14,7 @@ export const AuthScreen = () => {
     const [shownScreen, setShownScreen] = useState<AuthScreenType>("login");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [useWrongCredentials, setUseWrongCredentials] = useState<boolean>(false);
+    const [usedWrongCredentials, setUsedWrongCredentials] = useState<boolean>(false);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -76,7 +76,7 @@ export const AuthScreen = () => {
 
             if (errorMSG === "Invalid login credentials") {
                 errorMSG = "Falsche E-Mail oder Passwort.";
-                setUseWrongCredentials(true);
+                setUsedWrongCredentials(true);
             }
             if (errorMSG.includes("already registered")) errorMSG = "Diese E-Mail ist bereits registriert.";
             if (errorMSG.includes("Password should contain at least one character of each")) errorMSG = "Das Passwort muss große und kleine Buchstaben, sowie mind. eine Zahl und mind. ein Sonderzeichen haben!"
@@ -91,108 +91,109 @@ export const AuthScreen = () => {
 
 
     return (
-        <div>
+        <div className="min-h-full flex bg-gray-50 justify-center items-center shadow-">
+            <div className="bg-white">
+                {/* Header */}
+                <div className="items-center">
+                    {
+                        (shownScreen === "login") ? (
+                            <>
+                                <LogIn />
+                                <p>
+                                    {"Willkommen!"}
+                                </p>
+                                <p>
+                                    {"Einloggen um fortzufahren"}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <UserPlus />
+                                <p>
+                                    {"Konto Erstellen"}
+                                </p>
+                            </>
+                        )
+                    }
+                </div>
 
-            {/* Header */}
-            <div>
+                {/* Fehler */}
                 {
-                    (shownScreen === "login") ? (
-                        <>
-                            <LogIn />
-                            <p>
-                                {"Willkommen!"}
-                            </p>
-                            <p>
-                                {"Einloggen um fortzufahren"}
-                            </p>
-                        </>
-                    ) : (
-                        <>
-                            <UserPlus />
-                            <p>
-                                {"Konto Erstellen"}
-                            </p>
-                        </>
+                    errorMessage && (
+                        <div>
+                            <AlertCircle />
+                            {errorMessage}
+                        </div>
                     )
                 }
-            </div>
 
-            {/* Fehler */}
-            {
-                errorMessage && (
-                    <div>
-                        <AlertCircle />
-                        {errorMessage}
-                    </div>
-                )
-            }
+                {/* Bestätigung */}
+                {
+                    successMessage && (
+                        <div>
+                            <CheckCircle />
+                            {successMessage}
+                        </div>
+                    )
+                }
 
-            {/* Bestätigung */}
-            {
-                successMessage && (
-                    <div>
-                        <CheckCircle />
-                        {successMessage}
-                    </div>
-                )
-            }
+                {/* Eingabe */}
+                <div>
+                    <form onSubmit={handleAuth}>
+                        <div>
+                            <label>{"E-Mail Adresse:"}</label>
+                            <input
+                                type="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="max_zweitname.mustermann@smail.th-koeln.de"
+                            />
+                        </div>
+                        <div>
+                            <label> {"Passwort:"}</label>
+                            <input
+                                type="password"
+                                required
+                                minLength={10}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="min. 10 Zeichen"
+                            />
+                        </div>
+                        <div>
+                            <button
+                                type="submit"
+                            >
+                                {
+                                    isLoading ? "Laden..." : (shownScreen === "login" ? "Anmelden" : "Registrieren")
+                                }
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-            {/* Eingabe */}
-            <div>
-                <form onSubmit={handleAuth}>
-                    <div>
-                        <label>{"E-Mail Adresse:"}</label>
-                        <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="max_zweitname.mustermann@smail.th-koeln.de"
-                        />
-                    </div>
-                    <div>
-                        <label> {"Passwort:"}</label>
-                        <input
-                            type="password"
-                            required
-                            minLength={10}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="min. 10 Zeichen"
-                        />
-                    </div>
-                    <div>
+                {/* Passwort vergessen */}
+                {usedWrongCredentials ??
+                    (
+                        <div>
+
+                        </div>
+                    )
+                }
+
+                {/* der button, um zwischen login und registrierung zu wechseln */}
+                <div>
+                    <p>
+                        {shownScreen === "login" ? "Noch kein Konto? " : "Bereits registriert? "}
+
                         <button
-                            type="submit"
+                            onClick={() => shownScreen === "login" ? setShownScreen("register") : setShownScreen("login")}
                         >
-                            {
-                                isLoading ? "Laden..." : (shownScreen === "login" ? "Anmelden" : "Registrieren")
-                            }
+                            {shownScreen === "login" ? "Hier registrieren!" : "Hier anmelden!"}
                         </button>
-                    </div>
-                </form>
-            </div>
-
-            {/* Passwort vergessen */}
-            {useWrongCredentials ??
-                (
-                    <div>
-
-                    </div>
-                )
-            }
-
-            {/* der button, um zwischen login und registrierung zu wechseln */}
-            <div>
-                <p>
-                    {shownScreen === "login" ? "Noch kein Konto? " : "Bereits registriert? "}
-
-                    <button
-                        onClick={() => shownScreen === "login" ? setShownScreen("register") : setShownScreen("login")}
-                    >
-                        {shownScreen === "login" ? "Hier registrieren!" : "Hier anmelden!"}
-                    </button>
-                </p>
+                    </p>
+                </div>
             </div>
         </div>
     );

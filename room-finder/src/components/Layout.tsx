@@ -4,11 +4,11 @@ import { TopBar } from "./TopBar";
 
 export function Layout() {
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
+        <div className="h-screen w-full bg-gray-50 text-gray-900 font-sans">
             {/* Die obere Leiste */}
             <TopBar />
 
-            <main className="pt-16 pb-20 container mx-auto max-w-md">
+            <main className="h-full overflow-y-auto py-16 container mx-auto max-w-screen">
                 <Outlet />
             </main>
 
