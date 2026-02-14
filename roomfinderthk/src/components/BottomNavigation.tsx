@@ -4,12 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 
+/**
+ * BottomNavigation component provides the main navigation menu for the app.
+ * Displays different nav items based on user role and current route.
+ * Shows badge count for favorites and conditional items for professors/admins.
+ */
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const { favorites } = useFavorites();
 
+  /**
+   * Checks if the current route matches the given path.
+   * @param path - Route path to check
+   * @returns true if current location starts with the given path
+   */
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
@@ -75,14 +85,26 @@ const BottomNavigation = () => {
   );
 };
 
+/**
+ * Props for the NavItem component
+ */
 interface NavItemProps {
+  /** Label text displayed below the icon */
   label: string;
+  /** Icon element to display */
   icon: React.ReactNode;
+  /** Whether this nav item is currently active */
   active: boolean;
+  /** Callback when the nav item is clicked */
   onClick: () => void;
+  /** Optional badge number to display (e.g., favorites count) */
   badge?: number;
 }
 
+/**
+ * NavItem component represents a single navigation button.
+ * Shows active state styling and optional badge notification.
+ */
 const NavItem = ({ label, icon, active, onClick, badge }: NavItemProps) => {
   return (
     <button

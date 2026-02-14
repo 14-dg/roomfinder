@@ -34,13 +34,25 @@ import User from "@/models/User";
 // AUTHENTICATION SERVICES
 // ============================================================================
 
-
+/**
+ * Registers a new user with email and password.
+ * Creates user in Firebase Auth and stores profile in Firestore.
+ * Logs the user in immediately after registration.
+ * 
+ * @param email - User's email address
+ * @param password - User's password
+ * @param name - User's display name
+ * @param role - User's role (student, professor, or admin)
+ * @param additionalData - Optional extra data (e.g., department for professors)
+ * @returns Created User object with ID
+ * @throws Error if registration fails
+ */
 export async function registerUser(
   email: string,
   password: string,
   name: string,
   role: 'student' | 'professor' | 'admin',
-  additionalData: any = {} // Ermöglicht das Mitgeben von Prof-Daten
+  additionalData: any = {} // Allows passing professor-specific data
 ): Promise<User> {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -53,7 +65,7 @@ export async function registerUser(
       favourites: [],
       timetable: [],
       createdAt: serverTimestamp(),
-      ...additionalData, // Hier landen department, officeHours, etc.
+      ...additionalData, // Additional fields like department, officeHours get added here
     };
 
     await setDoc(doc(db, 'users', uid), userProfile);
@@ -68,6 +80,19 @@ export async function registerUser(
   }
 }
 
+/**
+ * Registers a user without logging them in.
+ * Creates a temporary Firebase app instance to avoid affecting current auth state.
+ * Useful for admin registering professors without losing current session.
+ * 
+ * @param email - User's email address
+ * @param password - User's password
+ * @param name - User's display name
+ * @param role - User's role
+ * @param additionalData - Optional extra data for the user
+ * @returns Created User object
+ * @throws Error if registration fails
+ */
 async function registerUserWithoutLogin(
   email: string,
   password: string,
@@ -105,12 +130,20 @@ async function registerUserWithoutLogin(
   }
 }
 
-
+/**
+ * Authenticates a user with email and password.
+ * Fetches user profile from Firestore after successful authentication.
+ * 
+ * @param email - User's email address
+ * @param password - User's password
+ * @returns User object with profile information
+ * @throws Error if credentials are invalid or profile not found
+ */
 export async function loginUser(
   email: string,
   password: string
 ): Promise<User> {
-  // 1. Firebase Authentication
+  // Authenticate with Firebase Auth
   const userCredential = await signInWithEmailAndPassword(
     auth,
     email,
@@ -119,7 +152,7 @@ export async function loginUser(
 
   const uid = userCredential.user.uid;
 
-  // 2. User-Profil aus Firestore laden
+  // Fetch user profile from Firestore
   const userSnap = await getDoc(doc(db, 'users', uid));
 
   if (!userSnap.exists()) {
@@ -138,6 +171,9 @@ export async function loginUser(
   };
 }
 
+/**
+ * Logs out the current user from Firebase Authentication.
+ */
 export async function logoutUser(): Promise<void> {
   await signOut(auth);
 }
@@ -146,6 +182,11 @@ export async function logoutUser(): Promise<void> {
 // ROOM SERVICES
 // ============================================================================
 
+/**
+ * Fetches all rooms from Firestore.
+ * 
+ * @returns Array of all RoomWithStatus objects
+ */
 export async function getRooms(): Promise<RoomWithStatus[]> {
   const snapshot = await getDocs(collection(db, "rooms"));
   return snapshot.docs.map(docSnap => ({
@@ -154,23 +195,48 @@ export async function getRooms(): Promise<RoomWithStatus[]> {
   }));
 }
 
+/**
+ * Fetches a specific room by ID.
+ * 
+ * @param roomId - ID of the room to fetch
+ * @returns RoomWithStatus object or null if not found
+ */
 export async function getRoom(roomId: string): Promise<RoomWithStatus | null> {
   const docSnap = await getDoc(doc(db, "rooms", roomId));
   return docSnap.exists() ? { id: docSnap.id, ...(docSnap.data() as Omit<RoomWithStatus, "id">) } : null;
 }
 
+/**
+ * Creates a new room in Firestore.
+ * 
+ * @param room - Room data without ID
+ * @returns Created room with generated ID
+ */
 export async function addRoom(room: Omit<RoomWithStatus, "id">): Promise<RoomWithStatus> {
   const docRef = await addDoc(collection(db, "rooms"), room);
   return { id: docRef.id, ...room };
 }
 
+/**
+ * Updates a room's properties in Firestore.
+ * 
+ * @param roomId - ID of the room to update
+ * @param updates - Partial room object with fields to update
+ */
 export async function updateRoom(roomId: string, updates: Partial<RoomWithStatus>): Promise<void> {
   await updateDoc(doc(db, "rooms", roomId), updates);
 }
 
+/**
+ * Deletes a room and all associated lectures, bookings, and check-ins.
+ * Performs cascading delete to maintain data integrity.
+ * 
+ * @param roomId - ID of the room to delete
+ * @throws Error if deletion fails
+ */
 export async function deleteRoom(roomId: string): Promise<void> {
   try {
-    // Queries für alle verknüpften Dokumente
+    // Find all related documents
     const lectureQ = query(collection(db, "lectures"), where("roomId", "==", roomId));
     const bookingQ = query(collection(db, "bookings"), where("roomId", "==", roomId));
     const checkinQ = query(collection(db, "checkins"), where("roomId", "==", roomId));
@@ -179,6 +245,7 @@ export async function deleteRoom(roomId: string): Promise<void> {
       getDocs(lectureQ), getDocs(bookingQ), getDocs(checkinQ)
     ]);
 
+    // Delete room and all related documents in parallel
     const deletePromises = [
       deleteDoc(doc(db, "rooms", roomId)),
       ...lectures.docs.map(d => deleteDoc(d.ref)),
@@ -187,9 +254,9 @@ export async function deleteRoom(roomId: string): Promise<void> {
     ];
 
     await Promise.all(deletePromises);
-    console.log(`Raum ${roomId} und alle Abhängigkeiten wurden bereinigt.`);
+    console.log(`Room ${roomId} and all related data have been deleted.`);
   } catch (error) {
-    console.error("Fehler beim Löschen des Raums:", error);
+    console.error("Error deleting room:", error);
     throw error;
   }
 }

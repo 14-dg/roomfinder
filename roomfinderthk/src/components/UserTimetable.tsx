@@ -8,6 +8,11 @@ import { toast } from 'sonner';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
+/**
+ * UserTimetable component displays the current user's enrolled courses/classes.
+ * Shows classes organized by day with times, locations, and instructors.
+ * Allows users to remove classes from their timetable.
+ */
 export function UserTimetable() {
   const { rooms, lecturers, getUserClasses, removeEventFromUserTimetable } = useData();
   const { user } = useAuth();
@@ -16,6 +21,10 @@ export function UserTimetable() {
 
   const userClasses = getUserClasses(user.id);
 
+  /**
+   * Removes a class from the user's timetable after confirmation.
+   * @param classId - ID of the class to remove
+   */
   const handleRemoveClass = async (classId: string) => {
     if (confirm('Remove this class from your timetable?')) {
       await removeEventFromUserTimetable(classId, user.id);
@@ -23,13 +32,17 @@ export function UserTimetable() {
     }
   };
 
-  // Organize classes by day
+  // Group classes by day of the week
   const classesByDay = DAYS.map(day => ({
     day,
     classes: userClasses.filter(cls => cls.day === day),
   }));
 
-  // Helper to get lecturer name by id
+  /**
+   * Gets the display name of a lecturer by their ID.
+   * @param userId - ID of the lecturer
+   * @returns Lecturer name or user ID if not found
+   */
   const getLecturerName = (userId: string): string => {
     const lecturer = lecturers?.find(l => l.id === userId);
     if (lecturer?.name) {
