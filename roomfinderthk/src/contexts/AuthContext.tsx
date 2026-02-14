@@ -4,6 +4,10 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase-config";
 import { logoutUser } from "@/services/firebase";
 
+/**
+ * AppUser interface represents an authenticated user in the application.
+ * Contains essential user information needed for the app to function.
+ */
 export type AppUser = {
   id: string;
   name: string;
@@ -11,6 +15,9 @@ export type AppUser = {
   role: 'student' | 'professor' | 'admin';
 };
 
+/**
+ * AuthContextType defines the shape of data and operations provided by AuthContext.
+ */
 interface AuthContextType {
   user: AppUser | null;
   isAuthenticated: boolean;
@@ -20,18 +27,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * AuthProvider component that manages user authentication state.
+ * Listens to Firebase auth state changes and fetches user profile from Firestore.
+ * 
+ * @param children - React components to wrap with authentication context
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
+  /**
+   * Logs out the current user from Firebase authentication.
+   */
   const logout = async () => {
     logoutUser();
   };
 
+  /**
+   * Effect hook that listens to Firebase authentication state changes.
+   * When user logs in, fetches their profile data from Firestore.
+   * When user logs out, clears the user state.
+   */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Firestore-Profil laden
+        // Fetch user profile data from Firestore
         const docRef = doc(db, "users", firebaseUser.uid);
         const docSnap = await getDoc(docRef);
 
@@ -69,6 +90,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Hook to access authentication context from any component.
+ * Provides current user information and authentication status.
+ * 
+ * @returns AuthContextType containing user data and authentication operations
+ * @throws Error if used outside of AuthProvider
+ */
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

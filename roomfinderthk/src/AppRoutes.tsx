@@ -13,7 +13,14 @@ import RegisterScreen from "@/screens/loginAndRegister/RegisterScreen";
 import RoomDetailScreen from "@/screens/rooms/RoomDetailScreen";
 import ProfessorDetailScreen from "@/screens/professor/ProfessorDetailScreen";
 
-// Route Guard für rollenbasierte Zugriffskontrolle
+/**
+ * Higher-order component that protects routes based on user role.
+ * Redirects to rooms page if user lacks required roles.
+ * 
+ * @param element - React component to render if access is granted
+ * @param allowedRoles - Array of user roles that can access this route
+ * @returns Protected element or redirect to rooms page
+ */
 const ProtectedRoute = ({ element, allowedRoles }: { element: React.ReactNode; allowedRoles: string[] }) => {
   const { user } = useAuth();
   
@@ -24,9 +31,15 @@ const ProtectedRoute = ({ element, allowedRoles }: { element: React.ReactNode; a
   return element;
 };
 
+/**
+ * Defines all routes in the application with role-based access control.
+ * Shows login/register routes for unauthenticated users.
+ * Shows protected routes for authenticated users based on their role.
+ */
 export default function AppRoutes() {
   const { isAuthenticated, user } = useAuth();
 
+  // Unauthenticated routes
   if (!isAuthenticated) {
     return (
       <Routes>
@@ -37,6 +50,7 @@ export default function AppRoutes() {
     );
   }
 
+  // Authenticated routes
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/rooms" replace />} />
@@ -47,9 +61,9 @@ export default function AppRoutes() {
       <Route path="/professors" element={<ProfessorScreen />} />
       <Route path="/professors/:professorId" element={<ProfessorDetailScreen />} />
       <Route path="/profile" element={<ProfileScreen />} />
-      {/* Admin Panel - nur für Admins */}
+      {/* Admin Panel - Only accessible to admin users */}
       <Route path="/admin" element={<ProtectedRoute element={<AdminScreen />} allowedRoles={['admin']} />} />
-      {/* Booking - nur für Professoren */}
+      {/* Booking System - Only accessible to professor users */}
       <Route path="/booking" element={<ProtectedRoute element={<BookingScreen />} allowedRoles={['professor']} />} />
       <Route path="/classes" element={<ClassesScreen />} />
     </Routes>

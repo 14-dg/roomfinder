@@ -1,9 +1,13 @@
-//  use in:
-//      - src/screens/admin/timetablebuilder/TimetableBuilder.tsx
-//  for:
-//      setting a module for an event in timetable like 'Systementwurfs Praktikum - SYP'
-
+/**
+ * Module interface represents an academic module or course grouping.
+ * Used for organizing events in the timetable builder.
+ * 
+ * Used in: src/screens/admin/timetablebuilder/TimetableBuilder.tsx
+ * Example: "Systems Design Practical - SYP"
+ */
 export interface Module {
-    id?: number
+    /** Optional unique identifier for the module */
+    id?: number;
+    /** Name or title of the module (e.g., "Systementwurfs Praktikum - SYP") */
     name: string;
 }
