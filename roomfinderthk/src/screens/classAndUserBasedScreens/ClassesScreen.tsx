@@ -98,21 +98,20 @@ export default function ClassesScreen() {
     if (!user) return;
 
     try {
-      if (isEventInTimetable(lecture.id)) {
-        await removeEventFromUserTimetable(lecture.id.toString(), user.id);
+      if (isEventInTimetable(lecture.id as string)) {
+        await removeEventFromUserTimetable((lecture.id!).toString(), user.id);
         toast.success('Lecture removed from your timetable');
       } else {
         // Pass only the lecture id and minimal info, so DataContext can match it in ProfileScreen
-        await addEventToUserTimetable(lecture.id.toString(), user.id, {
-          id: lecture.id,
+        await addEventToUserTimetable((lecture.id!).toString(), user.id, {
+          id: Number(lecture.id),
           name: lecture.name,
-          type: lecture.type,
-          professor: lecture.professor,
-          roomId: lecture.roomId,
+          lecturer: lecture.professor,
+          room: lecture.roomId,
           day: lecture.day,
           startTime: lecture.startTime,
           endTime: lecture.endTime,
-          subject: lecture.subject
+          module: lecture.subject,
         });
         toast.success('Lecture added to your timetable');
       }
@@ -208,7 +207,7 @@ export default function ClassesScreen() {
 
           {filteredLectures.length > 0 ? (
             filteredLectures.map(lecture => {
-              const inTimetable = isEventInTimetable(lecture.id);
+              const inTimetable = isEventInTimetable(lecture.id as string);
               return (
                 <Card key={lecture.uniqueKey} className={`p-4 ${inTimetable ? 'border-blue-500 bg-blue-50' : ''}`}>
                   <div className="flex items-start justify-between mb-3">

@@ -1,17 +1,17 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { 
-  RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry, 
-  DaySchedule, Timetable, Module, Event 
+import {
+  RoomWithStatus, Booking, Lecture, CheckIn, UserTimetableEntry,
+  DaySchedule, Timetable, Module, Event
 } from '@/models';
 import { defaultSchedulePattern, days } from "../mockData/mockData";
 import * as fb from "@/services/firebase";
-import { toast } from 'sonner';
 
 // Import data management hooks that handle specific business domains
 import { useRoomData } from './hooks/useRoomData';
 import { useBookingData } from './hooks/useBookingData';
 import { useLectureData } from './hooks/useLectureData';
 import { useLecturerData } from './hooks/useLecturerData';
+import { toast } from 'sonner';
 
 /**
  * Maps activity types to noise level scores.
@@ -44,7 +44,6 @@ interface DataContextType {
   getRoomBookings: (roomId: string) => Booking[];
   getProfessorLectures: (profId: string) => Lecture[];
   getStudentCheckinsForSlot: (roomId: string, day: string, timeSlot: string) => CheckIn[];
-  getLoudestActivity: (roomId: string, day: string, timeSlot: string) => string;
   getOccupancyLevel: (roomId: string, day: string, timeSlot: string, capacity: number) => 'empty' | 'moderate' | 'full';
   getCurrentDayAndTimeSlot: () => { day: string; timeSlot: string } | null;
   getUserClasses: (userId: string) => Lecture[];
@@ -63,8 +62,8 @@ interface DataContextType {
   removeProfessor: (id: string) => Promise<void>;
   addLecture: (lecture: Omit<Lecture, 'id'>) => Promise<Lecture | null>;
   removeLecture: (id: string) => Promise<void>;
-  saveTimetable: (t: Timetable) => Promise<void>;
-  saveModules: (m: Module[]) => Promise<void>;
+  //saveTimetable: (t: Timetable) => Promise<void>;
+  //saveModules: (m: Module[]) => Promise<void>;
   uploadTimetable: (roomId: string, schedule: DaySchedule[]) => Promise<void>;
   addEventToUserTimetable: (cId: string, uId: string, e: Event) => Promise<void>;
   removeEventFromUserTimetable: (cId: string, uId: string) => Promise<void>;
@@ -82,7 +81,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export function DataProvider({ children }: { children: ReactNode }) {
   // Initialize individual data management modules
   const lectureModule = useLectureData();
-  const roomModule = useRoomData(lectureModule.classes, []); 
+  const roomModule = useRoomData(lectureModule.classes, []);
   const lecturerModule = useLecturerData(lectureModule.classes);
   const bookingModule = useBookingData(roomModule.rooms, roomModule.refreshRooms);
 
@@ -110,11 +109,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Selector: Get all lectures scheduled in a specific room
-  const getRoomLectures = useCallback((roomId: string) => 
+  const getRoomLectures = useCallback((roomId: string) =>
     lectureModule.classes.filter(l => l.roomId === roomId), [lectureModule.classes]);
 
   // Selector: Get all bookings for a specific room
-  const getRoomBookings = useCallback((roomId: string) => 
+  const getRoomBookings = useCallback((roomId: string) =>
     bookingModule.bookings.filter(b => b.roomId === roomId), [bookingModule.bookings]);
 
   /**
@@ -133,31 +132,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return {
           ...slot,
           isBooked: !!(lMatch || bMatch),
-          subject: lMatch?.name || bMatch?.subject || '',
-          bookedBy: lMatch?.professor || bMatch?.bookedByName || '',
-          isLecture: !!lMatch
+          subject: lMatch?.name || bMatch?.description || '',
+          bookedBy: lMatch?.professor || bMatch?.bookedBy || '',
+          isLecture: !!lMatch,
         };
       }),
     }));
   }, [getRoomLectures, getRoomBookings]);
 
   // Helper: Get all student check-ins for a specific room and time slot
-  const getStudentCheckinsForSlot = (roomId: string, day: string, timeSlot: string) => 
+  const getStudentCheckinsForSlot = (roomId: string, day: string, timeSlot: string) =>
     bookingModule.studentCheckins.filter(c => c.roomId === roomId && c.day === day && c.timeSlot === timeSlot);
-
-  /**
-   * Selector: Find the loudest activity happening in a room during a time slot.
-   * Based on noise levels defined in activityNoiseLevel map.
-   */
-  const getLoudestActivity = (roomId: string, day: string, timeSlot: string) => {
-    const checkins = getStudentCheckinsForSlot(roomId, day, timeSlot);
-    let loudest = ''; let maxNoise = 0;
-    checkins.forEach(c => {
-      const level = activityNoiseLevel[c.activity] || 0;
-      if (level > maxNoise) { maxNoise = level; loudest = c.activity; }
-    });
-    return loudest;
-  };
 
   /**
    * Selector: Determine occupancy level of a room at a specific time.
@@ -221,7 +206,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     getRoomLectures,
     getRoomBookings,
     getStudentCheckinsForSlot,
-    getLoudestActivity,
     getOccupancyLevel,
     getCurrentDayAndTimeSlot,
     getUserClasses,
