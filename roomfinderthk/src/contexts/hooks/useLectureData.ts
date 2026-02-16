@@ -5,7 +5,9 @@ import {
   removeLecture as removeLectureService,
   saveTimetableFire, 
   saveModulesFire,
-  uploadTimetableAsLectures 
+  uploadTimetableAsLectures,
+  addUserEvent,
+  removeUserEvent
 } from "@/services/firebase";
 import { toast } from 'sonner';
 
@@ -55,8 +57,37 @@ export function useLectureData() {
     toast.success("Stundenplan importiert");
   };
 
+  /**
+   * Adds an event to a user's personal timetable and persists it via the service layer.
+   */
+  const addEventToUserTimetable = async (cId: string, uId: string, e?: any) => {
+    try {
+      const entry: UserTimetableEntry = { id: '', classId: cId, userId: uId };
+      const added = await addUserEvent(entry as any);
+      setUserTimetableEntries(prev => [...prev, added]);
+      return added;
+    } catch (err) {
+      toast.error('Failed to add event to timetable');
+      throw err;
+    }
+  };
+
+  /**
+   * Removes an event from a user's personal timetable and persists the deletion.
+   */
+  const removeEventFromUserTimetable = async (cId: string, uId: string) => {
+    try {
+      await removeUserEvent(uId, cId);
+      setUserTimetableEntries(prev => prev.filter(e => !(e.userId === uId && e.classId === cId)));
+    } catch (err) {
+      toast.error('Failed to remove event from timetable');
+      throw err;
+    }
+  };
+
   return { 
     classes, setClasses, timetables, setTimetables, modules, setModules, 
-    userTimetableEntries, setUserTimetableEntries, addLecture, removeLecture, uploadTimetable 
+    userTimetableEntries, setUserTimetableEntries, addLecture, removeLecture, uploadTimetable,
+    addEventToUserTimetable, removeEventFromUserTimetable
   };
 }
