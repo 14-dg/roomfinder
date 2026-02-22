@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -28,7 +29,10 @@ export default function TimetablesAdmin() {
   const [courseOfStudy, setCourseOfStudy] = useState('');
   const [semester, setSemester] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
-  const [isExporting, setIsExporting] = useState(false); // Neuer Lade-State
+  const [isExporting, setIsExporting] = useState(false); // loading state for export
+  const [showSat, setShowSat] = useState(false); // whether PDF should include Saturday
+  const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
+  const [selectedDay, setSelectedDay] = useState('Monday');
 
   const coursesOfStudy = ['Technische Informatik', 'Elektrotechnik', 'Medientechnologie'];
 
@@ -76,9 +80,14 @@ export default function TimetablesAdmin() {
           grp.forEach((lec:any)=>{if(layoutMap[lec.id!])layoutMap[lec.id!].cols=total;});
         });
       });
-      const hasSat = all.some(l=>l.day==='Saturday');
-      const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-      if(hasSat) days.push('Saturday');
+      // decide which days to export based on view mode and saturday toggle
+      let days: string[];
+      if (viewMode === 'day') {
+        days = [selectedDay];
+      } else {
+        days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+        if (showSat) days.push('Saturday');
+      }
       const timeSlots = TimeUtils.slots.slice(0,-1);
 
       // build temporary container
@@ -93,16 +102,15 @@ export default function TimetablesAdmin() {
       container.style.padding = '1rem';
 
       const header = document.createElement('div');
-      header.innerHTML = `<h2 style="text-align:center;">${courseOfStudy}</h2><p style="text-align:center;">${semester}semester ${year}/${year + 1}</p><hr/>`;
+      // more prominent course title
+      header.innerHTML = `<h1 style="text-align:center; font-size:2.5rem; font-weight:700; margin:0;">${courseOfStudy}</h1><p style="text-align:center; margin:0.2rem 0;">${semester}semester ${year}/${year + 1}</p><hr/>`;
       container.appendChild(header);
 
       days.forEach(day => {
         const daySection = document.createElement('div');
         daySection.style.marginBottom = '2rem';
 
-        const dayTitle = document.createElement('h3');
-        dayTitle.textContent = TimeUtils.getGermanDay(day);
-        daySection.appendChild(dayTitle);
+        // drop day title – table header already shows the name
 
         const table = document.createElement('table');
         table.className = 'timetable-grid';
@@ -247,10 +255,24 @@ export default function TimetablesAdmin() {
       {isFormComplete && (
         <>
           <Card className="p-6">
-            <TimetableBuilder courseOfStudy={courseOfStudy} semester={semester} year={year} />
+            <TimetableBuilder
+              courseOfStudy={courseOfStudy}
+              semester={semester}
+              year={year}
+              showSat={showSat}
+              setShowSat={setShowSat}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              selectedDay={selectedDay}
+              setSelectedDay={setSelectedDay}
+            />
           </Card>
 
           <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Switch id="exportSat" checked={showSat} onCheckedChange={setShowSat} />
+              <Label htmlFor="exportSat">Samstag im Export</Label>
+            </div>
             <Button
               className="w-full"
               onClick={handleExportPDF}

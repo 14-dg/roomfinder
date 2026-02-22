@@ -137,17 +137,35 @@ const TimetableCell: React.FC<TimetableCellProps> = ({
   );
 };
 
-export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year }) => {
+interface BuilderProps {
+  courseOfStudy: string;
+  semester: string;
+  year: number;
+  showSat: boolean;
+  setShowSat: React.Dispatch<React.SetStateAction<boolean>>;
+  viewMode: 'week' | 'day';
+  setViewMode: React.Dispatch<React.SetStateAction<'week' | 'day'>>;
+  selectedDay: string;
+  setSelectedDay: React.Dispatch<React.SetStateAction<string>>;
+}
+
+export const TimetableBuilder: React.FC<BuilderProps> = ({
+  courseOfStudy,
+  semester,
+  year,
+  showSat,
+  setShowSat,
+  viewMode,
+  setViewMode,
+  selectedDay,
+  setSelectedDay,
+}) => {
   const { classes, rooms, lecturers, addLecture, removeLecture } = useData();
   
-  const [showSat, setShowSat] = useState(false);
+  // showSat now controlled by parent
   const [modalOpen, setModalOpen] = useState(false);
   const [activeLecture, setActiveLecture] = useState<Lecture | null>(null);
   const [modalDefaults, setModalDefaults] = useState<{ day: string; slot: string }>({ day: 'Monday', slot: '08:00' });
-
-  // new view state: week or single day
-  const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
-  const [selectedDay, setSelectedDay] = useState('Monday');
 
   // layout map for overlapping lectures (day independent)
   const layoutMap = React.useMemo(() => {
