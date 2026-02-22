@@ -53,16 +53,20 @@ const TimetableCell: React.FC<TimetableCellProps> = ({
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
+    // highlight cell itself (use parent if coming from card)
+    const target = e.currentTarget as HTMLElement;
+    target.classList.add('drag-over');
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('drag-over');
+    const target = e.currentTarget as HTMLElement;
+    target.classList.remove('drag-over');
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
+    const target = e.currentTarget as HTMLElement;
+    target.classList.remove('drag-over');
     const lectureId = e.dataTransfer.getData("lectureId");
     if (lectureId) {
       onDropLecture(lectureId, day, slot);
@@ -76,6 +80,8 @@ const TimetableCell: React.FC<TimetableCellProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onDragOverCapture={handleDragOver}
+      onDropCapture={handleDrop}
     >
       <div className="cell-content-wrapper">
         {currentLectures.map((lec: any) => {
@@ -94,8 +100,12 @@ const TimetableCell: React.FC<TimetableCellProps> = ({
                 e.dataTransfer.setData("lectureId", lec.id);
                 e.dataTransfer.effectAllowed = "move";
                 e.currentTarget.classList.add('dragging');
+                document.body.classList.add('dragging-any');
               }}
-              onDragEnd={(e) => e.currentTarget.classList.remove('dragging')}
+              onDragEnd={(e) => {
+                e.currentTarget.classList.remove('dragging');
+                document.body.classList.remove('dragging-any');
+              }}
               onClick={(e) => { e.stopPropagation(); onCellClick(lec); }}
               className={`lecture-card type-${lec.type.toLowerCase()}`}
               onDragOver={handleDragOver}
@@ -409,6 +419,14 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
                   <select value={form.day} onChange={e => setForm({...form, day: e.target.value})}>
                     {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(d => (
                       <option key={d} value={d}>{TimeUtils.getGermanDay(d)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label>Startzeit</label>
+                  <select value={form.start} onChange={e => setForm({...form, start: e.target.value})}>
+                    {timeSlots.map(slot => (
+                      <option key={slot} value={slot}>{slot}</option>
                     ))}
                   </select>
                 </div>
