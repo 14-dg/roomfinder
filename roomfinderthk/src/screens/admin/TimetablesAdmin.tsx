@@ -38,6 +38,49 @@ export default function TimetablesAdmin() {
   const handleExportPDF = async () => {
     setIsExporting(true);
     try {
+      // compute layoutMap for overlapping entries
+      const all = classes.filter(l => l.subject === courseOfStudy);
+      const timesOverlap = (a: any, b: any) => {
+        const as = TimeUtils.slots.indexOf(a.startTime);
+        const ae = TimeUtils.slots.indexOf(a.endTime);
+        const bs = TimeUtils.slots.indexOf(b.startTime);
+        const be = TimeUtils.slots.indexOf(b.endTime);
+        return as < be && bs < ae;
+      };
+      const layoutMap: Record<string,{col:number;cols:number}> = {};
+      ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(day => {
+        const lecturesForDay = all.filter(l=>l.day===day);
+        const groups:any[][] = [];
+        lecturesForDay.sort((a,b)=>TimeUtils.slots.indexOf(a.startTime)-TimeUtils.slots.indexOf(b.startTime));
+        lecturesForDay.forEach(lec=>{
+          let placed=false;
+          for(const grp of groups){
+            if(grp.some(g=>timesOverlap(lec,g))){grp.push(lec);placed=true;break;}
+          }
+          if(!placed) groups.push([lec]);
+        });
+        groups.forEach(grp=>{
+          const colsEnd:number[]=[];
+          grp.sort((a,b)=>TimeUtils.slots.indexOf(a.startTime)-TimeUtils.slots.indexOf(b.startTime));
+          grp.forEach((lec:any)=>{
+            const s=TimeUtils.slots.indexOf(lec.startTime);
+            const dur=TimeUtils.slots.indexOf(lec.endTime)-s;
+            const e=s+dur;
+            let assigned=false;
+            for(let i=0;i<colsEnd.length;i++){
+              if(s>=colsEnd[i]){colsEnd[i]=e;layoutMap[lec.id!]={col:i,cols:colsEnd.length};assigned=true;break;}
+            }
+            if(!assigned){colsEnd.push(e);layoutMap[lec.id!]={col:colsEnd.length-1,cols:colsEnd.length};}
+          });
+          const total=colsEnd.length;
+          grp.forEach((lec:any)=>{if(layoutMap[lec.id!])layoutMap[lec.id!].cols=total;});
+        });
+      });
+      const hasSat = all.some(l=>l.day==='Saturday');
+      const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+      if(hasSat) days.push('Saturday');
+      const timeSlots = TimeUtils.slots.slice(0,-1);
+
       // build temporary container
       const container = document.createElement('div');
       container.style.position = 'absolute';
@@ -52,9 +95,6 @@ export default function TimetablesAdmin() {
       const header = document.createElement('div');
       header.innerHTML = `<h2 style="text-align:center;">${courseOfStudy}</h2><p style="text-align:center;">${semester}semester ${year}/${year + 1}</p><hr/>`;
       container.appendChild(header);
-
-      const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      const timeSlots = TimeUtils.slots.slice(0, -1);
 
       days.forEach(day => {
         const daySection = document.createElement('div');
@@ -98,9 +138,16 @@ export default function TimetablesAdmin() {
               card.className = `lecture-card type-${l.type.toLowerCase()}`;
               card.style.position = 'absolute';
               card.style.top = '0';
-              card.style.left = '0';
-              card.style.width = '100%';
+
+              // compute width/left based on overlapping layout map
+              const mapping = layoutMap[l.id!] || { col: 0, cols: 1 };
+              const widthPct = 100 / mapping.cols;
+              const leftPct = (mapping.col * 100) / mapping.cols;
+              card.style.width = `${widthPct}%`;
+              card.style.left = `${leftPct}%`;
+
               card.style.height = `calc(${duration * 100}% + ${(duration - 1) * 2}px)`;
+              card.style.boxSizing = 'border-box';
               card.innerHTML = `<div class="card-inner"><span class="card-title">${l.name}</span><div class="card-meta"><span class="meta-item">📍 ${roomName}</span>${
                 duration > 1 ? `<span class="meta-item">👤 ${profName}</span>` : ''
               }</div></div>`;
