@@ -81,14 +81,19 @@ export default function TimetablesAdmin() {
         });
       });
       // decide which days to export based on view mode and saturday toggle
+      // use the same logic as the builder so the PDF stays consistent
+      const allowedDays = showSat
+        ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+        : ['Monday','Tuesday','Wednesday','Thursday','Friday'];
       let days: string[];
       if (viewMode === 'day') {
+        // single day export
         days = [selectedDay];
       } else {
-        days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-        if (showSat) days.push('Saturday');
+        // week view should always include at least Monday–Friday
+        days = [...allowedDays];
       }
-      const timeSlots = TimeUtils.slots.slice(0,-1);
+      const timeSlots = TimeUtils.slots.slice(0, -1);
 
       // build temporary container
       const container = document.createElement('div');
@@ -177,8 +182,28 @@ export default function TimetablesAdmin() {
       document.body.removeChild(container);
 
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      // create a standard A4 pdf and slice the canvas if it's taller than one page
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      // calculate scaled height to fit width
+      const ratio = canvas.width / pdfWidth;
+      const imgHeight = canvas.height / ratio;
+
+      let position = 0;
+      let heightLeft = imgHeight;
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position -= pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
       pdf.save(`Stundenplan_${courseOfStudy}_${semester}_${year}.pdf`);
     } catch (error) {
       console.error("PDF Export fehlgeschlagen:", error);
