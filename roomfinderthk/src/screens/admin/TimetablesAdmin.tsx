@@ -95,27 +95,27 @@ export default function TimetablesAdmin() {
       }
       const timeSlots = TimeUtils.slots.slice(0, -1);
 
-      // build temporary container
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.top = '-9999px';
-      container.style.left = '-9999px';
-      container.style.width = '800px';
-      container.style.background = '#f8fafc';
-      container.style.color = '#1e293b';
-      container.style.fontFamily = 'Inter, system-ui, sans-serif';
-      container.style.padding = '1rem';
+      // we'll render each day separately so every day ends up on its own page
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      let firstPage = true;
 
-      const header = document.createElement('div');
-      // more prominent course title
-      header.innerHTML = `<h1 style="text-align:center; font-size:2.5rem; font-weight:700; margin:0;">${courseOfStudy}</h1><p style="text-align:center; margin:0.2rem 0;">${semester}semester ${year}/${year + 1}</p><hr/>`;
-      container.appendChild(header);
+      for (const day of days) {
+        // single-day container
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.top = '-9999px';
+        container.style.left = '-9999px';
+        container.style.width = '800px';
+        container.style.background = '#f8fafc';
+        container.style.color = '#1e293b';
+        container.style.fontFamily = 'Inter, system-ui, sans-serif';
+        container.style.padding = '1rem';
 
-      days.forEach(day => {
-        const daySection = document.createElement('div');
-        daySection.style.marginBottom = '2rem';
-
-        // drop day title – table header already shows the name
+        const header = document.createElement('div');
+        header.innerHTML = `<h1 style="text-align:center; font-size:2.5rem; font-weight:700; margin:0;">${courseOfStudy}</h1><p style="text-align:center; margin:0.2rem 0;">${semester}semester ${year}/${year + 1}</p><hr/>`;
+        container.appendChild(header);
 
         const table = document.createElement('table');
         table.className = 'timetable-grid';
@@ -152,7 +152,6 @@ export default function TimetablesAdmin() {
               card.style.position = 'absolute';
               card.style.top = '0';
 
-              // compute width/left based on overlapping layout map
               const mapping = layoutMap[l.id!] || { col: 0, cols: 1 };
               const widthPct = 100 / mapping.cols;
               const leftPct = (mapping.col * 100) / mapping.cols;
@@ -173,35 +172,31 @@ export default function TimetablesAdmin() {
         });
 
         table.appendChild(tbody);
-        daySection.appendChild(table);
-        container.appendChild(daySection);
-      });
+        container.appendChild(table);
 
-      document.body.appendChild(container);
-      const canvas = await html2canvas(container, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f8fafc' });
-      document.body.removeChild(container);
+        document.body.appendChild(container);
+        const canvas = await html2canvas(container, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f8fafc' });
+        document.body.removeChild(container);
 
-      const imgData = canvas.toDataURL('image/png');
-      // create a standard A4 pdf and slice the canvas if it's taller than one page
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgData = canvas.toDataURL('image/png');
+        const ratio = canvas.width / pdfWidth;
+        let imgHeight = canvas.height / ratio;
+        let imgWidth = pdfWidth;
 
-      // calculate scaled height to fit width
-      const ratio = canvas.width / pdfWidth;
-      const imgHeight = canvas.height / ratio;
+        // if the rendered day is taller than one page, shrink everything uniformly
+        if (imgHeight > pdfHeight) {
+          const scale = pdfHeight / imgHeight;
+          imgHeight = pdfHeight;
+          imgWidth = pdfWidth * scale;
+        }
 
-      let position = 0;
-      let heightLeft = imgHeight;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position -= pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        if (!firstPage) {
+          pdf.addPage();
+        }
+        // center smaller images horizontally
+        const xOffset = (pdfWidth - imgWidth) / 2;
+        pdf.addImage(imgData, 'PNG', xOffset, 0, imgWidth, imgHeight);
+        firstPage = false;
       }
 
       pdf.save(`Stundenplan_${courseOfStudy}_${semester}_${year}.pdf`);
