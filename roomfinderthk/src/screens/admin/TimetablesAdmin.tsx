@@ -31,6 +31,7 @@ export default function TimetablesAdmin() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [isExporting, setIsExporting] = useState(false); // loading state for export
   const [showSat, setShowSat] = useState(false); // whether PDF should include Saturday
+  const [twoPageMode, setTwoPageMode] = useState(false); // limit pdf to two pages
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
   const [selectedDay, setSelectedDay] = useState('Monday');
 
@@ -95,108 +96,218 @@ export default function TimetablesAdmin() {
       }
       const timeSlots = TimeUtils.slots.slice(0, -1);
 
-      // we'll render each day separately so every day ends up on its own page
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      let firstPage = true;
 
-      for (const day of days) {
-        // single-day container
-        const container = document.createElement('div');
-        container.style.position = 'absolute';
-        container.style.top = '-9999px';
-        container.style.left = '-9999px';
-        container.style.width = '800px';
-        container.style.background = '#f8fafc';
-        container.style.color = '#1e293b';
-        container.style.fontFamily = 'Inter, system-ui, sans-serif';
-        container.style.padding = '1rem';
+      if (twoPageMode) {
+        // split days into two groups (up to three days each) and render each group on its own page side-by-side
+        const groups: string[][] = [];
+        for (let i = 0; i < days.length; i += 3) {
+          groups.push(days.slice(i, i + 3));
+        }
+        let firstPage = true;
+        for (const group of groups) {
+          const container = document.createElement('div');
+          container.style.position = 'absolute';
+          container.style.top = '-9999px';
+          container.style.left = '-9999px';
+          container.style.width = '1200px'; // allow room for three columns
+          container.style.background = '#f8fafc';
+          container.style.color = '#1e293b';
+          container.style.fontFamily = 'Inter, system-ui, sans-serif';
+          container.style.padding = '1rem';
 
-        const header = document.createElement('div');
-        header.innerHTML = `<h1 style="text-align:center; font-size:2.5rem; font-weight:700; margin:0;">${courseOfStudy}</h1><p style="text-align:center; margin:0.2rem 0;">${semester}semester ${year}/${year + 1}</p><hr/>`;
-        container.appendChild(header);
+          const header = document.createElement('div');
+          header.innerHTML = `<h1 style="text-align:center; font-size:2.5rem; font-weight:700; margin:0;">${courseOfStudy}</h1><p style="text-align:center; margin:0.2rem 0;">${semester}semester ${year}/${year + 1}</p><hr/>`;
+          container.appendChild(header);
 
-        const table = document.createElement('table');
-        table.className = 'timetable-grid';
-        table.style.width = '100%';
-        const thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th class="time-col-header">Zeit</th><th class="day-col-header">' + TimeUtils.getGermanDay(day) + '</th></tr>';
-        table.appendChild(thead);
-        const tbody = document.createElement('tbody');
+          const flex = document.createElement('div');
+          flex.style.display = 'flex';
+          flex.style.gap = '1rem';
+          flex.style.justifyContent = 'space-between';
 
-        timeSlots.forEach(slot => {
-          const row = document.createElement('tr');
-          const timeCell = document.createElement('td');
-          timeCell.className = 'time-label';
-          timeCell.textContent = slot;
-          row.appendChild(timeCell);
+          group.forEach(day => {
+            const table = document.createElement('table');
+            table.className = 'timetable-grid';
+            table.style.width = '100%';
+            // slightly smaller text to help three columns fit
+            table.style.fontSize = '0.85rem';
 
-          const cell = document.createElement('td');
-          cell.className = 'timetable-cell';
-          cell.style.position = 'relative';
+            const thead = document.createElement('thead');
+            thead.innerHTML = '<tr><th class="time-col-header">Zeit</th><th class="day-col-header">' + TimeUtils.getGermanDay(day) + '</th></tr>';
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
 
-          const lecturesForSlot = classes.filter(
-            l => l.subject === courseOfStudy && l.day === day && l.startTime === slot
-          );
+            timeSlots.forEach(slot => {
+              const row = document.createElement('tr');
+              const timeCell = document.createElement('td');
+              timeCell.className = 'time-label';
+              timeCell.textContent = slot;
+              row.appendChild(timeCell);
 
-          if (lecturesForSlot.length) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'cell-content-wrapper';
-            lecturesForSlot.forEach(l => {
-              const duration = TimeUtils.slots.indexOf(l.endTime) - TimeUtils.slots.indexOf(l.startTime);
-              const roomName = rooms.find(r => r.id === l.roomId)?.roomName || '';
-              const profName = lecturers.find(p => p.id === l.professor)?.name || '';
-              const card = document.createElement('div');
-              card.className = `lecture-card type-${l.type.toLowerCase()}`;
-              card.style.position = 'absolute';
-              card.style.top = '0';
+              const cell = document.createElement('td');
+              cell.className = 'timetable-cell';
+              cell.style.position = 'relative';
 
-              const mapping = layoutMap[l.id!] || { col: 0, cols: 1 };
-              const widthPct = 100 / mapping.cols;
-              const leftPct = (mapping.col * 100) / mapping.cols;
-              card.style.width = `${widthPct}%`;
-              card.style.left = `${leftPct}%`;
+              const lecturesForSlot = classes.filter(
+                l => l.subject === courseOfStudy && l.day === day && l.startTime === slot
+              );
 
-              card.style.height = `calc(${duration * 100}% + ${(duration - 1) * 2}px)`;
-              card.style.boxSizing = 'border-box';
-              card.innerHTML = `<div class="card-inner"><span class="card-title">${l.name}</span><div class="card-meta"><span class="meta-item">📍 ${roomName}</span>${
-                duration > 1 ? `<span class="meta-item">👤 ${profName}</span>` : ''
-              }</div></div>`;
-              wrapper.appendChild(card);
+              if (lecturesForSlot.length) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'cell-content-wrapper';
+                lecturesForSlot.forEach(l => {
+                  const duration = TimeUtils.slots.indexOf(l.endTime) - TimeUtils.slots.indexOf(l.startTime);
+                  const roomName = rooms.find(r => r.id === l.roomId)?.roomName || '';
+                  const profName = lecturers.find(p => p.id === l.professor)?.name || '';
+                  const card = document.createElement('div');
+                  card.className = `lecture-card type-${l.type.toLowerCase()}`;
+                  card.style.position = 'absolute';
+                  card.style.top = '0';
+                  // keep default font size for readability
+
+                  const mapping = layoutMap[l.id!] || { col: 0, cols: 1 };
+                  const widthPct = 100 / mapping.cols;
+                  const leftPct = (mapping.col * 100) / mapping.cols;
+                  card.style.width = `${widthPct}%`;
+                  card.style.left = `${leftPct}%`;
+
+                  card.style.height = `calc(${duration * 100}% + ${(duration - 1) * 2}px)`;
+                  card.style.boxSizing = 'border-box';
+                  card.innerHTML = `<div class="card-inner"><span class="card-title">${l.name}</span><div class="card-meta"><span class="meta-item">📍 ${roomName}</span>${
+                    duration > 1 ? `<span class="meta-item">👤 ${profName}</span>` : ''
+                  }</div></div>`;
+                  wrapper.appendChild(card);
+                });
+                cell.appendChild(wrapper);
+              }
+              row.appendChild(cell);
+              tbody.appendChild(row);
             });
-            cell.appendChild(wrapper);
+
+            table.appendChild(tbody);
+            flex.appendChild(table);
+          });
+
+          container.appendChild(flex);
+          document.body.appendChild(container);
+          const canvas = await html2canvas(container, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f8fafc' });
+          document.body.removeChild(container);
+
+          const imgData = canvas.toDataURL('image/png');
+          const ratio = canvas.width / pdfWidth;
+          let imgHeight = canvas.height / ratio;
+          let imgWidth = pdfWidth;
+          if (imgHeight > pdfHeight) {
+            const scale = pdfHeight / imgHeight;
+            imgHeight = pdfHeight;
+            imgWidth = pdfWidth * scale;
           }
-          row.appendChild(cell);
-          tbody.appendChild(row);
-        });
-
-        table.appendChild(tbody);
-        container.appendChild(table);
-
-        document.body.appendChild(container);
-        const canvas = await html2canvas(container, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f8fafc' });
-        document.body.removeChild(container);
-
-        const imgData = canvas.toDataURL('image/png');
-        const ratio = canvas.width / pdfWidth;
-        let imgHeight = canvas.height / ratio;
-        let imgWidth = pdfWidth;
-
-        // if the rendered day is taller than one page, shrink everything uniformly
-        if (imgHeight > pdfHeight) {
-          const scale = pdfHeight / imgHeight;
-          imgHeight = pdfHeight;
-          imgWidth = pdfWidth * scale;
+          if (!firstPage) pdf.addPage();
+          const xOffset = (pdfWidth - imgWidth) / 2;
+          pdf.addImage(imgData, 'PNG', xOffset, 0, imgWidth, imgHeight);
+          firstPage = false;
         }
+      } else {
+        // original per-day logic
+        let firstPage = true;
+        for (const day of days) {
+          const container = document.createElement('div');
+          container.style.position = 'absolute';
+          container.style.top = '-9999px';
+          container.style.left = '-9999px';
+          container.style.width = '800px';
+          container.style.background = '#f8fafc';
+          container.style.color = '#1e293b';
+          container.style.fontFamily = 'Inter, system-ui, sans-serif';
+          container.style.padding = '1rem';
 
-        if (!firstPage) {
-          pdf.addPage();
+          const header = document.createElement('div');
+          header.innerHTML = `<h1 style="text-align:center; font-size:2.5rem; font-weight:700; margin:0;">${courseOfStudy}</h1><p style="text-align:center; margin:0.2rem 0;">${semester}semester ${year}/${year + 1}</p><hr/>`;
+          container.appendChild(header);
+
+          const table = document.createElement('table');
+          table.className = 'timetable-grid';
+          table.style.width = '100%';
+          const thead = document.createElement('thead');
+          thead.innerHTML = '<tr><th class="time-col-header">Zeit</th><th class="day-col-header">' + TimeUtils.getGermanDay(day) + '</th></tr>';
+          table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+
+          timeSlots.forEach(slot => {
+            const row = document.createElement('tr');
+            const timeCell = document.createElement('td');
+            timeCell.className = 'time-label';
+            timeCell.textContent = slot;
+            row.appendChild(timeCell);
+
+            const cell = document.createElement('td');
+            cell.className = 'timetable-cell';
+            cell.style.position = 'relative';
+
+            const lecturesForSlot = classes.filter(
+              l => l.subject === courseOfStudy && l.day === day && l.startTime === slot
+            );
+
+            if (lecturesForSlot.length) {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'cell-content-wrapper';
+              lecturesForSlot.forEach(l => {
+                const duration = TimeUtils.slots.indexOf(l.endTime) - TimeUtils.slots.indexOf(l.startTime);
+                const roomName = rooms.find(r => r.id === l.roomId)?.roomName || '';
+                const profName = lecturers.find(p => p.id === l.professor)?.name || '';
+                const card = document.createElement('div');
+                card.className = `lecture-card type-${l.type.toLowerCase()}`;
+                card.style.position = 'absolute';
+                card.style.top = '0';
+
+                const mapping = layoutMap[l.id!] || { col: 0, cols: 1 };
+                const widthPct = 100 / mapping.cols;
+                const leftPct = (mapping.col * 100) / mapping.cols;
+                card.style.width = `${widthPct}%`;
+                card.style.left = `${leftPct}%`;
+
+                card.style.height = `calc(${duration * 100}% + ${(duration - 1) * 2}px)`;
+                card.style.boxSizing = 'border-box';
+                card.innerHTML = `<div class="card-inner"><span class="card-title">${l.name}</span><div class="card-meta"><span class="meta-item">📍 ${roomName}</span>${
+                  duration > 1 ? `<span class="meta-item">👤 ${profName}</span>` : ''
+                }</div></div>`;
+                wrapper.appendChild(card);
+              });
+              cell.appendChild(wrapper);
+            }
+            row.appendChild(cell);
+            tbody.appendChild(row);
+          });
+
+          table.appendChild(tbody);
+          container.appendChild(table);
+
+          document.body.appendChild(container);
+          const canvas = await html2canvas(container, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f8fafc' });
+          document.body.removeChild(container);
+
+          const imgData = canvas.toDataURL('image/png');
+          const ratio = canvas.width / pdfWidth;
+          let imgHeight = canvas.height / ratio;
+          let imgWidth = pdfWidth;
+
+          // if the rendered day is taller than one page, shrink everything uniformly
+          if (imgHeight > pdfHeight) {
+            const scale = pdfHeight / imgHeight;
+            imgHeight = pdfHeight;
+            imgWidth = pdfWidth * scale;
+          }
+
+          if (!firstPage) {
+            pdf.addPage();
+          }
+          // center smaller images horizontally
+          const xOffset = (pdfWidth - imgWidth) / 2;
+          pdf.addImage(imgData, 'PNG', xOffset, 0, imgWidth, imgHeight);
+          firstPage = false;
         }
-        // center smaller images horizontally
-        const xOffset = (pdfWidth - imgWidth) / 2;
-        pdf.addImage(imgData, 'PNG', xOffset, 0, imgWidth, imgHeight);
-        firstPage = false;
       }
 
       pdf.save(`Stundenplan_${courseOfStudy}_${semester}_${year}.pdf`);
@@ -292,6 +403,10 @@ export default function TimetablesAdmin() {
             <div className="flex items-center gap-2 mb-4">
               <Switch id="exportSat" checked={showSat} onCheckedChange={setShowSat} />
               <Label htmlFor="exportSat">Samstag im Export</Label>
+            </div>
+            <div className="flex items-center gap-2 mb-4">
+              <Switch id="exportTwo" checked={twoPageMode} onCheckedChange={setTwoPageMode} />
+              <Label htmlFor="exportTwo">Export auf zwei Seiten begrenzen</Label>
             </div>
             <Button
               className="w-full"
