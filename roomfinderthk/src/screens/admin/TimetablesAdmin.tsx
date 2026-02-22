@@ -13,6 +13,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import TimetableBuilder from './timetablebuilder/TimetableBuilder';
+import { useData } from '@/contexts/DataContext';
+
+// same TimeUtils as timetablebuilder (could be exported there but copy is fine)
+const TimeUtils = {
+  slots: ['08:00', '08:50', '09:45', '10:35', '11:30', '12:20', '13:15', '14:05', '15:00', '15:50', '16:45', '17:35', '18:30', '19:20', '20:15'],
+  getGermanDay: (day: string) => {
+    const days: any = { Monday: 'Montag', Tuesday: 'Dienstag', Wednesday: 'Mittwoch', Thursday: 'Donnerstag', Friday: 'Freitag', Saturday: 'Samstag' };
+    return days[day] || day;
+  }
+};
 
 export default function TimetablesAdmin() {
   const [courseOfStudy, setCourseOfStudy] = useState('');
@@ -23,29 +33,96 @@ export default function TimetablesAdmin() {
   const coursesOfStudy = ['Technische Informatik', 'Elektrotechnik', 'Medientechnologie'];
 
 
-  const handleExportPDF = async () => {
-    const element = document.getElementById('timetable-to-export');
-    if (!element) return;
+  const { classes, rooms, lecturers } = useData();
 
+  const handleExportPDF = async () => {
     setIsExporting(true);
     try {
-      // Screenshot vom Element erstellen
-      const canvas = await html2canvas(element, {
-        scale: 2, // Höhere Qualität
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#f8fafc' // Gleicher Hintergrund wie im CSS
+      // build temporary container
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.top = '-9999px';
+      container.style.left = '-9999px';
+      container.style.width = '800px';
+      container.style.background = '#f8fafc';
+      container.style.color = '#1e293b';
+      container.style.fontFamily = 'Inter, system-ui, sans-serif';
+      container.style.padding = '1rem';
+
+      const header = document.createElement('div');
+      header.innerHTML = `<h2 style="text-align:center;">${courseOfStudy}</h2><p style="text-align:center;">${semester}semester ${year}/${year + 1}</p><hr/>`;
+      container.appendChild(header);
+
+      const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const timeSlots = TimeUtils.slots.slice(0, -1);
+
+      days.forEach(day => {
+        const daySection = document.createElement('div');
+        daySection.style.marginBottom = '2rem';
+
+        const dayTitle = document.createElement('h3');
+        dayTitle.textContent = TimeUtils.getGermanDay(day);
+        daySection.appendChild(dayTitle);
+
+        const table = document.createElement('table');
+        table.className = 'timetable-grid';
+        table.style.width = '100%';
+        const thead = document.createElement('thead');
+        thead.innerHTML = '<tr><th class="time-col-header">Zeit</th><th class="day-col-header">' + TimeUtils.getGermanDay(day) + '</th></tr>';
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+
+        timeSlots.forEach(slot => {
+          const row = document.createElement('tr');
+          const timeCell = document.createElement('td');
+          timeCell.className = 'time-label';
+          timeCell.textContent = slot;
+          row.appendChild(timeCell);
+
+          const cell = document.createElement('td');
+          cell.className = 'timetable-cell';
+          cell.style.position = 'relative';
+
+          const lecturesForSlot = classes.filter(
+            l => l.subject === courseOfStudy && l.day === day && l.startTime === slot
+          );
+
+          if (lecturesForSlot.length) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'cell-content-wrapper';
+            lecturesForSlot.forEach(l => {
+              const duration = TimeUtils.slots.indexOf(l.endTime) - TimeUtils.slots.indexOf(l.startTime);
+              const roomName = rooms.find(r => r.id === l.roomId)?.roomName || '';
+              const profName = lecturers.find(p => p.id === l.professor)?.name || '';
+              const card = document.createElement('div');
+              card.className = `lecture-card type-${l.type.toLowerCase()}`;
+              card.style.position = 'absolute';
+              card.style.top = '0';
+              card.style.left = '0';
+              card.style.width = '100%';
+              card.style.height = `calc(${duration * 100}% + ${(duration - 1) * 2}px)`;
+              card.innerHTML = `<div class="card-inner"><span class="card-title">${l.name}</span><div class="card-meta"><span class="meta-item">📍 ${roomName}</span>${
+                duration > 1 ? `<span class="meta-item">👤 ${profName}</span>` : ''
+              }</div></div>`;
+              wrapper.appendChild(card);
+            });
+            cell.appendChild(wrapper);
+          }
+          row.appendChild(cell);
+          tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+        daySection.appendChild(table);
+        container.appendChild(daySection);
       });
+
+      document.body.appendChild(container);
+      const canvas = await html2canvas(container, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f8fafc' });
+      document.body.removeChild(container);
 
       const imgData = canvas.toDataURL('image/png');
-      
-      // PDF im Querformat (Landscape) erstellen
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
-      });
-
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
       pdf.save(`Stundenplan_${courseOfStudy}_${semester}_${year}.pdf`);
     } catch (error) {
