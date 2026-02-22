@@ -80,6 +80,25 @@
   color: var(--text-muted);
 }
 
+/* Tables & toggles styling */
+.view-toggle button,
+.day-toggle button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  background: white;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.view-toggle button.active,
+.day-toggle button.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
 /* Tabellen Styling */
 .calendar-container {
   max-width: 1400px;
@@ -144,13 +163,13 @@
 .cell-content-wrapper {
   position: absolute;
   inset: 2px;
-  display: flex;
-  gap: 2px;
+  /* don't use flex now, children are absolutely positioned */
   z-index: 10;
+  overflow: visible; /* allow cards to extend beyond slot boundaries */
 }
 
 .lecture-card {
-  flex: 1;
+  position: absolute; /* will be positioned by inline style */
   border-radius: 0.5rem;
   padding: 0.5rem;
   font-size: 0.75rem;
@@ -347,6 +366,11 @@
 
 .lecture-card:active {
   cursor: grabbing;
+}
+
+.lecture-card.dragging {
+  opacity: 0.5;
+  pointer-events: none; /* allow underlying cells to receive drop */
 }
 
 /* Visuelles Feedback für die Ziel-Zelle */

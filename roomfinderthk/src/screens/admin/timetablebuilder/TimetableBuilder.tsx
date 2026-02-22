@@ -28,7 +28,27 @@ const TimeUtils = {
   }
 };
 
-const TimetableCell: React.FC<any> = ({ day, slot, lectures, rooms, lecturers, onCellClick, onDropLecture }) => {
+interface TimetableCellProps {
+  day: string;
+  slot: string;
+  lectures: Lecture[];
+  rooms: any[];
+  lecturers: any[];
+  onCellClick: (lec: any | null, day?: string, slot?: string) => void;
+  onDropLecture: (lectureId: string, newDay: string, newStart: string) => void;
+  layoutMap: Record<string, { col: number; cols: number }>;
+}
+
+const TimetableCell: React.FC<TimetableCellProps> = ({
+  day,
+  slot,
+  lectures,
+  rooms,
+  lecturers,
+  onCellClick,
+  onDropLecture,
+  layoutMap,
+}) => {
   const currentLectures = lectures.filter((l: any) => l.day === day && l.startTime === slot);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -62,6 +82,9 @@ const TimetableCell: React.FC<any> = ({ day, slot, lectures, rooms, lecturers, o
           const duration = TimeUtils.calculateDuration(lec.startTime, lec.endTime);
           const room = rooms.find((r: any) => r.id === lec.roomId)?.roomName || 'N.N.';
           const prof = lecturers.find((p: any) => p.id === lec.professor)?.name || 'Dozent N.N.';
+          const layout = layoutMap[lec.id!] || { col: 0, cols: 1 };
+          const widthPct = 100 / layout.cols;
+          const leftPct = layout.col * widthPct;
 
           return (
             <div
@@ -70,10 +93,22 @@ const TimetableCell: React.FC<any> = ({ day, slot, lectures, rooms, lecturers, o
               onDragStart={(e) => {
                 e.dataTransfer.setData("lectureId", lec.id);
                 e.dataTransfer.effectAllowed = "move";
+                e.currentTarget.classList.add('dragging');
               }}
+              onDragEnd={(e) => e.currentTarget.classList.remove('dragging')}
               onClick={(e) => { e.stopPropagation(); onCellClick(lec); }}
               className={`lecture-card type-${lec.type.toLowerCase()}`}
-              style={{ height: `calc(${duration * 100}% + ${(duration - 1) * 2}px)` }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: `${leftPct}%`,
+                width: `${widthPct}%`,
+                height: `calc(${duration * 100}% + ${(duration - 1) * 2}px)`,
+                zIndex: TimeUtils.slots.indexOf(lec.startTime) + 1 // later start = higher z
+              }}
             >
               <div className="card-inner">
                 <span className="card-title">{lec.name}</span>
@@ -99,11 +134,97 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
   const [isSaving, setIsSaving] = useState(false);
   const [activeLecture, setActiveLecture] = useState<Lecture | null>(null);
 
+  // new view state: week or single day
+  const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
+  const [selectedDay, setSelectedDay] = useState('Monday');
+
+  // layout map for overlapping lectures (day independent)
+  const layoutMap = React.useMemo(() => {
+    const all = classes.filter((l: any) => l.subject === courseOfStudy);
+
+    const timesOverlap = (a: any, b: any) => {
+      const as = TimeUtils.slots.indexOf(a.startTime);
+      const ae = TimeUtils.slots.indexOf(a.endTime);
+      const bs = TimeUtils.slots.indexOf(b.startTime);
+      const be = TimeUtils.slots.indexOf(b.endTime);
+      return as < be && bs < ae;
+    };
+
+    const map: Record<string, { col: number; cols: number }> = {};
+
+    // compute per-day groups so lectures on different days don't influence each other
+    const daysOfWeek = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    daysOfWeek.forEach(day => {
+      const lecturesForDay = all.filter(l => l.day === day);
+      const groups: any[][] = [];
+      lecturesForDay.sort((a: any, b: any) =>
+        TimeUtils.slots.indexOf(a.startTime) - TimeUtils.slots.indexOf(b.startTime)
+      );
+      lecturesForDay.forEach((lec: any) => {
+        let placed = false;
+        for (const grp of groups) {
+          if (grp.some((g) => timesOverlap(lec, g))) {
+            grp.push(lec);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) groups.push([lec]);
+      });
+
+      groups.forEach((grp) => {
+        const colsEnd: number[] = [];
+        grp.sort(
+          (a, b) =>
+            TimeUtils.slots.indexOf(a.startTime) -
+            TimeUtils.slots.indexOf(b.startTime)
+        );
+        grp.forEach((lec: any) => {
+          const s = TimeUtils.slots.indexOf(lec.startTime);
+          const dur = TimeUtils.calculateDuration(lec.startTime, lec.endTime);
+          const e = s + dur;
+          let assigned = false;
+          for (let i = 0; i < colsEnd.length; i++) {
+            if (s >= colsEnd[i]) {
+              colsEnd[i] = e;
+              map[lec.id!] = { col: i, cols: colsEnd.length };
+              assigned = true;
+              break;
+            }
+          }
+          if (!assigned) {
+            colsEnd.push(e);
+            map[lec.id!] = { col: colsEnd.length - 1, cols: colsEnd.length };
+          }
+        });
+        const total = colsEnd.length;
+        grp.forEach((lec: any) => {
+          if (map[lec.id!]) map[lec.id!].cols = total;
+        });
+      });
+    });
+
+    return map;
+  }, [classes, courseOfStudy]);
+
   const [form, setForm] = useState({
     name: '', day: 'Monday', start: '08:00', duration: 1, type: 'Vorlesung' as LectureType, room: '', prof: ''
   });
 
-  const days = showSat ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  // compute allowed days based on saturday toggle
+  const allowedDays = showSat
+    ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+  // make sure selectedDay stays valid when allowedDays change
+  React.useEffect(() => {
+    if (!allowedDays.includes(selectedDay)) {
+      setSelectedDay(allowedDays[0]);
+    }
+  }, [allowedDays, selectedDay]);
+
+  // decide which days to render based on view mode
+  const days = viewMode === 'week' ? allowedDays : [selectedDay];
   const timeSlots = TimeUtils.slots.slice(0, -1);
 
   const handleOpenEditor = (lec?: any, day?: string, slot?: string) => {
@@ -117,7 +238,7 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
     } else {
       setActiveLecture(null);
       setForm({
-        name: '', day: day || 'Monday', start: slot || '08:00', duration: 1, type: 'Vorlesung', room: '', prof: ''
+        name: '', day: day || selectedDay || 'Monday', start: slot || '08:00', duration: 1, type: 'Vorlesung', room: '', prof: ''
       });
     }
     setModalOpen(true);
@@ -188,6 +309,38 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
             <Switch id="sat" checked={showSat} onCheckedChange={setShowSat} />
             <Label htmlFor="sat">Samstag</Label>
           </div>
+
+          {/* view selector: week or day */}
+          {/* modern toggle for week/day view */}
+          <div className="control-group view-toggle">
+            <button
+              className={viewMode === 'week' ? 'active' : ''}
+              onClick={() => setViewMode('week')}
+            >
+              Woche
+            </button>
+            <button
+              className={viewMode === 'day' ? 'active' : ''}
+              onClick={() => setViewMode('day')}
+            >
+              Tag
+            </button>
+          </div>
+
+          {viewMode === 'day' && (
+            <div className="control-group day-toggle">
+              {allowedDays.map(d => (
+                <button
+                  key={d}
+                  className={selectedDay === d ? 'active' : ''}
+                  onClick={() => setSelectedDay(d)}
+                >
+                  {TimeUtils.getGermanDay(d)}
+                </button>
+              ))}
+            </div>
+          )}
+
           <button className="btn-primary" onClick={() => handleOpenEditor()}>
             + Neuer Eintrag
           </button>
@@ -221,6 +374,7 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
                       lecturers={lecturers}
                       onCellClick={handleOpenEditor}
                       onDropLecture={handleDropLecture}
+                      layoutMap={layoutMap}
                     />
                   ))}
                 </tr>
