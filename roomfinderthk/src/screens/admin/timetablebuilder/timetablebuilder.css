@@ -177,6 +177,7 @@
   border-left: 4px solid #cbd5e1;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   transition: transform 0.1s, box-shadow 0.2s;
+  touch-action: none; /* allow pointer drag on touch devices */
 }
 
 .lecture-card:hover {
@@ -376,6 +377,11 @@
 /* while any card is being dragged, let all others pass events through */
 .dragging-any .lecture-card {
   pointer-events: none;
+}
+
+/* ghost helper element (inline style used, this is fallback) */
+.drag-ghost {
+  user-select: none;
 }
 
 /* Visuelles Feedback für die Ziel-Zelle */

@@ -38,6 +38,8 @@ interface TimetableCellProps {
   lecturers: any[];
   onCellClick: (lec: any | null, day?: string, slot?: string) => void;
   onDropLecture: (lectureId: string, newDay: string, newStart: string) => void;
+  onStartDrag: (e: React.PointerEvent, lec: any) => void;
+  pointerDrag: {lec:any;x:number;y:number} | null;
   layoutMap: Record<string, { col: number; cols: number }>;
 }
 
@@ -49,12 +51,16 @@ const TimetableCell: React.FC<TimetableCellProps> = ({
   lecturers,
   onCellClick,
   onDropLecture,
+  onStartDrag,
+  pointerDrag,
   layoutMap,
 }) => {
   const currentLectures = lectures.filter((l: any) => l.day === day && l.startTime === slot);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    // set explicit effect so cursor shows move
+    e.dataTransfer.dropEffect = 'move';
     // highlight cell itself (use parent if coming from card)
     const target = e.currentTarget as HTMLElement;
     target.classList.add('drag-over');
@@ -69,8 +75,12 @@ const TimetableCell: React.FC<TimetableCellProps> = ({
     e.preventDefault();
     const target = e.currentTarget as HTMLElement;
     target.classList.remove('drag-over');
-    const lectureId = e.dataTransfer.getData("lectureId");
+    // support both custom and plain text types
+    const lectureId = e.dataTransfer.getData("lectureId") || e.dataTransfer.getData("text/plain");
     if (lectureId) {
+      // ignore drops that don't change position
+      const lec = lectures.find(l => l.id === lectureId);
+      if (lec && lec.day === day && lec.startTime === slot) return;
       onDropLecture(lectureId, day, slot);
     }
   };
@@ -78,6 +88,8 @@ const TimetableCell: React.FC<TimetableCellProps> = ({
   return (
     <td 
       className="timetable-cell" 
+      data-day={day}
+      data-slot={slot}
       onClick={() => onCellClick(null, day, slot)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -97,22 +109,9 @@ const TimetableCell: React.FC<TimetableCellProps> = ({
           return (
             <div
               key={lec.id}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData("lectureId", lec.id);
-                e.dataTransfer.effectAllowed = "move";
-                e.currentTarget.classList.add('dragging');
-                document.body.classList.add('dragging-any');
-              }}
-              onDragEnd={(e) => {
-                e.currentTarget.classList.remove('dragging');
-                document.body.classList.remove('dragging-any');
-              }}
+              onPointerDown={(e) => onStartDrag(e, lec)}
               onClick={(e) => { e.stopPropagation(); onCellClick(lec); }}
-              className={`lecture-card type-${lec.type.toLowerCase()}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
+              className={`lecture-card type-${lec.type.toLowerCase()} ${pointerDrag?.lec.id === lec.id ? 'dragging' : ''}`}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -245,6 +244,27 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
     setModalOpen(true);
   };
 
+  // pointer drag state for touch/mobile and desktop fallback
+  const [pointerDrag, setPointerDrag] = useState<{lec:any;x:number;y:number}|null>(null);
+  const pointerDragRef = React.useRef<{lec:any;x:number;y:number}|null>(null);
+  const lastCellRef = React.useRef<HTMLElement | null>(null);
+
+  const onPointerMove = useCallback((e: PointerEvent) => {
+    const prev = pointerDragRef.current;
+    if (prev) {
+      const updated = { ...prev, x: e.clientX, y: e.clientY };
+      pointerDragRef.current = updated;
+      setPointerDrag(updated);
+    }
+    const elem = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = elem?.closest('.timetable-cell') as HTMLElement | null;
+    if (cell !== lastCellRef.current) {
+      if (lastCellRef.current) lastCellRef.current.classList.remove('drag-over');
+      if (cell) cell.classList.add('drag-over');
+      lastCellRef.current = cell;
+    }
+  }, []);
+
   const handleDropLecture = useCallback(async (lectureId: string, newDay: string, newStart: string) => {
     const lec = classes.find((l: any) => l.id === lectureId);
     if (!lec) return;
@@ -263,6 +283,38 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
       console.error("Fehler beim Verschieben:", e);
     }
   }, [classes, addLecture, removeLecture]);
+
+  const onPointerUp = useCallback((e: PointerEvent) => {
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+    document.body.classList.remove('dragging-any');
+    if (lastCellRef.current) {
+      lastCellRef.current.classList.remove('drag-over');
+      const cell = lastCellRef.current;
+      lastCellRef.current = null;
+      const drag = pointerDragRef.current;
+      if (drag) {
+        const day = cell.getAttribute('data-day') || '';
+        const slot = cell.getAttribute('data-slot') || '';
+        if (!(drag.lec.day === day && drag.lec.startTime === slot)) {
+          console.log('dropping', drag.lec.id, day, slot);
+          handleDropLecture(drag.lec.id, day, slot);
+        }
+      }
+    }
+    pointerDragRef.current = null;
+    setPointerDrag(null);
+  }, [handleDropLecture]);
+
+  const startPointerDrag = useCallback((e: React.PointerEvent, lec: any) => {
+    e.preventDefault();
+    const initial = { lec, x: e.clientX, y: e.clientY };
+    pointerDragRef.current = initial;
+    setPointerDrag(initial);
+    document.body.classList.add('dragging-any');
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+  }, [onPointerMove, onPointerUp]);
 
 
   return (
@@ -346,6 +398,8 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
                       lecturers={lecturers}
                       onCellClick={handleOpenEditor}
                       onDropLecture={handleDropLecture}
+                      onStartDrag={startPointerDrag}
+                      pointerDrag={pointerDrag}
                       layoutMap={layoutMap}
                     />
                   ))}
@@ -355,6 +409,27 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
           </table>
         </div>
       </main>
+
+      {pointerDrag && (
+        <div
+          className="drag-ghost"
+          style={{
+            position: 'fixed',
+            top: pointerDrag.y + 5,
+            left: pointerDrag.x + 5,
+            pointerEvents: 'none',
+            zIndex: 2000,
+            background: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            fontSize: '0.75rem',
+            fontWeight: '700',
+          }}
+        >
+          {pointerDrag.lec.name}
+        </div>
+      )}
 
       <EntryModal
         isOpen={modalOpen}
