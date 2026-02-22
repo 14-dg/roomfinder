@@ -1,4 +1,6 @@
 import React, { useState, useCallback } from 'react';
+import EntryModal from './EntryModal';
+
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useData } from '@/contexts/DataContext';
@@ -141,8 +143,8 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
   
   const [showSat, setShowSat] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [activeLecture, setActiveLecture] = useState<Lecture | null>(null);
+  const [modalDefaults, setModalDefaults] = useState<{ day: string; slot: string }>({ day: 'Monday', slot: '08:00' });
 
   // new view state: week or single day
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
@@ -217,9 +219,6 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
     return map;
   }, [classes, courseOfStudy]);
 
-  const [form, setForm] = useState({
-    name: '', day: 'Monday', start: '08:00', duration: 1, type: 'Vorlesung' as LectureType, room: '', prof: ''
-  });
 
   // compute allowed days based on saturday toggle
   const allowedDays = showSat
@@ -238,19 +237,11 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
   const timeSlots = TimeUtils.slots.slice(0, -1);
 
   const handleOpenEditor = (lec?: any, day?: string, slot?: string) => {
-    if (lec) {
-      setActiveLecture(lec);
-      setForm({
-        name: lec.name, day: lec.day, start: lec.startTime,
-        duration: TimeUtils.calculateDuration(lec.startTime, lec.endTime),
-        type: lec.type, room: lec.roomId, prof: lec.professor
-      });
-    } else {
-      setActiveLecture(null);
-      setForm({
-        name: '', day: day || selectedDay || 'Monday', start: slot || '08:00', duration: 1, type: 'Vorlesung', room: '', prof: ''
-      });
-    }
+    setActiveLecture(lec || null);
+    setModalDefaults({
+      day: day || selectedDay || 'Monday',
+      slot: slot || '08:00',
+    });
     setModalOpen(true);
   };
 
@@ -273,35 +264,6 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
     }
   }, [classes, addLecture, removeLecture]);
 
-  const handleSave = async () => {
-    if (!form.name || !form.room || !form.prof) {
-      alert("Bitte füllen Sie Titel, Raum und Dozent aus.");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      if (activeLecture) await removeLecture(activeLecture.id!);
-      
-      await addLecture({
-        name: form.name,
-        type: form.type,
-        professor: form.prof,
-        roomId: form.room,
-        day: form.day,
-        startTime: form.start,
-        endTime: TimeUtils.calculateEndTime(form.start, form.duration),
-        subject: courseOfStudy,
-        startDate: semester === 'Winter' ? `01.10.${year}` : `01.04.${year}`,
-        endDate: semester === 'Winter' ? `31.03.${year + 1}` : `30.09.${year}`
-      });
-      setModalOpen(false);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   return (
     <div className="builder-screen" id="timetable-to-export">
@@ -351,7 +313,7 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
             </div>
           )}
 
-          <button className="btn-primary" onClick={() => handleOpenEditor()}>
+              <button className="btn-primary" onClick={() => handleOpenEditor()}>
             + Neuer Eintrag
           </button>
         </div>
@@ -394,100 +356,35 @@ export const TimetableBuilder: React.FC<any> = ({ courseOfStudy, semester, year 
         </div>
       </main>
 
-      {modalOpen && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{activeLecture ? 'Eintrag bearbeiten' : 'Termin planen'}</h2>
-              <button className="close-btn" onClick={() => setModalOpen(false)}>×</button>
-            </div>
-
-            <div className="modal-body">
-              <div className="input-group full">
-                <label>Veranstaltungstitel</label>
-                <input 
-                  type="text" 
-                  value={form.name} 
-                  onChange={e => setForm({...form, name: e.target.value})}
-                  placeholder="z.B. Einführung in die BWL"
-                />
-              </div>
-
-              <div className="input-row">
-                <div className="input-group">
-                  <label>Tag</label>
-                  <select value={form.day} onChange={e => setForm({...form, day: e.target.value})}>
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(d => (
-                      <option key={d} value={d}>{TimeUtils.getGermanDay(d)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="input-group">
-                  <label>Startzeit</label>
-                  <select value={form.start} onChange={e => setForm({...form, start: e.target.value})}>
-                    {timeSlots.map(slot => (
-                      <option key={slot} value={slot}>{slot}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="input-group">
-                  <label>Dauer (Blöcke)</label>
-                  <div className="block-picker">
-                    {[1, 2, 3, 4].map(n => (
-                      <button 
-                        key={n}
-                        className={form.duration === n ? 'active' : ''}
-                        onClick={() => setForm({...form, duration: n})}
-                      >{n}</button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label>Typ</label>
-                <div className="type-picker">
-                  {['Vorlesung', 'Uebung', 'Praktikum', 'Seminar'].map(t => (
-                    <button 
-                      key={t}
-                      className={form.type === t ? 'active' : ''}
-                      onClick={() => setForm({...form, type: t as any})}
-                    >{t}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="input-row">
-                <div className="input-group">
-                  <label>Dozent/in</label>
-                  <select value={form.prof} onChange={e => setForm({...form, prof: e.target.value})}>
-                    <option value="">-- Wählen --</option>
-                    {lecturers.map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                  </select>
-                </div>
-                <div className="input-group">
-                  <label>Raum</label>
-                  <select value={form.room} onChange={e => setForm({...form, room: e.target.value})}>
-                    <option value="">-- Wählen --</option>
-                    {rooms.map((r: any) => <option key={r.id} value={r.id}>{r.roomName}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              {activeLecture && (
-                <button className="btn-delete" onClick={async () => { if(confirm('Löschen?')) { await removeLecture(activeLecture.id!); setModalOpen(false); }}}>
-                  Löschen
-                </button>
-              )}
-              <button className="btn-save" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? 'Speichert...' : 'Termin speichern'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EntryModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        rooms={rooms}
+        lecturers={lecturers}
+        timeSlots={timeSlots}
+        allowedDays={allowedDays}
+        initialDay={modalDefaults.day}
+        initialSlot={modalDefaults.slot}
+        activeLecture={activeLecture}
+        onSave={async (formData, lecture) => {
+          if (lecture) await removeLecture(lecture.id!);
+          await addLecture({
+            name: formData.name,
+            type: formData.type,
+            professor: formData.prof,
+            roomId: formData.room,
+            day: formData.day,
+            startTime: formData.start,
+            endTime: TimeUtils.calculateEndTime(formData.start, formData.duration),
+            subject: courseOfStudy,
+            startDate: semester === 'Winter' ? `01.10.${year}` : `01.04.${year}`,
+            endDate: semester === 'Winter' ? `31.03.${year + 1}` : `30.09.${year}`,
+          });
+        }}
+        onDelete={async (id) => {
+          await removeLecture(id);
+        }}
+      />
     </div>
   );
 };
