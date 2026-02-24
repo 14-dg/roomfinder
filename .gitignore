@@ -8,3 +8,5 @@ secrets/
 .env.local
 .local
 .env.*
+
+.~lock.*
